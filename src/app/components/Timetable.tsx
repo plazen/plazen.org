@@ -17,12 +17,14 @@ type TimetableProps = {
   tasks: Task[];
   onToggleDone: (taskId: string, currentStatus: boolean) => void;
   onDeleteTask: (taskId: string) => void;
+  onReschedule: (task: Task) => void;
 };
 
 const Timetable: React.FC<TimetableProps> = ({
   tasks,
   onToggleDone,
   onDeleteTask,
+  onReschedule,
 }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
     {
@@ -65,10 +67,7 @@ const Timetable: React.FC<TimetableProps> = ({
   const menuOptions = menu.task
     ? [
         { label: "Delete", onClick: () => onDeleteTask(menu.task!.id) },
-        {
-          label: "Reschedule",
-          onClick: () => alert(`Rescheduling "${menu.task!.title}"...`),
-        },
+        { label: "Reschedule", onClick: () => onReschedule(menu.task!) },
       ]
     : [];
 

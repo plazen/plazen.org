@@ -176,29 +176,49 @@ export async function PATCH(request: Request) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
     const body = await request.json();
+    const { id, is_completed, scheduled_time } = body;
 
-    if (!body.id || typeof body.is_completed !== "boolean") {
+    if (!id) {
       return NextResponse.json(
-        { error: "Task ID and completion status are required" },
+        { error: "Task ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const dataToUpdate: {
+      is_completed?: boolean;
+      scheduled_time?: Date;
+      is_time_sensitive?: boolean;
+    } = {};
+
+    if (typeof is_completed === "boolean") {
+      dataToUpdate.is_completed = is_completed;
+    }
+
+    if (scheduled_time) {
+      dataToUpdate.scheduled_time = new Date(scheduled_time);
+      dataToUpdate.is_time_sensitive = true;
+    }
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return NextResponse.json(
+        { error: "No update data provided" },
         { status: 400 }
       );
     }
 
     const updatedTask = await prisma.tasks.update({
       where: {
-        id: BigInt(body.id),
+        id: BigInt(id),
         user_id: session.user.id,
       },
-      data: {
-        is_completed: body.is_completed,
-      },
+      data: dataToUpdate,
     });
 
     const serializableUpdatedTask = {

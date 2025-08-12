@@ -1,12 +1,11 @@
-"use client"; // This component interacts with user state and browser APIs.
+"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import Timetable from "./components/Timetable";
-
-// --- Reusable Components & Icons ---
+import RescheduleModal from "./components/RescheduleModal";
 
 const PlazenLogo = () => (
   <svg
@@ -68,10 +67,7 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   </button>
 );
 
-// --- Main Application Component ---
-
 export default function App() {
-  // --- State Management ---
   const [user, setUser] = useState<User | null>(null);
   type Task = {
     id: string;
@@ -86,11 +82,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isTimeSensitive, setIsTimeSensitive] = useState(false);
   const [duration, setDuration] = useState(30);
   const [scheduledTime, setScheduledTime] = useState("");
+  const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
 
   const router = useRouter();
   const supabase = createBrowserClient(
@@ -98,7 +94,6 @@ export default function App() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // --- Data Fetching ---
   const fetchTasks = useCallback(async () => {
     try {
       const response = await fetch("/api/tasks");
@@ -116,7 +111,6 @@ export default function App() {
     }
   }, []);
 
-  // --- Effects ---
   useEffect(() => {
     const checkUserAndFetchTasks = async () => {
       const {
@@ -135,7 +129,6 @@ export default function App() {
     checkUserAndFetchTasks();
   }, [router, supabase.auth, fetchTasks]);
 
-  // --- Handlers ---
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
@@ -161,7 +154,6 @@ export default function App() {
       const addedTask = await response.json();
       setTasks((prevTasks) => [...prevTasks, addedTask]);
 
-      // Reset form
       setNewTaskTitle("");
       setIsTimeSensitive(false);
       setDuration(30);
@@ -201,10 +193,6 @@ export default function App() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
   const handleDeleteTask = async (taskId: string) => {
     setTasks(tasks.filter((task) => task.id !== taskId));
 
@@ -225,6 +213,43 @@ export default function App() {
         setError("An unknown error occurred while deleting");
       }
     }
+  };
+
+  const handleOpenRescheduleModal = (task: Task) => {
+    setReschedulingTask(task);
+  };
+
+  const handleCloseRescheduleModal = () => {
+    setReschedulingTask(null);
+  };
+
+  const handleUpdateTaskTime = async (taskId: string, newTime: string) => {
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId, scheduled_time: newTime }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to reschedule task");
+      }
+
+      const updatedTask = await response.json();
+      setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
+      handleCloseRescheduleModal();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   if (loading) {
@@ -339,10 +364,19 @@ export default function App() {
               tasks={tasks}
               onToggleDone={handleToggleDone}
               onDeleteTask={handleDeleteTask}
+              onReschedule={handleOpenRescheduleModal}
             />
           </div>
         </div>
       </main>
+
+      {reschedulingTask && (
+        <RescheduleModal
+          task={reschedulingTask}
+          onClose={handleCloseRescheduleModal}
+          onSave={handleUpdateTaskTime}
+        />
+      )}
     </div>
   );
 }
