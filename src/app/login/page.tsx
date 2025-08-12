@@ -1,12 +1,12 @@
-"use client"; // This component needs to be a client component to use hooks.
+"use client";
 
 import { createBrowserClient } from "@supabase/ssr";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
-// --- Helper Component: Plazen Logo ---
 const PlazenLogo = () => (
   <svg
     width="32"
@@ -30,17 +30,20 @@ const PlazenLogo = () => (
 );
 
 export default function LoginPage() {
-  // --- State and Client Initialization ---
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [session, setSession] = useState<Session | null>(null);
+  const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // --- Authentication Logic ---
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        router.push("/");
+      }
       setSession(data.session);
     };
     getSession();
@@ -48,20 +51,17 @@ export default function LoginPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        router.push("/");
+      }
       setSession(session);
     });
 
     return () => {
       subscription?.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, [supabase.auth, router]);
 
-  // --- Handlers ---
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
-  // --- Render Logic ---
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
@@ -69,30 +69,15 @@ export default function LoginPage() {
           <PlazenLogo />
         </div>
 
-        {session ? (
-          <div className="bg-gray-800 rounded-lg shadow-lg p-8 text-center">
-            <h2 className="text-xl font-semibold text-white mb-2">
-              You are logged in!
-            </h2>
-            <p className="text-gray-400 mb-6">Welcome, {session.user.email}</p>
-            <button
-              onClick={handleLogout}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800"
-            >
-              Sign Out
-            </button>
-          </div>
-        ) : (
-          <div className="bg-gray-800 rounded-lg shadow-lg p-8">
-            <Auth
-              supabaseClient={supabase}
-              appearance={{ theme: ThemeSupa }}
-              theme="dark"
-              providers={["github"]}
-              redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`}
-            />
-          </div>
-        )}
+        <div className="bg-gray-800 rounded-lg shadow-lg p-8">
+          <Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            theme="dark"
+            providers={["github"]}
+            redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`}
+          />
+        </div>
       </div>
     </div>
   );

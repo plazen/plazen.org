@@ -80,6 +80,7 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
 );
 
 export default function App() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
   type Task = {
     id: string;
@@ -252,11 +253,6 @@ export default function App() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
   if (loading || !settings) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
@@ -282,7 +278,7 @@ export default function App() {
                 <SettingsIcon />
               </button>
               <button
-                onClick={handleLogout}
+                onClick={() => router.push("/account")}
                 className="rounded-full p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <UserIcon />
