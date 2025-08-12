@@ -1,4 +1,4 @@
-"use client";
+"use client"; // This component needs to be a client component to use hooks.
 
 import { createBrowserClient } from "@supabase/ssr";
 import { Auth } from "@supabase/auth-ui-react";
@@ -30,33 +30,27 @@ const PlazenLogo = () => (
 );
 
 export default function LoginPage() {
+  // --- State and Client Initialization ---
   const [session, setSession] = useState<Session | null>(null);
-
-  // Create a Supabase client for browser-based interactions.
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   // --- Authentication Logic ---
-
   useEffect(() => {
-    // 1. Get the initial session when the component mounts.
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
     };
     getSession();
 
-    // 2. Set up a listener for authentication state changes.
-    // This will update the UI in real-time when a user logs in or out.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    // 3. Clean up the listener when the component unmounts.
     return () => {
       subscription?.unsubscribe();
     };
@@ -65,11 +59,9 @@ export default function LoginPage() {
   // --- Handlers ---
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // The onAuthStateChange listener will handle setting the session to null.
   };
 
   // --- Render Logic ---
-
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
@@ -96,7 +88,7 @@ export default function LoginPage() {
               supabaseClient={supabase}
               appearance={{ theme: ThemeSupa }}
               theme="dark"
-              providers={["github"]} // You can add 'google', 'twitter', etc.
+              providers={["github"]}
               redirectTo={`${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`}
             />
           </div>

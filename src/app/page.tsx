@@ -1,9 +1,9 @@
-"use client";
+"use client"; // This component interacts with user state and browser APIs.
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
-import type { Session, User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 // --- Reusable Components & Icons ---
 
@@ -73,8 +73,9 @@ export default function App() {
 
   // Form state
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [isFlexible, setIsFlexible] = useState(true);
+  const [isTimeSensitive, setIsTimeSensitive] = useState(false);
   const [duration, setDuration] = useState(30);
+  const [scheduledTime, setScheduledTime] = useState("");
 
   const router = useRouter();
   const supabase = createBrowserClient(
@@ -82,9 +83,21 @@ export default function App() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  // --- Effects ---
+  // --- Data Fetching ---
+  const fetchTasks = useCallback(async () => {
+    try {
+      const response = await fetch("/api/tasks");
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks");
+      }
+      const fetchedTasks = await response.json();
+      setTasks(fetchedTasks);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  }, []);
 
-  // Effect to check for user session and fetch initial data
+  // --- Effects ---
   useEffect(() => {
     const checkUserAndFetchTasks = async () => {
       const {
@@ -92,30 +105,18 @@ export default function App() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        router.push("/login"); // Redirect to login if not authenticated
+        router.push("/login");
         return;
       }
       setUser(session.user);
-
-      try {
-        const response = await fetch("/api/tasks");
-        if (!response.ok) {
-          throw new Error("Failed to fetch tasks");
-        }
-        const fetchedTasks = await response.json();
-        setTasks(fetchedTasks);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      await fetchTasks();
+      setLoading(false);
     };
 
     checkUserAndFetchTasks();
-  }, [router, supabase.auth]);
+  }, [router, supabase.auth, fetchTasks]);
 
   // --- Handlers ---
-
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
@@ -126,8 +127,11 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: newTaskTitle,
-          is_flexible: isFlexible,
-          duration_minutes: Number(duration),
+          is_time_sensitive: isTimeSensitive,
+          duration_minutes: isTimeSensitive ? null : Number(duration),
+          scheduled_time: isTimeSensitive
+            ? new Date(scheduledTime).toISOString()
+            : null,
         }),
       });
 
@@ -136,25 +140,38 @@ export default function App() {
       }
 
       const addedTask = await response.json();
-      setTasks([...tasks, addedTask]); // Add new task to the local state
+      setTasks((prevTasks) => [...prevTasks, addedTask]);
 
       // Reset form
       setNewTaskTitle("");
-      setIsFlexible(true);
+      setIsTimeSensitive(false);
       setDuration(30);
+      setScheduledTime("");
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  // Note: This is a local-only update. To persist this change,
-  // you would need a new API endpoint (e.g., PUT /api/tasks/:id)
-  const handleToggleDone = (taskId: number) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, done: !task.done } : task
-      )
-    );
+  const handleToggleDone = async (taskId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId, is_completed: !currentStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update task status");
+      }
+
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, is_completed: !currentStatus } : task
+        )
+      );
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
   const handleLogout = async () => {
@@ -163,7 +180,6 @@ export default function App() {
   };
 
   // --- Render Logic ---
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
@@ -228,27 +244,38 @@ export default function App() {
                     Time Sensitive?
                   </span>
                   <ToggleSwitch
-                    isToggled={!isFlexible}
-                    onToggle={() => setIsFlexible(!isFlexible)}
+                    isToggled={isTimeSensitive}
+                    onToggle={() => setIsTimeSensitive(!isTimeSensitive)}
                   />
                 </div>
                 <div>
                   <label
-                    htmlFor="duration"
+                    htmlFor="timing"
                     className="block text-sm font-medium text-gray-300"
                   >
-                    {isFlexible
-                      ? "Estimated Duration (minutes)"
-                      : "Specific Time"}
+                    {isTimeSensitive
+                      ? "Specific Time"
+                      : "Estimated Duration (minutes)"}
                   </label>
-                  <input
-                    type="number"
-                    id="duration"
-                    value={duration}
-                    onChange={(e) => setDuration(parseInt(e.target.value, 10))}
-                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    placeholder={isFlexible ? "e.g., 45" : "e.g., 14:30"}
-                  />
+                  {isTimeSensitive ? (
+                    <input
+                      type="datetime-local"
+                      id="timing"
+                      value={scheduledTime}
+                      onChange={(e) => setScheduledTime(e.target.value)}
+                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    />
+                  ) : (
+                    <input
+                      type="number"
+                      id="timing"
+                      value={duration}
+                      onChange={(e) =>
+                        setDuration(parseInt(e.target.value, 10))
+                      }
+                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    />
+                  )}
                 </div>
                 <button
                   type="submit"
@@ -268,9 +295,11 @@ export default function App() {
                   tasks.map((task) => (
                     <li
                       key={task.id}
-                      onClick={() => handleToggleDone(task.id)}
+                      onClick={() =>
+                        handleToggleDone(task.id, task.is_completed)
+                      }
                       className={`flex items-center justify-between p-4 rounded-md cursor-pointer transition-all duration-200 ${
-                        task.done
+                        task.is_completed
                           ? "bg-gray-700/50 text-gray-500"
                           : "bg-gray-700 hover:bg-gray-600/80"
                       }`}
@@ -278,13 +307,15 @@ export default function App() {
                       <div className="flex items-center">
                         <div
                           className={`w-2.5 h-2.5 rounded-full mr-4 flex-shrink-0 ${
-                            task.is_flexible ? "bg-green-400" : "bg-red-400"
+                            task.is_time_sensitive
+                              ? "bg-red-400"
+                              : "bg-green-400"
                           }`}
                         ></div>
                         <div>
                           <p
                             className={`font-medium ${
-                              task.done ? "line-through" : ""
+                              task.is_completed ? "line-through" : ""
                             }`}
                           >
                             {task.title}
@@ -293,12 +324,15 @@ export default function App() {
                             {task.scheduled_time
                               ? new Date(
                                   task.scheduled_time
-                                ).toLocaleTimeString()
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
                               : `${task.duration_minutes} min`}
                           </p>
                         </div>
                       </div>
-                      {task.done && (
+                      {task.is_completed && (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"

@@ -7,17 +7,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const cookieStore = await cookies();
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
   );
 
   const {
@@ -30,12 +23,8 @@ export async function GET() {
 
   try {
     const tasks = await prisma.tasks.findMany({
-      where: {
-        user_id: session.user.id,
-      },
-      orderBy: {
-        created_at: "asc",
-      },
+      where: { user_id: session.user.id },
+      orderBy: { created_at: "asc" },
     });
 
     const serializableTasks = tasks.map((task) => ({
@@ -55,17 +44,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
   );
 
   const {
@@ -87,8 +69,10 @@ export async function POST(request: Request) {
       data: {
         user_id: session.user.id,
         title: body.title,
-        is_flexible: body.is_flexible,
         duration_minutes: body.duration_minutes,
+        is_time_sensitive: body.is_time_sensitive,
+        scheduled_time: body.scheduled_time,
+        is_completed: false,
       },
     });
 
@@ -102,6 +86,57 @@ export async function POST(request: Request) {
     console.error("Error creating task:", error);
     return NextResponse.json(
       { error: "Failed to create task" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+  );
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+
+    if (!body.id || typeof body.is_completed !== "boolean") {
+      return NextResponse.json(
+        { error: "Task ID and completion status are required" },
+        { status: 400 }
+      );
+    }
+
+    const updatedTask = await prisma.tasks.update({
+      where: {
+        id: BigInt(body.id),
+        user_id: session.user.id,
+      },
+      data: {
+        is_completed: body.is_completed,
+      },
+    });
+
+    const serializableUpdatedTask = {
+      ...updatedTask,
+      id: updatedTask.id.toString(),
+    };
+
+    return NextResponse.json(serializableUpdatedTask, { status: 200 });
+  } catch (error) {
+    console.error("Error updating task:", error);
+    return NextResponse.json(
+      { error: "Failed to update task" },
       { status: 500 }
     );
   }
