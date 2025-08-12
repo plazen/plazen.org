@@ -175,6 +175,32 @@ export default function App() {
     }
   };
 
+  const handleToggleDone = async (taskId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId, is_completed: !currentStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update task status");
+      }
+
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? { ...task, is_completed: !currentStatus } : task
+        )
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -288,7 +314,7 @@ export default function App() {
           </div>
 
           <div className="lg:col-span-2">
-            <Timetable tasks={tasks} />
+            <Timetable tasks={tasks} onToggleDone={handleToggleDone} />
           </div>
         </div>
       </main>
