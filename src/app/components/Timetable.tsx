@@ -149,11 +149,12 @@ const Timetable: React.FC<TimetableProps> = ({
                     isCompleted ? "line-through" : ""
                   }`}
                 >
-                  {event.title}
+                  {event.title} |{" "}
+                  <span className="text-xs opacity-70 font-mono mt-auto">
+                    {formatTime(event.startTime)} – {formatTime(endTime)}
+                  </span>
                 </p>
-                <p className="text-xs opacity-70 font-mono mt-auto">
-                  {formatTime(event.startTime)} – {formatTime(endTime)}
-                </p>
+
                 {isCompleted && (
                   <motion.div
                     initial={{ scale: 0 }}
