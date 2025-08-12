@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const cookieStore = await cookies();
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -36,7 +37,13 @@ export async function GET() {
         created_at: "asc",
       },
     });
-    return NextResponse.json(tasks, { status: 200 });
+
+    const serializableTasks = tasks.map((task) => ({
+      ...task,
+      id: task.id.toString(),
+    }));
+
+    return NextResponse.json(serializableTasks, { status: 200 });
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json(
@@ -85,7 +92,12 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(newTask, { status: 201 });
+    const serializableNewTask = {
+      ...newTask,
+      id: newTask.id.toString(),
+    };
+
+    return NextResponse.json(serializableNewTask, { status: 201 });
   } catch (error) {
     console.error("Error creating task:", error);
     return NextResponse.json(

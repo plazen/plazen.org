@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createBrowserClient } from "@supabase/ssr";
+import { useRouter } from "next/navigation";
+import type { Session, User } from "@supabase/supabase-js";
+
+// --- Reusable Components & Icons ---
 
 const PlazenLogo = () => (
   <svg
@@ -42,7 +47,6 @@ const UserIcon = () => (
   </svg>
 );
 
-// Toggle Switch Component for "Time Sensitive"
 const ToggleSwitch = ({ isToggled, onToggle }) => (
   <button
     onClick={onToggle}
@@ -58,70 +62,93 @@ const ToggleSwitch = ({ isToggled, onToggle }) => (
   </button>
 );
 
-export default function Home() {
+// --- Main Application Component ---
+
+export default function App() {
   // --- State Management ---
+  const [user, setUser] = useState<User | null>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // State for the list of tasks. Initialized with some placeholder data.
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: "Morning Stand-up Meeting",
-      time: "09:00",
-      isFlexible: false,
-      done: true,
-    },
-    {
-      id: 2,
-      title: "Design new landing page mockups",
-      time: "10:30",
-      isFlexible: true,
-      done: false,
-    },
-    {
-      id: 3,
-      title: "Lunch Break",
-      time: "12:30",
-      isFlexible: false,
-      done: false,
-    },
-    {
-      id: 4,
-      title: "Review pull requests",
-      time: "14:00",
-      isFlexible: true,
-      done: false,
-    },
-  ]);
-
-  // State for the new task form inputs
+  // Form state
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isFlexible, setIsFlexible] = useState(true);
-  const [duration, setDuration] = useState("30");
+  const [duration, setDuration] = useState(30);
+
+  const router = useRouter();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // --- Effects ---
+
+  // Effect to check for user session and fetch initial data
+  useEffect(() => {
+    const checkUserAndFetchTasks = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/login"); // Redirect to login if not authenticated
+        return;
+      }
+      setUser(session.user);
+
+      try {
+        const response = await fetch("/api/tasks");
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks");
+        }
+        const fetchedTasks = await response.json();
+        setTasks(fetchedTasks);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUserAndFetchTasks();
+  }, [router, supabase.auth]);
 
   // --- Handlers ---
 
-  // Handles form submission to add a new task
-  const handleAddTask = (e) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return; // Don't add empty tasks
+    if (!newTaskTitle.trim()) return;
 
-    const newTask = {
-      id: tasks.length + 1,
-      title: newTaskTitle,
-      // In a real app, the time would be calculated by your algorithm
-      time: "15:45",
-      isFlexible: isFlexible,
-      done: false,
-    };
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newTaskTitle,
+          is_flexible: isFlexible,
+          duration_minutes: Number(duration),
+        }),
+      });
 
-    setTasks([...tasks, newTask]);
-    // Reset form fields
-    setNewTaskTitle("");
-    setIsFlexible(true);
-    setDuration("30");
+      if (!response.ok) {
+        throw new Error("Failed to add task");
+      }
+
+      const addedTask = await response.json();
+      setTasks([...tasks, addedTask]); // Add new task to the local state
+
+      // Reset form
+      setNewTaskTitle("");
+      setIsFlexible(true);
+      setDuration(30);
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
-  // Toggles the 'done' status of a task
+  // Note: This is a local-only update. To persist this change,
+  // you would need a new API endpoint (e.g., PUT /api/tasks/:id)
   const handleToggleDone = (taskId: number) => {
     setTasks(
       tasks.map((task) =>
@@ -130,9 +157,23 @@ export default function Home() {
     );
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
+  // --- Render Logic ---
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
-      {/* --- Header --- */}
       <header className="border-b border-gray-700/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -140,8 +181,14 @@ export default function Home() {
               <PlazenLogo />
               <span className="text-xl font-semibold">Plazen</span>
             </div>
-            <div className="flex items-center">
-              <button className="rounded-full p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-400 hidden sm:block">
+                {user?.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="rounded-full p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+              >
                 <UserIcon />
               </button>
             </div>
@@ -149,10 +196,13 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- Main Content --- */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-md p-4 mb-6">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* --- Left Column: Add Task Form --- */}
           <div className="lg:col-span-1">
             <div className="bg-gray-800/80 rounded-lg shadow-lg p-6">
               <h2 className="text-lg font-medium mb-4">Add a New Task</h2>
@@ -192,10 +242,10 @@ export default function Home() {
                       : "Specific Time"}
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     id="duration"
                     value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
+                    onChange={(e) => setDuration(parseInt(e.target.value, 10))}
                     className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     placeholder={isFlexible ? "e.g., 45" : "e.g., 14:30"}
                   />
@@ -210,59 +260,67 @@ export default function Home() {
             </div>
           </div>
 
-          {/* --- Right Column: Today's Schedule --- */}
           <div className="lg:col-span-2">
             <div className="bg-gray-800/80 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-medium mb-4">
-                Today&apos;s Schedule
-              </h2>
+              <h2 className="text-lg font-medium mb-4">Today's Schedule</h2>
               <ul className="space-y-3">
-                {tasks.map((task) => (
-                  <li
-                    key={task.id}
-                    onClick={() => handleToggleDone(task.id)}
-                    className={`flex items-center justify-between p-4 rounded-md cursor-pointer transition-all duration-200 ${
-                      task.done
-                        ? "bg-gray-700/50 text-gray-500"
-                        : "bg-gray-700 hover:bg-gray-600/80"
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <div
-                        className={`w-2.5 h-2.5 rounded-full mr-4 ${
-                          task.isFlexible ? "bg-green-400" : "bg-red-400"
-                        }`}
-                      ></div>
-                      <div>
-                        <p
-                          className={`font-medium ${
-                            task.done ? "line-through" : ""
+                {tasks.length > 0 ? (
+                  tasks.map((task) => (
+                    <li
+                      key={task.id}
+                      onClick={() => handleToggleDone(task.id)}
+                      className={`flex items-center justify-between p-4 rounded-md cursor-pointer transition-all duration-200 ${
+                        task.done
+                          ? "bg-gray-700/50 text-gray-500"
+                          : "bg-gray-700 hover:bg-gray-600/80"
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <div
+                          className={`w-2.5 h-2.5 rounded-full mr-4 flex-shrink-0 ${
+                            task.is_flexible ? "bg-green-400" : "bg-red-400"
                           }`}
-                        >
-                          {task.title}
-                        </p>
-                        <p className="text-sm text-gray-400">{task.time}</p>
+                        ></div>
+                        <div>
+                          <p
+                            className={`font-medium ${
+                              task.done ? "line-through" : ""
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {task.scheduled_time
+                              ? new Date(
+                                  task.scheduled_time
+                                ).toLocaleTimeString()
+                              : `${task.duration_minutes} min`}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    {/* Checkmark appears when done */}
-                    {task.done && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-6 w-6 text-green-400"
-                      >
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                    )}
-                  </li>
-                ))}
+                      {task.done && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-6 w-6 text-green-400"
+                        >
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </li>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-center py-4">
+                    No tasks scheduled yet. Add one to get started!
+                  </p>
+                )}
               </ul>
             </div>
           </div>
