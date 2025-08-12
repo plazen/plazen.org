@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import Timetable from "./components/Timetable";
 
 // --- Reusable Components & Icons ---
 
@@ -174,38 +175,11 @@ export default function App() {
     }
   };
 
-  const handleToggleDone = async (taskId: string, currentStatus: boolean) => {
-    try {
-      const response = await fetch("/api/tasks", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: taskId, is_completed: !currentStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update task status");
-      }
-
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, is_completed: !currentStatus } : task
-        )
-      );
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-    }
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
-  // --- Render Logic ---
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
@@ -314,77 +288,7 @@ export default function App() {
           </div>
 
           <div className="lg:col-span-2">
-            <div className="bg-gray-800/80 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-medium mb-4">
-                Today&apos;s Schedule
-              </h2>
-              <ul className="space-y-3">
-                {tasks.length > 0 ? (
-                  tasks.map((task) => (
-                    <li
-                      key={task.id}
-                      onClick={() =>
-                        handleToggleDone(task.id, task.is_completed)
-                      }
-                      className={`flex items-center justify-between p-4 rounded-md cursor-pointer transition-all duration-200 ${
-                        task.is_completed
-                          ? "bg-gray-700/50 text-gray-500"
-                          : "bg-gray-700 hover:bg-gray-600/80"
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <div
-                          className={`w-2.5 h-2.5 rounded-full mr-4 flex-shrink-0 ${
-                            task.is_time_sensitive
-                              ? "bg-red-400"
-                              : "bg-green-400"
-                          }`}
-                        ></div>
-                        <div>
-                          <p
-                            className={`font-medium ${
-                              task.is_completed ? "line-through" : ""
-                            }`}
-                          >
-                            {task.title}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            {task.scheduled_time
-                              ? new Date(
-                                  task.scheduled_time
-                                ).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : `${task.duration_minutes} min`}
-                          </p>
-                        </div>
-                      </div>
-                      {task.is_completed && (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-6 w-6 text-green-400"
-                        >
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      )}
-                    </li>
-                  ))
-                ) : (
-                  <p className="text-gray-400 text-center py-4">
-                    No tasks scheduled yet. Add one to get started!
-                  </p>
-                )}
-              </ul>
-            </div>
+            <Timetable tasks={tasks} />
           </div>
         </div>
       </main>

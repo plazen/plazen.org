@@ -65,13 +65,87 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
+    let scheduledTime = body.scheduled_time
+      ? new Date(body.scheduled_time)
+      : null;
+
+    if (!body.is_time_sensitive) {
+      const existingTasks = await prisma.tasks.findMany({
+        where: {
+          user_id: session.user.id,
+          scheduled_time: { not: null },
+        },
+        orderBy: { scheduled_time: "asc" },
+      });
+
+      const today = new Date();
+      const timetableStart = new Date(new Date(today).setHours(8, 0, 0, 0));
+      const timetableEnd = new Date(new Date(today).setHours(18, 0, 0, 0));
+
+      const occupiedSlots = existingTasks.map((task) => {
+        const start = new Date(task.scheduled_time!);
+        const end = new Date(
+          start.getTime() + (task.duration_minutes || 60) * 60000
+        );
+        return { start, end };
+      });
+
+      const freeSlots: { start: Date; end: Date }[] = [];
+      let lastEventEnd = timetableStart;
+
+      occupiedSlots.forEach((slot) => {
+        if (slot.start > lastEventEnd) {
+          freeSlots.push({ start: lastEventEnd, end: slot.start });
+        }
+        lastEventEnd = slot.end > lastEventEnd ? slot.end : lastEventEnd;
+      });
+
+      if (lastEventEnd < timetableEnd) {
+        freeSlots.push({ start: lastEventEnd, end: timetableEnd });
+      }
+
+      const taskDuration = body.duration_minutes || 60;
+      const availableSlots = freeSlots.filter(
+        (slot) =>
+          (slot.end.getTime() - slot.start.getTime()) / 60000 >= taskDuration
+      );
+
+      if (availableSlots.length > 0) {
+        const randomSlot =
+          availableSlots[Math.floor(Math.random() * availableSlots.length)];
+        const maxStartTime = randomSlot.end.getTime() - taskDuration * 60000;
+
+        if (maxStartTime > randomSlot.start.getTime()) {
+          const randomStartTimeMillis =
+            randomSlot.start.getTime() +
+            Math.random() * (maxStartTime - randomSlot.start.getTime());
+
+          const randomDate = new Date(randomStartTimeMillis);
+          const minutes = randomDate.getMinutes();
+          const roundedMinutes = Math.round(minutes / 15) * 15;
+
+          randomDate.setSeconds(0, 0);
+          randomDate.setMinutes(roundedMinutes);
+
+          if (roundedMinutes >= 60) {
+            randomDate.setHours(randomDate.getHours() + 1, 0);
+          }
+
+          const endTime = new Date(randomDate.getTime() + taskDuration * 60000);
+          if (endTime <= randomSlot.end) {
+            scheduledTime = randomDate;
+          }
+        }
+      }
+    }
+
     const newTask = await prisma.tasks.create({
       data: {
         user_id: session.user.id,
         title: body.title,
-        duration_minutes: body.duration_minutes,
+        duration_minutes: body.duration_minutes || 60,
         is_time_sensitive: body.is_time_sensitive,
-        scheduled_time: body.scheduled_time,
+        scheduled_time: scheduledTime,
         is_completed: false,
       },
     });
