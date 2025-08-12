@@ -1,12 +1,7 @@
 # Plazen
 
 <p align="center">
-  <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M3 12C5.66667 8 7.33333 8 10 12C12.6667 16 14.3333 16 17 12C19.6667 8 21 8 21 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="6" cy="10" r="1.5" fill="currentColor"/>
-    <circle cx="12" cy="14" r="1.5" fill="currentColor"/>
-    <circle cx="18" cy="10" r="1.5" fill="currentColor"/>
-  </svg>
+  <img src = "src/app/favicon.ico" height=100 width=100>
 </p>
 
 <h2 align="center">Let your schedule build itself.</h2>
