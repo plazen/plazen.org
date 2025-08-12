@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContextMenu from "./ContextMenu";
+import TimeNeedle from "./TimeNeedle";
 
 type Task = {
   id: string;
@@ -44,7 +45,7 @@ const Timetable: React.FC<TimetableProps> = ({
   };
 
   const timetableStartHour = 8;
-  const timetableEndHour = 18;
+  const timetableEndHour = 24;
   const totalHours = timetableEndHour - timetableStartHour;
 
   const formatTime = (date: Date): string => {
@@ -72,35 +73,42 @@ const Timetable: React.FC<TimetableProps> = ({
     : [];
 
   return (
-    <div className="bg-gray-800/80 rounded-lg shadow-lg p-6 h-[500px] lg:h-auto lg:min-h-[600px] overflow-y-auto">
-      <h2 className="text-lg font-medium mb-4">Today&apos;s Schedule</h2>
-      <div className="relative h-[800px]">
-        <div className="absolute top-0 bottom-0 -ml-16 w-16 text-right pr-4 text-gray-400">
+    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl p-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(#ffffff1a_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+      <h2 className="text-xl font-bold mb-6 text-white tracking-wider">
+        Today&apos;s Schedule
+      </h2>
+      <div className="relative h-[800px] overflow-y-auto pr-2">
+        <div className="absolute top-0 bottom-0 w-16 text-right pr-4 text-gray-400">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
               className="absolute w-full"
               style={{ top: `${(i / totalHours) * 100}%` }}
             >
-              <span className="text-xs -mt-2 inline-block">
+              <span className="text-xs font-mono -mt-2 inline-block">
                 {String(timetableStartHour + i).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
 
-        <div className="absolute top-0 bottom-0 left-0 right-0">
+        <div className="absolute top-0 bottom-0 left-16 right-0">
           {Array.from({ length: totalHours }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full border-t border-dashed border-gray-700"
+              className="absolute w-full border-t border-dashed border-white/10"
               style={{ top: `${((i + 1) / totalHours) * 100}%` }}
             />
           ))}
         </div>
 
-        <div className="relative h-full">
-          {eventsToDisplay.map((event, index) => {
+        <div className="relative h-full ml-16">
+          <TimeNeedle
+            startHour={timetableStartHour}
+            endHour={timetableEndHour}
+          />
+          {eventsToDisplay.map((event) => {
             const startHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
             const duration = (event.duration_minutes || 60) / 60;
@@ -111,6 +119,19 @@ const Timetable: React.FC<TimetableProps> = ({
             );
             const isCompleted = event.is_completed;
 
+            const baseColorRGB = event.is_time_sensitive
+              ? "59, 130, 246"
+              : "34, 197, 94";
+            const gradientBg = `
+                repeating-linear-gradient(
+                  0deg,
+                  rgba(${baseColorRGB}, 0.1),
+                  rgba(${baseColorRGB}, 0.1) 1px,
+                  transparent 1px,
+                  transparent 20px
+                ),
+                linear-gradient(45deg, rgba(${baseColorRGB}, 0.3), rgba(${baseColorRGB}, 0.1))`;
+
             return (
               <motion.div
                 key={event.id}
@@ -119,49 +140,52 @@ const Timetable: React.FC<TimetableProps> = ({
                 onContextMenu={(e) => handleContextMenu(e, event)}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{
-                  opacity: isCompleted ? 0.6 : 1,
+                  opacity: isCompleted ? 0.5 : 1,
                   y: 0,
                   x: isCompleted ? "100%" : "0%",
                   width: isCompleted ? "50%" : "100%",
                 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="absolute p-2 text-white overflow-hidden cursor-pointer rounded-lg"
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="absolute p-2 flex flex-col justify-between text-white cursor-pointer rounded-lg backdrop-blur-sm"
                 style={{
                   top: `${top}%`,
+                  minHeight: "40px",
                   height: `${height}%`,
                   left: "0",
                   right: "0",
-                  backgroundColor: event.is_time_sensitive
-                    ? "rgba(37, 99, 235, 0.5)"
-                    : "rgba(22, 163, 74, 0.5)",
-                  borderLeft: `4px solid ${
-                    event.is_time_sensitive ? "#3B82F6" : "#16A34A"
-                  }`,
+                  borderLeft: `3px solid rgb(${baseColorRGB})`,
+                  background: gradientBg,
                 }}
               >
                 <p
-                  className={`font-bold text-sm truncate ${
+                  className={`font-semibold text-sm truncate ${
                     isCompleted ? "line-through" : ""
                   }`}
                 >
-                  {event.title}
+                  {event.title} |{" "}
+                  <span className="text-xs opacity-70 font-mono mt-auto">
+                    {" "}
+                    {formatTime(event.startTime)} – {formatTime(endTime)}
+                  </span>
                 </p>
-                <p className="text-xs opacity-80">
-                  {formatTime(event.startTime)} - {formatTime(endTime)}
-                </p>
+
                 {isCompleted && (
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-1/2 right-2.5 -translate-y-1/2"
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
+                      width="18"
+                      height="18"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="absolute top-1/2 right-2 -translate-y-1/2 text-white"
+                      className="text-white"
                     >
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
