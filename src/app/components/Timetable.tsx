@@ -13,9 +13,15 @@ type Task = {
   scheduled_time: string | null;
   is_completed: boolean;
 };
+type Settings = {
+  timetable_start: number;
+  timetable_end: number;
+  show_time_needle: boolean;
+};
 
 type TimetableProps = {
   tasks: Task[];
+  settings: Settings;
   onToggleDone: (taskId: string, currentStatus: boolean) => void;
   onDeleteTask: (taskId: string) => void;
   onReschedule: (task: Task) => void;
@@ -23,16 +29,13 @@ type TimetableProps = {
 
 const Timetable: React.FC<TimetableProps> = ({
   tasks,
+  settings,
   onToggleDone,
   onDeleteTask,
   onReschedule,
 }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
-    {
-      x: 0,
-      y: 0,
-      task: null,
-    }
+    { x: 0, y: 0, task: null }
   );
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
@@ -40,29 +43,23 @@ const Timetable: React.FC<TimetableProps> = ({
     setMenu({ x: e.pageX, y: e.pageY, task });
   };
 
-  const closeMenu = () => {
-    setMenu({ ...menu, task: null });
-  };
+  const closeMenu = () => setMenu({ ...menu, task: null });
 
-  const timetableStartHour = 8;
-  const timetableEndHour = 24;
-  const totalHours = timetableEndHour - timetableStartHour;
+  const { timetable_start: startHour, timetable_end: endHour } = settings;
+  const totalHours =
+    endHour > startHour ? endHour - startHour : 24 - startHour + endHour;
 
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], {
+  const formatTime = (date: Date): string =>
+    date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     });
-  };
 
   const eventsToDisplay = useMemo(() => {
     return tasks
       .filter((t) => t.scheduled_time)
-      .map((t) => ({
-        ...t,
-        startTime: new Date(t.scheduled_time!),
-      }));
+      .map((t) => ({ ...t, startTime: new Date(t.scheduled_time!) }));
   }, [tasks]);
 
   const menuOptions = menu.task
@@ -87,12 +84,11 @@ const Timetable: React.FC<TimetableProps> = ({
               style={{ top: `${(i / totalHours) * 100}%` }}
             >
               <span className="text-xs font-mono -mt-2 inline-block">
-                {String(timetableStartHour + i).padStart(2, "0")}:00
+                {String((startHour + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
-
         <div className="absolute top-0 bottom-0 left-16 right-0">
           {Array.from({ length: totalHours }).map((_, i) => (
             <div
@@ -102,35 +98,26 @@ const Timetable: React.FC<TimetableProps> = ({
             />
           ))}
         </div>
-
         <div className="relative h-full ml-16">
-          <TimeNeedle
-            startHour={timetableStartHour}
-            endHour={timetableEndHour}
-          />
+          {settings.show_time_needle && (
+            <TimeNeedle startHour={startHour} endHour={endHour} />
+          )}
           {eventsToDisplay.map((event) => {
-            const startHour =
+            const currentStartHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
             const duration = (event.duration_minutes || 60) / 60;
-            const top = ((startHour - timetableStartHour) / totalHours) * 100;
+            const top = ((currentStartHour - startHour) / totalHours) * 100;
             const height = (duration / totalHours) * 100;
             const endTime = new Date(
               event.startTime.getTime() + (event.duration_minutes || 60) * 60000
             );
             const isCompleted = event.is_completed;
-
             const baseColorRGB = event.is_time_sensitive
               ? "59, 130, 246"
               : "34, 197, 94";
-            const gradientBg = `
-                repeating-linear-gradient(
-                  0deg,
-                  rgba(${baseColorRGB}, 0.1),
-                  rgba(${baseColorRGB}, 0.1) 1px,
-                  transparent 1px,
-                  transparent 20px
-                ),
-                linear-gradient(45deg, rgba(${baseColorRGB}, 0.3), rgba(${baseColorRGB}, 0.1))`;
+            const gradientBg = `repeating-linear-gradient(0deg, rgba(${baseColorRGB}, 0.1), rgba(${baseColorRGB}, 0.1) 1px, transparent 1px, transparent 20px), linear-gradient(45deg, rgba(${baseColorRGB}, 0.3), rgba(${baseColorRGB}, 0.1))`;
+
+            if (top < 0 || top > 100) return null;
 
             return (
               <motion.div
@@ -162,13 +149,11 @@ const Timetable: React.FC<TimetableProps> = ({
                     isCompleted ? "line-through" : ""
                   }`}
                 >
-                  {event.title} |{" "}
-                  <span className="text-xs opacity-70 font-mono mt-auto">
-                    {" "}
-                    {formatTime(event.startTime)} – {formatTime(endTime)}
-                  </span>
+                  {event.title}
                 </p>
-
+                <p className="text-xs opacity-70 font-mono mt-auto">
+                  {formatTime(event.startTime)} – {formatTime(endTime)}
+                </p>
                 {isCompleted && (
                   <motion.div
                     initial={{ scale: 0 }}
@@ -196,7 +181,6 @@ const Timetable: React.FC<TimetableProps> = ({
           })}
         </div>
       </div>
-
       <AnimatePresence>
         {menu.task && (
           <ContextMenu

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import Timetable from "./components/Timetable";
 import RescheduleModal from "./components/RescheduleModal";
+import SettingsModal from "./components/SettingsModal";
 
 const PlazenLogo = () => (
   <svg
@@ -28,7 +29,6 @@ const PlazenLogo = () => (
     <circle cx="18" cy="10" r="1.5" fill="currentColor" />
   </svg>
 );
-
 const UserIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -46,12 +46,24 @@ const UserIcon = () => (
     <circle cx="12" cy="7" r="4"></circle>
   </svg>
 );
-
-type ToggleSwitchProps = {
-  isToggled: boolean;
-  onToggle: () => void;
-};
-
+const SettingsIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-6 w-6 text-gray-400"
+  >
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+);
+type ToggleSwitchProps = { isToggled: boolean; onToggle: () => void };
 const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   <button
     onClick={onToggle}
@@ -77,8 +89,14 @@ export default function App() {
     scheduled_time: string | null;
     is_completed: boolean;
   };
+  type Settings = {
+    timetable_start: number;
+    timetable_end: number;
+    show_time_needle: boolean;
+  };
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,7 +104,9 @@ export default function App() {
   const [isTimeSensitive, setIsTimeSensitive] = useState(false);
   const [duration, setDuration] = useState(30);
   const [scheduledTime, setScheduledTime] = useState("");
+
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const router = useRouter();
   const supabase = createBrowserClient(
@@ -94,45 +114,45 @@ export default function App() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const fetchTasks = useCallback(async () => {
+  const fetchInitialData = useCallback(async () => {
     try {
-      const response = await fetch("/api/tasks");
-      if (!response.ok) {
-        throw new Error("Failed to fetch tasks");
+      const [tasksResponse, settingsResponse] = await Promise.all([
+        fetch("/api/tasks"),
+        fetch("/api/settings"),
+      ]);
+      if (!tasksResponse.ok || !settingsResponse.ok) {
+        throw new Error("Failed to fetch initial data");
       }
-      const fetchedTasks = await response.json();
+      const fetchedTasks = await tasksResponse.json();
+      const fetchedSettings = await settingsResponse.json();
       setTasks(fetchedTasks);
+      setSettings(fetchedSettings);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     }
   }, []);
 
   useEffect(() => {
-    const checkUserAndFetchTasks = async () => {
+    const checkUserAndFetch = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
       if (!session) {
         router.push("/login");
         return;
       }
       setUser(session.user);
-      await fetchTasks();
+      await fetchInitialData();
       setLoading(false);
     };
-
-    checkUserAndFetchTasks();
-  }, [router, supabase.auth, fetchTasks]);
+    checkUserAndFetch();
+  }, [router, supabase.auth, fetchInitialData]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -146,24 +166,17 @@ export default function App() {
             : null,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to add task");
-      }
-
+      if (!response.ok) throw new Error("Failed to add task");
       const addedTask = await response.json();
-      setTasks((prevTasks) => [...prevTasks, addedTask]);
-
+      setTasks((prev) => [...prev, addedTask]);
       setNewTaskTitle("");
       setIsTimeSensitive(false);
       setDuration(30);
       setScheduledTime("");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     }
   };
 
@@ -174,54 +187,34 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: taskId, is_completed: !currentStatus }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to update task status");
-      }
-
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, is_completed: !currentStatus } : task
-        )
+      if (!response.ok) throw new Error("Failed to update task status");
+      const updatedTask = await response.json();
+      setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
       );
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
     setTasks(tasks.filter((task) => task.id !== taskId));
-
     try {
       const response = await fetch("/api/tasks", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: taskId }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete task");
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred while deleting");
-      }
+      if (!response.ok) throw new Error("Failed to delete task");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     }
   };
 
-  const handleOpenRescheduleModal = (task: Task) => {
-    setReschedulingTask(task);
-  };
-
-  const handleCloseRescheduleModal = () => {
-    setReschedulingTask(null);
-  };
+  const handleOpenRescheduleModal = (task: Task) => setReschedulingTask(task);
+  const handleCloseRescheduleModal = () => setReschedulingTask(null);
 
   const handleUpdateTaskTime = async (taskId: string, newTime: string) => {
     try {
@@ -230,20 +223,32 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: taskId, scheduled_time: newTime }),
       });
-
-      if (!response.ok) {
-        throw new Error("Failed to reschedule task");
-      }
-
+      if (!response.ok) throw new Error("Failed to reschedule task");
       const updatedTask = await response.json();
       setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
       handleCloseRescheduleModal();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    }
+  };
+
+  const handleSaveSettings = async (newSettings: Settings) => {
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newSettings),
+      });
+      if (!response.ok) throw new Error("Failed to save settings");
+      const updatedSettings = await response.json();
+      setSettings(updatedSettings);
+      setIsSettingsOpen(false);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
     }
   };
 
@@ -252,7 +257,7 @@ export default function App() {
     router.push("/login");
   };
 
-  if (loading) {
+  if (loading || !settings) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
         Loading...
@@ -269,13 +274,16 @@ export default function App() {
               <PlazenLogo />
               <span className="text-xl font-semibold">Plazen</span>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-400 hidden sm:block">
-                {user?.email}
-              </span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="rounded-full p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+              >
+                <SettingsIcon />
+              </button>
               <button
                 onClick={handleLogout}
-                className="rounded-full p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                className="rounded-full p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <UserIcon />
               </button>
@@ -362,6 +370,7 @@ export default function App() {
           <div className="lg:col-span-2">
             <Timetable
               tasks={tasks}
+              settings={settings}
               onToggleDone={handleToggleDone}
               onDeleteTask={handleDeleteTask}
               onReschedule={handleOpenRescheduleModal}
@@ -375,6 +384,13 @@ export default function App() {
           task={reschedulingTask}
           onClose={handleCloseRescheduleModal}
           onSave={handleUpdateTaskTime}
+        />
+      )}
+      {isSettingsOpen && (
+        <SettingsModal
+          currentSettings={settings}
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={handleSaveSettings}
         />
       )}
     </div>
