@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { motion } from "framer-motion";
+import React, { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import ContextMenu from "./ContextMenu";
 
 type Task = {
   id: string;
@@ -15,9 +16,31 @@ type Task = {
 type TimetableProps = {
   tasks: Task[];
   onToggleDone: (taskId: string, currentStatus: boolean) => void;
+  onDeleteTask: (taskId: string) => void;
 };
 
-const Timetable: React.FC<TimetableProps> = ({ tasks, onToggleDone }) => {
+const Timetable: React.FC<TimetableProps> = ({
+  tasks,
+  onToggleDone,
+  onDeleteTask,
+}) => {
+  const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
+    {
+      x: 0,
+      y: 0,
+      task: null,
+    }
+  );
+
+  const handleContextMenu = (e: React.MouseEvent, task: Task) => {
+    e.preventDefault();
+    setMenu({ x: e.pageX, y: e.pageY, task });
+  };
+
+  const closeMenu = () => {
+    setMenu({ ...menu, task: null });
+  };
+
   const timetableStartHour = 8;
   const timetableEndHour = 18;
   const totalHours = timetableEndHour - timetableStartHour;
@@ -38,6 +61,16 @@ const Timetable: React.FC<TimetableProps> = ({ tasks, onToggleDone }) => {
         startTime: new Date(t.scheduled_time!),
       }));
   }, [tasks]);
+
+  const menuOptions = menu.task
+    ? [
+        { label: "Delete", onClick: () => onDeleteTask(menu.task!.id) },
+        {
+          label: "Reschedule",
+          onClick: () => alert(`Rescheduling "${menu.task!.title}"...`),
+        },
+      ]
+    : [];
 
   return (
     <div className="bg-gray-800/80 rounded-lg shadow-lg p-6 h-[500px] lg:h-auto lg:min-h-[600px] overflow-y-auto">
@@ -77,14 +110,14 @@ const Timetable: React.FC<TimetableProps> = ({ tasks, onToggleDone }) => {
             const endTime = new Date(
               event.startTime.getTime() + (event.duration_minutes || 60) * 60000
             );
-
             const isCompleted = event.is_completed;
 
             return (
               <motion.div
                 key={event.id}
-                layout // Animate layout changes
+                layout
                 onClick={() => onToggleDone(event.id, isCompleted)}
+                onContextMenu={(e) => handleContextMenu(e, event)}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{
                   opacity: isCompleted ? 0.6 : 1,
@@ -140,6 +173,17 @@ const Timetable: React.FC<TimetableProps> = ({ tasks, onToggleDone }) => {
           })}
         </div>
       </div>
+
+      <AnimatePresence>
+        {menu.task && (
+          <ContextMenu
+            x={menu.x}
+            y={menu.y}
+            options={menuOptions}
+            onClose={closeMenu}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

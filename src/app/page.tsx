@@ -205,6 +205,27 @@ export default function App() {
     await supabase.auth.signOut();
     router.push("/login");
   };
+  const handleDeleteTask = async (taskId: string) => {
+    setTasks(tasks.filter((task) => task.id !== taskId));
+
+    try {
+      const response = await fetch("/api/tasks", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: taskId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete task");
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred while deleting");
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -314,7 +335,11 @@ export default function App() {
           </div>
 
           <div className="lg:col-span-2">
-            <Timetable tasks={tasks} onToggleDone={handleToggleDone} />
+            <Timetable
+              tasks={tasks}
+              onToggleDone={handleToggleDone}
+              onDeleteTask={handleDeleteTask}
+            />
           </div>
         </div>
       </main>
