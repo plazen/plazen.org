@@ -47,7 +47,12 @@ const UserIcon = () => (
   </svg>
 );
 
-const ToggleSwitch = ({ isToggled, onToggle }) => (
+type ToggleSwitchProps = {
+  isToggled: boolean;
+  onToggle: () => void;
+};
+
+const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   <button
     onClick={onToggle}
     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
@@ -67,7 +72,16 @@ const ToggleSwitch = ({ isToggled, onToggle }) => (
 export default function App() {
   // --- State Management ---
   const [user, setUser] = useState<User | null>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
+  type Task = {
+    id: string;
+    title: string;
+    is_time_sensitive: boolean;
+    duration_minutes: number | null;
+    scheduled_time: string | null;
+    is_completed: boolean;
+  };
+
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,8 +106,12 @@ export default function App() {
       }
       const fetchedTasks = await response.json();
       setTasks(fetchedTasks);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     }
   }, []);
 
@@ -147,8 +165,12 @@ export default function App() {
       setIsTimeSensitive(false);
       setDuration(30);
       setScheduledTime("");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     }
   };
 
@@ -169,8 +191,12 @@ export default function App() {
           task.id === taskId ? { ...task, is_completed: !currentStatus } : task
         )
       );
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     }
   };
 
@@ -289,7 +315,9 @@ export default function App() {
 
           <div className="lg:col-span-2">
             <div className="bg-gray-800/80 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-medium mb-4">Today's Schedule</h2>
+              <h2 className="text-lg font-medium mb-4">
+                Today&apos;s Schedule
+              </h2>
               <ul className="space-y-3">
                 {tasks.length > 0 ? (
                   tasks.map((task) => (
