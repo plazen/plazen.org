@@ -23,6 +23,7 @@ type TimetableProps = {
   tasks: Task[];
   settings: Settings;
   date: Date;
+  tasksLoading: boolean; // Add this prop
   onToggleDone: (taskId: string, currentStatus: boolean) => void;
   onDeleteTask: (taskId: string) => void;
   onReschedule: (task: Task) => void;
@@ -32,6 +33,7 @@ const Timetable: React.FC<TimetableProps> = ({
   tasks,
   settings,
   date,
+  tasksLoading, // Add this prop
   onToggleDone,
   onDeleteTask,
   onReschedule,
@@ -85,6 +87,11 @@ const Timetable: React.FC<TimetableProps> = ({
 
   return (
     <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
+      {tasksLoading && (
+        <div className="absolute inset-0 bg-card bg-opacity-50 flex items-center justify-center z-30">
+          <p className="text-foreground">Loading...</p>
+        </div>
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
       <h2 className="text-xl font-bold mb-6 text-foreground tracking-wider">
         {formattedDate}

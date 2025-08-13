@@ -103,7 +103,6 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [tasksLoading, setTasksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -413,6 +412,7 @@ export default function App() {
               tasks={tasks}
               settings={settings}
               date={date || new Date()}
+              tasksLoading={tasksLoading}
               onToggleDone={handleToggleDone}
               onDeleteTask={handleDeleteTask}
               onReschedule={handleOpenRescheduleModal}
