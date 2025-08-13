@@ -90,21 +90,21 @@ const Timetable: React.FC<TimetableProps> = ({
         {formattedDate}
       </h2>
       <div className="relative h-[800px] overflow-y-auto pr-2">
-        <div className="absolute top-0 bottom-0 w-16 text-right pr-4 text-muted-foreground">
+        <div className="absolute top-0 bottom-0 w-16 text-right text-muted-foreground">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
               className="absolute w-full"
               style={{ top: `${(i / totalHours) * 100}%` }}
             >
-              <span className="text-xs font-mono -mt-2 inline-block">
+              <span className="text-xs font-mono mt-6.5 inline-block">
                 {String((startHour + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
         <div className="absolute top-0 bottom-0 left-16 right-0">
-          {Array.from({ length: totalHours }).map((_, i) => (
+          {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
               className="absolute w-full border-t border-dashed border-border"
