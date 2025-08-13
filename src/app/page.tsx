@@ -32,6 +32,7 @@ const PlazenLogo = () => (
     <circle cx="18" cy="10" r="1.5" fill="currentColor" />
   </svg>
 );
+
 const UserIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -83,9 +84,7 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
 );
 
 export default function App() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
-
   const [date, setDate] = useState<Date | undefined>(new Date());
   type Task = {
     id: string;
@@ -104,6 +103,8 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [tasksLoading, setTasksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -120,29 +121,28 @@ export default function App() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const fetchInitialData = useCallback(async (selectedDate: Date) => {
+  const fetchTasks = useCallback(async (selectedDate: Date) => {
+    setTasksLoading(true);
     try {
       const dateString = selectedDate.toISOString().split("T")[0];
-      const [tasksResponse, settingsResponse] = await Promise.all([
-        fetch(`/api/tasks?date=${dateString}`),
-        fetch("/api/settings"),
-      ]);
-      if (!tasksResponse.ok || !settingsResponse.ok) {
-        throw new Error("Failed to fetch initial data");
+      const response = await fetch(`/api/tasks?date=${dateString}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch tasks");
       }
-      const fetchedTasks = await tasksResponse.json();
-      const fetchedSettings = await settingsResponse.json();
+      const fetchedTasks = await response.json();
       setTasks(fetchedTasks);
-      setSettings(fetchedSettings);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
+    } finally {
+      setTasksLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const checkUserAndFetch = async () => {
+      setLoading(true);
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -151,17 +151,36 @@ export default function App() {
         return;
       }
       setUser(session.user);
-      if (date) {
-        await fetchInitialData(date);
+
+      try {
+        const settingsResponse = await fetch("/api/settings");
+        if (!settingsResponse.ok) {
+          throw new Error("Failed to fetch settings");
+        }
+        const fetchedSettings = await settingsResponse.json();
+        setSettings(fetchedSettings);
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
       }
       setLoading(false);
     };
     checkUserAndFetch();
-  }, [router, supabase.auth, fetchInitialData, date]);
+  }, [router, supabase.auth]);
+
+  useEffect(() => {
+    if (date && user) {
+      fetchTasks(date);
+    }
+  }, [date, fetchTasks, user]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
+    const isForToday = date
+      ? new Date().toDateString() === date.toDateString()
+      : true;
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -174,6 +193,10 @@ export default function App() {
             ? new Date(scheduledTime).toISOString()
             : null,
           user_current_time: new Date().toISOString(),
+          for_date: date
+            ? date.toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+          is_for_today: isForToday,
         }),
       });
       if (!response.ok) throw new Error("Failed to add task");
