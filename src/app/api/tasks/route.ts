@@ -70,6 +70,13 @@ export async function POST(request: Request) {
       : null;
 
     if (!body.is_time_sensitive) {
+      const userSettings = await prisma.userSettings.findUnique({
+        where: { user_id: session.user.id },
+      });
+
+      const timetableStartHour = userSettings?.timetable_start ?? 8;
+      const timetableEndHour = userSettings?.timetable_end ?? 18;
+
       const existingTasks = await prisma.tasks.findMany({
         where: {
           user_id: session.user.id,
@@ -79,8 +86,12 @@ export async function POST(request: Request) {
       });
 
       const today = new Date();
-      const timetableStart = new Date(new Date(today).setHours(8, 0, 0, 0));
-      const timetableEnd = new Date(new Date(today).setHours(18, 0, 0, 0));
+      const timetableStart = new Date(
+        new Date(today).setHours(timetableStartHour, 0, 0, 0)
+      );
+      const timetableEnd = new Date(
+        new Date(today).setHours(timetableEndHour, 0, 0, 0)
+      );
 
       const occupiedSlots = existingTasks.map((task) => {
         const start = new Date(task.scheduled_time!);
@@ -90,14 +101,32 @@ export async function POST(request: Request) {
         return { start, end };
       });
 
+      // Merge overlapping slots
+      const mergedSlots: { start: Date; end: Date }[] = [];
+      if (occupiedSlots.length > 0) {
+        let currentMerge = { ...occupiedSlots[0] };
+        for (let i = 1; i < occupiedSlots.length; i++) {
+          const nextSlot = occupiedSlots[i];
+          if (nextSlot.start <= currentMerge.end) {
+            currentMerge.end = new Date(
+              Math.max(currentMerge.end.getTime(), nextSlot.end.getTime())
+            );
+          } else {
+            mergedSlots.push(currentMerge);
+            currentMerge = { ...nextSlot };
+          }
+        }
+        mergedSlots.push(currentMerge);
+      }
+
       const freeSlots: { start: Date; end: Date }[] = [];
       let lastEventEnd = timetableStart;
 
-      occupiedSlots.forEach((slot) => {
+      mergedSlots.forEach((slot) => {
         if (slot.start > lastEventEnd) {
           freeSlots.push({ start: lastEventEnd, end: slot.start });
         }
-        lastEventEnd = slot.end > lastEventEnd ? slot.end : lastEventEnd;
+        lastEventEnd = slot.end;
       });
 
       if (lastEventEnd < timetableEnd) {
