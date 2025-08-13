@@ -85,13 +85,18 @@ export async function POST(request: Request) {
         orderBy: { scheduled_time: "asc" },
       });
 
-      const today = new Date();
-      const timetableStart = new Date(
-        new Date(today).setHours(timetableStartHour, 0, 0, 0)
-      );
-      const timetableEnd = new Date(
-        new Date(today).setHours(timetableEndHour, 0, 0, 0)
-      );
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      let timetableStart = new Date(today);
+      timetableStart.setHours(timetableStartHour, 0, 0, 0);
+
+      const timetableEnd = new Date(today);
+      timetableEnd.setHours(timetableEndHour, 0, 0, 0);
+
+      if (now > timetableStart) {
+        timetableStart = now;
+      }
 
       const occupiedSlots = existingTasks.map((task) => {
         const start = new Date(task.scheduled_time!);
@@ -101,32 +106,16 @@ export async function POST(request: Request) {
         return { start, end };
       });
 
-      // Merge overlapping slots
-      const mergedSlots: { start: Date; end: Date }[] = [];
-      if (occupiedSlots.length > 0) {
-        let currentMerge = { ...occupiedSlots[0] };
-        for (let i = 1; i < occupiedSlots.length; i++) {
-          const nextSlot = occupiedSlots[i];
-          if (nextSlot.start <= currentMerge.end) {
-            currentMerge.end = new Date(
-              Math.max(currentMerge.end.getTime(), nextSlot.end.getTime())
-            );
-          } else {
-            mergedSlots.push(currentMerge);
-            currentMerge = { ...nextSlot };
-          }
-        }
-        mergedSlots.push(currentMerge);
-      }
-
       const freeSlots: { start: Date; end: Date }[] = [];
       let lastEventEnd = timetableStart;
 
-      mergedSlots.forEach((slot) => {
+      occupiedSlots.forEach((slot) => {
         if (slot.start > lastEventEnd) {
           freeSlots.push({ start: lastEventEnd, end: slot.start });
         }
-        lastEventEnd = slot.end;
+        lastEventEnd = new Date(
+          Math.max(lastEventEnd.getTime(), slot.end.getTime())
+        );
       });
 
       if (lastEventEnd < timetableEnd) {

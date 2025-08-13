@@ -46,8 +46,13 @@ const Timetable: React.FC<TimetableProps> = ({
   const closeMenu = () => setMenu({ ...menu, task: null });
 
   const { timetable_start: startHour, timetable_end: endHour } = settings;
-  const totalHours =
-    endHour > startHour ? endHour - startHour : 24 - startHour + endHour;
+  const totalHours = useMemo(() => {
+    if (endHour > startHour) {
+      return endHour - startHour;
+    } else {
+      return 24 - startHour + endHour;
+    }
+  }, [startHour, endHour]);
 
   const formatTime = (date: Date): string =>
     date.toLocaleTimeString([], {
@@ -106,8 +111,15 @@ const Timetable: React.FC<TimetableProps> = ({
             const currentStartHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
             const duration = (event.duration_minutes || 60) / 60;
-            const top = ((currentStartHour - startHour) / totalHours) * 100;
+
+            let effectiveStartHour = currentStartHour;
+            if (endHour < startHour && currentStartHour < startHour) {
+              effectiveStartHour += 24;
+            }
+
+            const top = ((effectiveStartHour - startHour) / totalHours) * 100;
             const height = (duration / totalHours) * 100;
+
             const endTime = new Date(
               event.startTime.getTime() + (event.duration_minutes || 60) * 60000
             );
