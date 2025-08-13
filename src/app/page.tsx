@@ -83,6 +83,7 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
 );
 
 export default function App() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
 
   const [date, setDate] = useState<Date | undefined>(new Date());

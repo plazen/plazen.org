@@ -16,6 +16,7 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   captionLayout = "label",
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   buttonVariant = "ghost",
   formatters,
   components,
