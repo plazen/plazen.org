@@ -63,13 +63,13 @@ export default function LoginPage() {
   }, [supabase.auth, router]);
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
         <div className="flex justify-center mb-6">
           <PlazenLogo />
         </div>
 
-        <div className="bg-gray-800 rounded-lg shadow-lg p-8">
+        <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
           <Auth
             supabaseClient={supabase}
             appearance={{ theme: ThemeSupa }}

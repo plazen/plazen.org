@@ -4,6 +4,7 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import { Button } from "../components/ui/button";
 
 const PlazenLogo = () => (
   <svg
@@ -56,15 +57,15 @@ export default function AccountPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <header className="border-b border-gray-700/50">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div
@@ -78,17 +79,18 @@ export default function AccountPage() {
         </div>
       </header>
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-md mx-auto bg-gray-800 rounded-lg shadow-lg p-8 text-center">
-          <h2 className="text-2xl font-semibold text-white mb-4">
+        <div className="max-w-md mx-auto bg-card rounded-lg shadow-lg p-8 text-center border border-border">
+          <h2 className="text-2xl font-semibold text-foreground mb-4">
             Account Management
           </h2>
-          <p className="text-gray-400 mb-6">Email: {user.email}</p>
-          <button
+          <p className="text-muted-foreground mb-6">Email: {user.email}</p>
+          <Button
+            variant="destructive"
             onClick={handleLogout}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 focus:ring-offset-gray-800"
+            className="w-full"
           >
             Sign Out
-          </button>
+          </Button>
         </div>
       </main>
     </div>

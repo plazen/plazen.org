@@ -24,7 +24,7 @@ const TimeNeedle: React.FC<TimeNeedleProps> = ({ startHour, endHour }) => {
     const totalHours = endHour - startHour;
 
     if (currentHour < startHour || currentHour > endHour) {
-      return -1; // Hide if outside timetable hours
+      return -1;
     }
 
     const percentage = ((currentHour - startHour) / totalHours) * 100;
@@ -43,15 +43,7 @@ const TimeNeedle: React.FC<TimeNeedleProps> = ({ startHour, endHour }) => {
       style={{ top: `${topPosition}%` }}
     >
       <div className="flex items-center">
-        <div className="w-16 text-right pr-2">
-          <span className="text-xs font-medium text-red-400">
-            {currentTime.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })}
-          </span>
-        </div>
+        <div className="w-max text-right pr-2"></div>
         <div className="relative flex-grow h-px bg-red-400">
           <div className="absolute -left-1 -top-1 w-2 h-2 rounded-full bg-red-400"></div>
         </div>
