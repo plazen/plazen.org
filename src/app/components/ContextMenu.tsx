@@ -42,7 +42,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.1 }}
-      className="absolute z-10 w-48 bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+      className="fixed z-10 w-48 bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
       style={{ top: y, left: x }}
     >
       <div className="py-1">

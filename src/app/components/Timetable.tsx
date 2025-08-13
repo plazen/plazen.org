@@ -40,7 +40,7 @@ const Timetable: React.FC<TimetableProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
     e.preventDefault();
-    setMenu({ x: e.pageX, y: e.pageY, task });
+    setMenu({ x: e.clientX, y: e.clientY, task });
   };
 
   const closeMenu = () => setMenu({ ...menu, task: null });
