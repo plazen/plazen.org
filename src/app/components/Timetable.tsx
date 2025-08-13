@@ -97,18 +97,18 @@ const Timetable: React.FC<TimetableProps> = ({
               className="absolute w-full"
               style={{ top: `${(i / totalHours) * 100}%` }}
             >
-              <span className="text-xs font-mono mt-6.5 inline-block">
+              <span className="text-xs font-mono inline-block">
                 {String((startHour + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
-        <div className="absolute top-0 bottom-0 left-16 right-0">
+        <div className="absolute top-0 bottom-0 left-20 right-0">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full border-t border-dashed border-border"
-              style={{ top: `${((i + 1) / totalHours) * 100}%` }}
+              className="absolute w-full border-t border-dashed border-border mt-3"
+              style={{ top: `${(i / totalHours) * 100}%` }}
             />
           ))}
         </div>
