@@ -84,13 +84,13 @@ const Timetable: React.FC<TimetableProps> = ({
   });
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl p-6 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(#ffffff1a_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
-      <h2 className="text-xl font-bold mb-6 text-white tracking-wider">
+    <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
+      <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
+      <h2 className="text-xl font-bold mb-6 text-foreground tracking-wider">
         {formattedDate}
       </h2>
       <div className="relative h-[800px] overflow-y-auto pr-2">
-        <div className="absolute top-0 bottom-0 w-16 text-right pr-4 text-gray-400">
+        <div className="absolute top-0 bottom-0 w-16 text-right pr-4 text-muted-foreground">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
@@ -107,7 +107,7 @@ const Timetable: React.FC<TimetableProps> = ({
           {Array.from({ length: totalHours }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full border-t border-dashed border-white/10"
+              className="absolute w-full border-t border-dashed border-border"
               style={{ top: `${((i + 1) / totalHours) * 100}%` }}
             />
           ))}
@@ -126,10 +126,13 @@ const Timetable: React.FC<TimetableProps> = ({
               event.startTime.getTime() + (event.duration_minutes || 60) * 60000
             );
             const isCompleted = event.is_completed;
-            const baseColorRGB = event.is_time_sensitive
-              ? "59, 130, 246"
-              : "34, 197, 94";
-            const gradientBg = `repeating-linear-gradient(0deg, rgba(${baseColorRGB}, 0.1), rgba(${baseColorRGB}, 0.1) 1px, transparent 1px, transparent 20px), linear-gradient(45deg, rgba(${baseColorRGB}, 0.3), rgba(${baseColorRGB}, 0.1))`;
+            const baseColor = event.is_time_sensitive
+              ? "hsl(var(--primary))"
+              : "hsl(var(--secondary-foreground))";
+
+            const gradientBg = event.is_time_sensitive
+              ? `linear-gradient(45deg, oklch(0.7 0.1 190 / 0.1), oklch(0.7 0.1 190 / 0.2))`
+              : `linear-gradient(45deg, oklch(0.95 0.01 240 / 0.05), oklch(0.95 0.01 240 / 0.1))`;
 
             if (top < 0 || top > 100) return null;
 
@@ -143,31 +146,31 @@ const Timetable: React.FC<TimetableProps> = ({
                 animate={{
                   opacity: isCompleted ? 0.5 : 1,
                   y: 0,
-                  x: isCompleted ? "100%" : "0%",
-                  width: isCompleted ? "50%" : "100%",
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute p-2 flex flex-col justify-between text-white cursor-pointer rounded-lg backdrop-blur-sm"
+                className="absolute p-2 flex flex-col justify-between text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border"
                 style={{
                   top: `${top}%`,
                   minHeight: "40px",
                   height: `${height}%`,
                   left: "0",
                   right: "0",
-                  borderLeft: `3px solid rgb(${baseColorRGB})`,
+                  borderLeft: `3px solid ${baseColor}`,
                   background: gradientBg,
                 }}
               >
-                <p
-                  className={`font-semibold text-sm truncate ${
-                    isCompleted ? "line-through" : ""
-                  }`}
-                >
-                  {event.title} |{" "}
-                  <span className="text-xs opacity-70 font-mono mt-auto">
-                    {formatTime(event.startTime)} – {formatTime(endTime)}
-                  </span>
-                </p>
+                <div>
+                  <p
+                    className={`font-semibold text-sm ${
+                      isCompleted ? "line-through" : ""
+                    }`}
+                  >
+                    {event.title} &nbsp;
+                    <span className="text-xs opacity-70 font-mono">
+                      {formatTime(event.startTime)} – {formatTime(endTime)}
+                    </span>
+                  </p>
+                </div>
 
                 {isCompleted && (
                   <motion.div

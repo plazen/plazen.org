@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "./ui/button";
 
 type Task = {
   id: string;
@@ -42,24 +43,26 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
         onClick={onClose}
       >
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm"
+          className="bg-card rounded-lg shadow-xl p-6 w-full max-w-sm border border-border"
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 className="text-lg font-medium leading-6 text-white mb-2">
+          <h3 className="text-lg font-medium leading-6 text-foreground mb-2">
             Reschedule Task
           </h3>
-          <p className="text-sm text-gray-400 mb-4 truncate">{task.title}</p>
+          <p className="text-sm text-muted-foreground mb-4 truncate">
+            {task.title}
+          </p>
           <div>
             <label
               htmlFor="task-time"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-foreground"
             >
               New scheduled time
             </label>
@@ -68,24 +71,14 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
               id="task-time"
               value={newTime}
               onChange={(e) => setNewTime(e.target.value)}
-              className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
             />
           </div>
           <div className="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500"
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500"
-            >
-              Save Changes
-            </button>
+            </Button>
+            <Button onClick={handleSave}>Save Changes</Button>
           </div>
         </motion.div>
       </motion.div>

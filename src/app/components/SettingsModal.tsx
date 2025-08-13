@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "./ui/button";
 
 type Settings = {
   timetable_start: number;
@@ -43,17 +44,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
         onClick={onClose}
       >
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md"
+          className="bg-card rounded-lg shadow-xl p-6 w-full max-w-md border border-border"
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 className="text-lg font-medium leading-6 text-white mb-4">
+          <h3 className="text-lg font-medium leading-6 text-foreground mb-4">
             Settings
           </h3>
           <div className="space-y-4">
@@ -61,7 +62,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <label
                   htmlFor="start-time"
-                  className="block text-sm font-medium text-gray-300"
+                  className="block text-sm font-medium text-muted-foreground"
                 >
                   Start Time
                 </label>
@@ -74,7 +75,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       timetable_start: parseInt(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
@@ -87,7 +88,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div>
                 <label
                   htmlFor="end-time"
-                  className="block text-sm font-medium text-gray-300"
+                  className="block text-sm font-medium text-muted-foreground"
                 >
                   End Time
                 </label>
@@ -100,7 +101,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       timetable_end: parseInt(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
@@ -112,13 +113,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
             <div className="flex items-center justify-between pt-2">
-              <span className="text-sm font-medium text-gray-300">
+              <span className="text-sm font-medium text-muted-foreground">
                 Show current time indicator
               </span>
               <button
                 onClick={handleToggle}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  settings.show_time_needle ? "bg-blue-600" : "bg-gray-600"
+                  settings.show_time_needle ? "bg-primary" : "bg-gray-600"
                 }`}
               >
                 <span
@@ -132,20 +133,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
           <div className="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 rounded-md hover:bg-gray-600"
-            >
+            <Button variant="outline" onClick={onClose}>
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-            >
-              Save Changes
-            </button>
+            </Button>
+            <Button onClick={handleSave}>Save Changes</Button>
           </div>
         </motion.div>
       </motion.div>

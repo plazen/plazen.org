@@ -8,6 +8,8 @@ import Timetable from "./components/Timetable";
 import RescheduleModal from "./components/RescheduleModal";
 import SettingsModal from "./components/SettingsModal";
 import { Calendar } from "./components/ui/calendar";
+import { Button } from "./components/ui/button";
+import { PlusIcon } from "lucide-react";
 
 const PlazenLogo = () => (
   <svg
@@ -69,7 +71,7 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   <button
     onClick={onToggle}
     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-      isToggled ? "bg-blue-600" : "bg-gray-600"
+      isToggled ? "bg-primary" : "bg-gray-600"
     }`}
   >
     <span
@@ -261,15 +263,15 @@ export default function App() {
 
   if (loading || !settings) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
-      <header className="border-b border-gray-700/50">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
+      <header className="border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -277,18 +279,20 @@ export default function App() {
               <span className="text-xl font-semibold">Plazen</span>
             </div>
             <div className="flex items-center space-x-2">
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsSettingsOpen(true)}
-                className="rounded-full p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <SettingsIcon />
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => router.push("/account")}
-                className="rounded-full p-2 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 <UserIcon />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -296,20 +300,17 @@ export default function App() {
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-md p-4 mb-6">
+          <div className="bg-destructive/20 border border-destructive text-destructive-foreground rounded-md p-4 mb-6">
             {error}
           </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-8">
-            <div className="bg-gray-800/80 rounded-lg shadow-lg p-6">
+          <div className="lg-col-span-1 space-y-8">
+            <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
               <h2 className="text-lg font-medium mb-4">Add a New Task</h2>
               <form onSubmit={handleAddTask} className="space-y-4">
                 <div>
-                  <label
-                    htmlFor="task-title"
-                    className="block text-sm font-medium text-gray-300"
-                  >
+                  <label htmlFor="task-title" className="sr-only">
                     Task Title
                   </label>
                   <input
@@ -317,12 +318,12 @@ export default function App() {
                     id="task-title"
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     placeholder="e.g., Water the plants"
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-300">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Time Sensitive?
                   </span>
                   <ToggleSwitch
@@ -331,10 +332,7 @@ export default function App() {
                   />
                 </div>
                 <div>
-                  <label
-                    htmlFor="timing"
-                    className="block text-sm font-medium text-gray-300"
-                  >
+                  <label htmlFor="timing" className="sr-only">
                     {isTimeSensitive
                       ? "Specific Time"
                       : "Estimated Duration (minutes)"}
@@ -345,7 +343,7 @@ export default function App() {
                       id="timing"
                       value={scheduledTime}
                       onChange={(e) => setScheduledTime(e.target.value)}
-                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
                   ) : (
                     <input
@@ -355,19 +353,17 @@ export default function App() {
                       onChange={(e) =>
                         setDuration(parseInt(e.target.value, 10))
                       }
-                      className="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
                   )}
                 </div>
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800"
-                >
+                <Button type="submit" className="w-full">
+                  <PlusIcon className="mr-2" />
                   Add to Schedule
-                </button>
+                </Button>
               </form>
             </div>
-            <div className="bg-gray-800/80 rounded-lg shadow-lg">
+            <div className="bg-card rounded-lg shadow-lg border border-border">
               <Calendar
                 mode="single"
                 selected={date}
