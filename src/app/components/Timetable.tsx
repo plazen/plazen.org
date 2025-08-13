@@ -40,14 +40,19 @@ const Timetable: React.FC<TimetableProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
     e.preventDefault();
-    setMenu({ x: e.pageX, y: e.pageY, task });
+    setMenu({ x: e.clientX, y: e.clientY, task });
   };
 
   const closeMenu = () => setMenu({ ...menu, task: null });
 
   const { timetable_start: startHour, timetable_end: endHour } = settings;
-  const totalHours =
-    endHour > startHour ? endHour - startHour : 24 - startHour + endHour;
+  const totalHours = useMemo(() => {
+    if (endHour > startHour) {
+      return endHour - startHour;
+    } else {
+      return 24 - startHour + endHour;
+    }
+  }, [startHour, endHour]);
 
   const formatTime = (date: Date): string =>
     date.toLocaleTimeString([], {

@@ -70,6 +70,13 @@ export async function POST(request: Request) {
       : null;
 
     if (!body.is_time_sensitive) {
+      const userSettings = await prisma.userSettings.findUnique({
+        where: { user_id: session.user.id },
+      });
+
+      const timetableStartHour = userSettings?.timetable_start ?? 8;
+      const timetableEndHour = userSettings?.timetable_end ?? 18;
+
       const existingTasks = await prisma.tasks.findMany({
         where: {
           user_id: session.user.id,
@@ -78,9 +85,18 @@ export async function POST(request: Request) {
         orderBy: { scheduled_time: "asc" },
       });
 
-      const today = new Date();
-      const timetableStart = new Date(new Date(today).setHours(8, 0, 0, 0));
-      const timetableEnd = new Date(new Date(today).setHours(18, 0, 0, 0));
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      let timetableStart = new Date(today);
+      timetableStart.setHours(timetableStartHour, 0, 0, 0);
+
+      const timetableEnd = new Date(today);
+      timetableEnd.setHours(timetableEndHour, 0, 0, 0);
+
+      if (now > timetableStart) {
+        timetableStart = now;
+      }
 
       const occupiedSlots = existingTasks.map((task) => {
         const start = new Date(task.scheduled_time!);
@@ -97,7 +113,9 @@ export async function POST(request: Request) {
         if (slot.start > lastEventEnd) {
           freeSlots.push({ start: lastEventEnd, end: slot.start });
         }
-        lastEventEnd = slot.end > lastEventEnd ? slot.end : lastEventEnd;
+        lastEventEnd = new Date(
+          Math.max(lastEventEnd.getTime(), slot.end.getTime())
+        );
       });
 
       if (lastEventEnd < timetableEnd) {
