@@ -124,8 +124,12 @@ export default function App() {
   const fetchTasks = useCallback(async (selectedDate: Date) => {
     setTasksLoading(true);
     try {
-      const dateString = selectedDate.toISOString().split("T")[0];
+      const year = selectedDate.getFullYear();
+      const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = selectedDate.getDate().toString().padStart(2, "0");
+      const dateString = `${year}-${month}-${day}`;
       const response = await fetch(`/api/tasks?date=${dateString}`);
+      console.log("Fetching tasks for date:", dateString, selectedDate);
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
