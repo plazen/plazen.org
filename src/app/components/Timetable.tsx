@@ -22,6 +22,7 @@ type Settings = {
 type TimetableProps = {
   tasks: Task[];
   settings: Settings;
+  date: Date;
   onToggleDone: (taskId: string, currentStatus: boolean) => void;
   onDeleteTask: (taskId: string) => void;
   onReschedule: (task: Task) => void;
@@ -30,6 +31,7 @@ type TimetableProps = {
 const Timetable: React.FC<TimetableProps> = ({
   tasks,
   settings,
+  date,
   onToggleDone,
   onDeleteTask,
   onReschedule,
@@ -74,11 +76,18 @@ const Timetable: React.FC<TimetableProps> = ({
       ]
     : [];
 
+  const formattedDate = date.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl p-6 relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(#ffffff1a_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
       <h2 className="text-xl font-bold mb-6 text-white tracking-wider">
-        Today&apos;s Schedule
+        {formattedDate}
       </h2>
       <div className="relative h-[800px] overflow-y-auto pr-2">
         <div className="absolute top-0 bottom-0 w-16 text-right pr-4 text-gray-400">

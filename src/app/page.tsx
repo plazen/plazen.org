@@ -81,10 +81,9 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
 );
 
 export default function App() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
 
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());
   type Task = {
     id: string;
     title: string;
@@ -118,10 +117,11 @@ export default function App() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchInitialData = useCallback(async (selectedDate: Date) => {
     try {
+      const dateString = selectedDate.toISOString().split("T")[0];
       const [tasksResponse, settingsResponse] = await Promise.all([
-        fetch("/api/tasks"),
+        fetch(`/api/tasks?date=${dateString}`),
         fetch("/api/settings"),
       ]);
       if (!tasksResponse.ok || !settingsResponse.ok) {
@@ -148,11 +148,13 @@ export default function App() {
         return;
       }
       setUser(session.user);
-      await fetchInitialData();
+      if (date) {
+        await fetchInitialData(date);
+      }
       setLoading(false);
     };
     checkUserAndFetch();
-  }, [router, supabase.auth, fetchInitialData]);
+  }, [router, supabase.auth, fetchInitialData, date]);
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,7 +301,7 @@ export default function App() {
           </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-8">
             <div className="bg-gray-800/80 rounded-lg shadow-lg p-6">
               <h2 className="text-lg font-medium mb-4">Add a New Task</h2>
               <form onSubmit={handleAddTask} className="space-y-4">
@@ -365,19 +367,21 @@ export default function App() {
                 </button>
               </form>
             </div>
+            <div className="bg-gray-800/80 rounded-lg shadow-lg">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                className="p-4"
+              />
+            </div>
           </div>
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={setDate}
-            className="rounded-md border shadow-sm"
-            captionLayout="dropdown"
-          />
 
           <div className="lg:col-span-2">
             <Timetable
               tasks={tasks}
               settings={settings}
+              date={date || new Date()}
               onToggleDone={handleToggleDone}
               onDeleteTask={handleDeleteTask}
               onReschedule={handleOpenRescheduleModal}

@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,9 +21,30 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const date = searchParams.get("date");
+
   try {
+    const whereClause: {
+      user_id: string;
+      scheduled_time?: { gte: Date; lt: Date };
+    } = {
+      user_id: session.user.id,
+    };
+
+    if (date) {
+      const startDate = new Date(date);
+      startDate.setUTCHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setUTCHours(23, 59, 59, 999);
+      whereClause.scheduled_time = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
     const tasks = await prisma.tasks.findMany({
-      where: { user_id: session.user.id },
+      where: whereClause,
       orderBy: { created_at: "asc" },
     });
 
