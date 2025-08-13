@@ -8,7 +8,16 @@
 
 Plazen is a modern, open-source task manager that intelligently plans your day for you. Add your flexible to-dos, and it automatically finds the perfect spot in your daily timetable. For crucial, time-sensitive appointments, you can pin them to a specific time. Reclaim your focus and reduce the mental load of planning.
 
----
+<div align="center">
+
+[![CLA assistant](https://cla-assistant.io/readme/badge/plazen/plazen.org)](https://cla-assistant.io/plazen/plazen.org)
+[![MIT License](https://img.shields.io/github/license/plazen/plazen.org)](https://github.com/plazen/plazen.org/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/plazen/plazen.org)](https://github.com/plazen/plazen.org/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/plazen/plazen.org)](https://github.com/plazen/plazen.org/issues)
+[![GitHub forks](https://img.shields.io/github/forks/plazen/plazen.org)](https://github.com/plazen/plazen.org/network)
+[![GitHub stars](https://img.shields.io/github/stars/plazen/plazen.org)](https://github.com/plazen/plazen.org/stargazers)
+
+</div>
 
 ## ✨ Key Features
 
@@ -35,7 +44,7 @@ Follow these instructions to get a local copy up and running for development and
 
 ### Prerequisites
 
-- Node.js (v18.18 or later)
+- Node.js (v22 or later)
 - npm, yarn, or pnpm
 - A Supabase account and a new project created.
 
@@ -96,11 +105,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+Please, see [`CONTRIBUTING.md`](CONTRIBUTING.md) for more information
 
 ## 📄 License
 
