@@ -111,15 +111,8 @@ const Timetable: React.FC<TimetableProps> = ({
             const currentStartHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
             const duration = (event.duration_minutes || 60) / 60;
-
-            let effectiveStartHour = currentStartHour;
-            if (endHour < startHour && currentStartHour < startHour) {
-              effectiveStartHour += 24;
-            }
-
-            const top = ((effectiveStartHour - startHour) / totalHours) * 100;
+            const top = ((currentStartHour - startHour) / totalHours) * 100;
             const height = (duration / totalHours) * 100;
-
             const endTime = new Date(
               event.startTime.getTime() + (event.duration_minutes || 60) * 60000
             );
