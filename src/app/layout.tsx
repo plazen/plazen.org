@@ -24,6 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <link rel="me" href="https://fosstodon.org/@plazen" />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
