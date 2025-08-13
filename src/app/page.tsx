@@ -368,7 +368,7 @@ export default function App() {
                 mode="single"
                 selected={date}
                 onSelect={setDate}
-                className="p-4"
+                className="p-4 w-full"
               />
             </div>
           </div>
