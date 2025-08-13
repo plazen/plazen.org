@@ -182,9 +182,18 @@ export default function App() {
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
+
+    const toLocalISOString = (dateToFormat: Date) => {
+      const year = dateToFormat.getFullYear();
+      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, "0");
+      const day = dateToFormat.getDate().toString().padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
     const isForToday = date
       ? new Date().toDateString() === date.toDateString()
       : true;
+
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -197,9 +206,7 @@ export default function App() {
             ? new Date(scheduledTime).toISOString()
             : null,
           user_current_time: new Date().toISOString(),
-          for_date: date
-            ? date.toISOString().split("T")[0]
-            : new Date().toISOString().split("T")[0],
+          for_date: toLocalISOString(date || new Date()),
           is_for_today: isForToday,
         }),
       });
