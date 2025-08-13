@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import Timetable from "./components/Timetable";
 import RescheduleModal from "./components/RescheduleModal";
 import SettingsModal from "./components/SettingsModal";
+import { Calendar } from "./components/ui/calendar";
 
 const PlazenLogo = () => (
   <svg
@@ -82,6 +83,8 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
 export default function App() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
+
+  const [date, setDate] = useState<Date>(new Date());
   type Task = {
     id: string;
     title: string;
@@ -363,6 +366,13 @@ export default function App() {
               </form>
             </div>
           </div>
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={setDate}
+            className="rounded-md border shadow-sm"
+            captionLayout="dropdown"
+          />
 
           <div className="lg:col-span-2">
             <Timetable
