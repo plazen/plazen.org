@@ -165,6 +165,7 @@ export default function App() {
           scheduled_time: isTimeSensitive
             ? new Date(scheduledTime).toISOString()
             : null,
+          user_current_time: new Date().toISOString(),
         }),
       });
       if (!response.ok) throw new Error("Failed to add task");

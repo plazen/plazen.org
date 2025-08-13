@@ -85,7 +85,9 @@ export async function POST(request: Request) {
         orderBy: { scheduled_time: "asc" },
       });
 
-      const now = new Date();
+      const now = body.user_current_time
+        ? new Date(body.user_current_time)
+        : new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       let timetableStart = new Date(today);
