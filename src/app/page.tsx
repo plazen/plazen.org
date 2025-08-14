@@ -110,6 +110,7 @@ export default function App() {
   const [isTimeSensitive, setIsTimeSensitive] = useState(false);
   const [duration, setDuration] = useState(30);
   const [scheduledTime, setScheduledTime] = useState("");
+  const [isAddingTask, setIsAddingTask] = useState(false);
 
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -180,7 +181,8 @@ export default function App() {
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim() || isAddingTask) return;
+    setIsAddingTask(true);
 
     const toLocalISOString = (dateToFormat: Date) => {
       const year = dateToFormat.getFullYear();
@@ -220,6 +222,8 @@ export default function App() {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
+    } finally {
+      setIsAddingTask(false);
     }
   };
 
@@ -391,9 +395,19 @@ export default function App() {
                     />
                   )}
                 </div>
-                <Button type="submit" className="w-full">
-                  <PlusIcon className="mr-2" />
-                  Add to Schedule
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isAddingTask}
+                >
+                  {isAddingTask ? (
+                    "Adding..."
+                  ) : (
+                    <>
+                      <PlusIcon className="mr-2" />
+                      Add to Schedule
+                    </>
+                  )}
                 </Button>
               </form>
             </div>
