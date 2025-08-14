@@ -9,6 +9,7 @@ import RescheduleModal from "./components/RescheduleModal";
 import SettingsModal from "./components/SettingsModal";
 import { Calendar } from "./components/ui/calendar";
 import { Button } from "./components/ui/button";
+import { Slider } from "./components/ui/slider";
 import { PlusIcon } from "lucide-react";
 
 const PlazenLogo = () => (
@@ -83,6 +84,18 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   </button>
 );
 
+const durationSteps = [
+  15, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360,
+];
+
+const formatDuration = (minutes: number) => {
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  }
+  const hours = minutes / 60;
+  return `${hours} hour${hours > 1 ? "s" : ""}`;
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -129,7 +142,6 @@ export default function App() {
       const day = selectedDate.getDate().toString().padStart(2, "0");
       const dateString = `${year}-${month}-${day}`;
       const response = await fetch(`/api/tasks?date=${dateString}`);
-      console.log("Fetching tasks for date:", dateString, selectedDate);
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
@@ -369,32 +381,49 @@ export default function App() {
                     onToggle={() => setIsTimeSensitive(!isTimeSensitive)}
                   />
                 </div>
-                <div>
-                  <label htmlFor="timing" className="sr-only">
-                    {isTimeSensitive
-                      ? "Specific Time"
-                      : "Estimated Duration (minutes)"}
-                  </label>
-                  {isTimeSensitive ? (
+
+                {isTimeSensitive ? (
+                  <div>
+                    <label
+                      htmlFor="scheduled-time"
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
+                      Specific Time
+                    </label>
                     <input
                       type="datetime-local"
-                      id="timing"
+                      id="scheduled-time"
                       value={scheduledTime}
                       onChange={(e) => setScheduledTime(e.target.value)}
                       className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
-                  ) : (
-                    <input
-                      type="number"
-                      id="timing"
-                      value={duration}
-                      onChange={(e) =>
-                        setDuration(parseInt(e.target.value, 10))
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label
+                        htmlFor="duration"
+                        className="text-sm font-medium text-muted-foreground"
+                      >
+                        Estimated Duration
+                      </label>
+                      <span className="text-sm font-semibold text-foreground">
+                        {formatDuration(duration)}
+                      </span>
+                    </div>
+                    <Slider
+                      id="duration"
+                      min={0}
+                      max={durationSteps.length - 1}
+                      step={1}
+                      value={[durationSteps.indexOf(duration)]}
+                      onValueChange={(value) =>
+                        setDuration(durationSteps[value[0]])
                       }
-                      className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   className="w-full"
