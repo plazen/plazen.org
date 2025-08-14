@@ -51,6 +51,7 @@ const UserIcon = () => (
     <circle cx="12" cy="7" r="4"></circle>
   </svg>
 );
+
 const SettingsIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -68,6 +69,7 @@ const SettingsIcon = () => (
     <circle cx="12" cy="12" r="3"></circle>
   </svg>
 );
+
 type ToggleSwitchProps = { isToggled: boolean; onToggle: () => void };
 const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   <button
@@ -196,6 +198,15 @@ export default function App() {
     if (!newTaskTitle.trim() || isAddingTask) return;
     setIsAddingTask(true);
 
+    let finalScheduledTime = null;
+
+    if (isTimeSensitive && scheduledTime && date) {
+      const [hours, minutes] = scheduledTime.split(":").map(Number);
+      const combinedDate = new Date(date);
+      combinedDate.setHours(hours, minutes, 0, 0);
+      finalScheduledTime = combinedDate.toISOString();
+    }
+
     const toLocalISOString = (dateToFormat: Date) => {
       const year = dateToFormat.getFullYear();
       const month = (dateToFormat.getMonth() + 1).toString().padStart(2, "0");
@@ -214,10 +225,8 @@ export default function App() {
         body: JSON.stringify({
           title: newTaskTitle,
           is_time_sensitive: isTimeSensitive,
-          duration_minutes: isTimeSensitive ? null : Number(duration),
-          scheduled_time: isTimeSensitive
-            ? new Date(scheduledTime).toISOString()
-            : null,
+          duration_minutes: Number(duration),
+          scheduled_time: finalScheduledTime,
           user_current_time: new Date().toISOString(),
           for_date: toLocalISOString(date || new Date()),
           is_for_today: isForToday,
@@ -382,47 +391,47 @@ export default function App() {
                   />
                 </div>
 
-                {isTimeSensitive ? (
+                {isTimeSensitive && (
                   <div>
                     <label
                       htmlFor="scheduled-time"
                       className="block text-sm font-medium text-muted-foreground mb-1"
                     >
-                      Specific Time
+                      Start Time
                     </label>
                     <input
-                      type="datetime-local"
+                      type="time"
                       id="scheduled-time"
                       value={scheduledTime}
                       onChange={(e) => setScheduledTime(e.target.value)}
                       className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label
-                        htmlFor="duration"
-                        className="text-sm font-medium text-muted-foreground"
-                      >
-                        Estimated Duration
-                      </label>
-                      <span className="text-sm font-semibold text-foreground">
-                        {formatDuration(duration)}
-                      </span>
-                    </div>
-                    <Slider
-                      id="duration"
-                      min={0}
-                      max={durationSteps.length - 1}
-                      step={1}
-                      value={[durationSteps.indexOf(duration)]}
-                      onValueChange={(value) =>
-                        setDuration(durationSteps[value[0]])
-                      }
-                    />
-                  </div>
                 )}
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label
+                      htmlFor="duration"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      Duration
+                    </label>
+                    <span className="text-sm font-semibold text-foreground">
+                      {formatDuration(duration)}
+                    </span>
+                  </div>
+                  <Slider
+                    id="duration"
+                    min={0}
+                    max={durationSteps.length - 1}
+                    step={1}
+                    value={[durationSteps.indexOf(duration)]}
+                    onValueChange={(value) =>
+                      setDuration(durationSteps[value[0]])
+                    }
+                  />
+                </div>
 
                 <Button
                   type="submit"
