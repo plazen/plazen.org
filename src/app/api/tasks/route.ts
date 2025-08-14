@@ -98,15 +98,10 @@ export async function POST(request: Request) {
       const timetableStartHour = userSettings?.timetable_start ?? 8;
       const timetableEndHour = userSettings?.timetable_end ?? 18;
 
-      const now = new Date(body.user_current_time);
       const scheduleDay = new Date(body.for_date);
 
-      let timetableStart = new Date(scheduleDay);
+      const timetableStart = new Date(scheduleDay);
       timetableStart.setUTCHours(timetableStartHour, 0, 0, 0);
-
-      if (body.is_for_today && now > timetableStart) {
-        timetableStart = now;
-      }
 
       const timetableEnd = new Date(scheduleDay);
       timetableEnd.setUTCHours(timetableEndHour, 0, 0, 0);
@@ -132,6 +127,14 @@ export async function POST(request: Request) {
 
       const freeSlots: { start: Date; end: Date }[] = [];
       let lastEventEnd = timetableStart;
+
+      const isToday = new Date().toDateString() === scheduleDay.toDateString();
+      if (isToday) {
+        const now = new Date();
+        if (now > timetableStart) {
+          lastEventEnd = now;
+        }
+      }
 
       occupiedSlots.forEach((slot) => {
         if (slot.start > lastEventEnd) {
