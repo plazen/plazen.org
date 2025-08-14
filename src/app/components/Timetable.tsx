@@ -23,7 +23,7 @@ type TimetableProps = {
   tasks: Task[];
   settings: Settings;
   date: Date;
-  tasksLoading: boolean; // Add this prop
+  tasksLoading: boolean;
   onToggleDone: (taskId: string, currentStatus: boolean) => void;
   onDeleteTask: (taskId: string) => void;
   onReschedule: (task: Task) => void;
@@ -33,7 +33,7 @@ const Timetable: React.FC<TimetableProps> = ({
   tasks,
   settings,
   date,
-  tasksLoading, // Add this prop
+  tasksLoading,
   onToggleDone,
   onDeleteTask,
   onReschedule,
@@ -85,6 +85,8 @@ const Timetable: React.FC<TimetableProps> = ({
     day: "numeric",
   });
 
+  const isToday = new Date().toDateString() === date.toDateString();
+
   return (
     <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
       {tasksLoading && (
@@ -120,7 +122,7 @@ const Timetable: React.FC<TimetableProps> = ({
           ))}
         </div>
         <div className="relative h-full ml-16">
-          {settings.show_time_needle && (
+          {settings.show_time_needle && isToday && (
             <TimeNeedle startHour={startHour} endHour={endHour} />
           )}
           {eventsToDisplay.map((event) => {

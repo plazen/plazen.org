@@ -9,6 +9,7 @@ import RescheduleModal from "./components/RescheduleModal";
 import SettingsModal from "./components/SettingsModal";
 import { Calendar } from "./components/ui/calendar";
 import { Button } from "./components/ui/button";
+import { Slider } from "./components/ui/slider";
 import { PlusIcon } from "lucide-react";
 
 const PlazenLogo = () => (
@@ -50,6 +51,7 @@ const UserIcon = () => (
     <circle cx="12" cy="7" r="4"></circle>
   </svg>
 );
+
 const SettingsIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -67,6 +69,7 @@ const SettingsIcon = () => (
     <circle cx="12" cy="12" r="3"></circle>
   </svg>
 );
+
 type ToggleSwitchProps = { isToggled: boolean; onToggle: () => void };
 const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
   <button
@@ -82,6 +85,18 @@ const ToggleSwitch = ({ isToggled, onToggle }: ToggleSwitchProps) => (
     />
   </button>
 );
+
+const durationSteps = [
+  15, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360,
+];
+
+const formatDuration = (minutes: number) => {
+  if (minutes < 60) {
+    return `${minutes} minutes`;
+  }
+  const hours = minutes / 60;
+  return `${hours} hour${hours > 1 ? "s" : ""}`;
+};
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -110,6 +125,7 @@ export default function App() {
   const [isTimeSensitive, setIsTimeSensitive] = useState(false);
   const [duration, setDuration] = useState(30);
   const [scheduledTime, setScheduledTime] = useState("");
+  const [isAddingTask, setIsAddingTask] = useState(false);
 
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -128,7 +144,6 @@ export default function App() {
       const day = selectedDate.getDate().toString().padStart(2, "0");
       const dateString = `${year}-${month}-${day}`;
       const response = await fetch(`/api/tasks?date=${dateString}`);
-      console.log("Fetching tasks for date:", dateString, selectedDate);
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
@@ -180,7 +195,17 @@ export default function App() {
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim() || isAddingTask) return;
+    setIsAddingTask(true);
+
+    let finalScheduledTime = null;
+
+    if (isTimeSensitive && scheduledTime && date) {
+      const [hours, minutes] = scheduledTime.split(":").map(Number);
+      const combinedDate = new Date(date);
+      combinedDate.setHours(hours, minutes, 0, 0);
+      finalScheduledTime = combinedDate.toISOString();
+    }
 
     const toLocalISOString = (dateToFormat: Date) => {
       const year = dateToFormat.getFullYear();
@@ -200,10 +225,8 @@ export default function App() {
         body: JSON.stringify({
           title: newTaskTitle,
           is_time_sensitive: isTimeSensitive,
-          duration_minutes: isTimeSensitive ? null : Number(duration),
-          scheduled_time: isTimeSensitive
-            ? new Date(scheduledTime).toISOString()
-            : null,
+          duration_minutes: Number(duration),
+          scheduled_time: finalScheduledTime,
           user_current_time: new Date().toISOString(),
           for_date: toLocalISOString(date || new Date()),
           is_for_today: isForToday,
@@ -220,6 +243,8 @@ export default function App() {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
+    } finally {
+      setIsAddingTask(false);
     }
   };
 
@@ -365,35 +390,62 @@ export default function App() {
                     onToggle={() => setIsTimeSensitive(!isTimeSensitive)}
                   />
                 </div>
-                <div>
-                  <label htmlFor="timing" className="sr-only">
-                    {isTimeSensitive
-                      ? "Specific Time"
-                      : "Estimated Duration (minutes)"}
-                  </label>
-                  {isTimeSensitive ? (
+
+                {isTimeSensitive && (
+                  <div>
+                    <label
+                      htmlFor="scheduled-time"
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
+                      Start Time
+                    </label>
                     <input
-                      type="datetime-local"
-                      id="timing"
+                      type="time"
+                      id="scheduled-time"
                       value={scheduledTime}
                       onChange={(e) => setScheduledTime(e.target.value)}
                       className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                     />
-                  ) : (
-                    <input
-                      type="number"
-                      id="timing"
-                      value={duration}
-                      onChange={(e) =>
-                        setDuration(parseInt(e.target.value, 10))
-                      }
-                      className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                    />
-                  )}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label
+                      htmlFor="duration"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      Duration
+                    </label>
+                    <span className="text-sm font-semibold text-foreground">
+                      {formatDuration(duration)}
+                    </span>
+                  </div>
+                  <Slider
+                    id="duration"
+                    min={0}
+                    max={durationSteps.length - 1}
+                    step={1}
+                    value={[durationSteps.indexOf(duration)]}
+                    onValueChange={(value) =>
+                      setDuration(durationSteps[value[0]])
+                    }
+                  />
                 </div>
-                <Button type="submit" className="w-full">
-                  <PlusIcon className="mr-2" />
-                  Add to Schedule
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isAddingTask}
+                >
+                  {isAddingTask ? (
+                    "Adding..."
+                  ) : (
+                    <>
+                      <PlusIcon className="mr-2" />
+                      Add to Schedule
+                    </>
+                  )}
                 </Button>
               </form>
             </div>
