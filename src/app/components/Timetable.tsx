@@ -157,10 +157,9 @@ const Timetable: React.FC<TimetableProps> = ({
                   y: 0,
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute p-2 flex flex-col justify-between text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border"
+                className="absolute px-2 py-1 flex flex-col justify-start overflow-hidden text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border"
                 style={{
                   top: `${top}%`,
-                  minHeight: "40px",
                   height: `${height}%`,
                   left: "0",
                   right: "0",
