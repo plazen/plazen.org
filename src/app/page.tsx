@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import Timetable from "./components/Timetable";
+import RescheduleModal from "./components/RescheduleModal";
+import SettingsModal from "./components/SettingsModal";
 import { Calendar } from "./components/ui/calendar";
 import { Button } from "./components/ui/button";
 import { Slider } from "./components/ui/slider";
 import { PlusIcon } from "lucide-react";
-
-const RescheduleModal = lazy(() => import("./components/RescheduleModal"));
-const SettingsModal = lazy(() => import("./components/SettingsModal"));
 
 const PlazenLogo = () => (
   <svg
@@ -121,11 +120,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [isTimeSensitive, setIsTimeSensitive] = useState(false);
   const [duration, setDuration] = useState(30);
   const [scheduledTime, setScheduledTime] = useState("");
   const [isAddingTask, setIsAddingTask] = useState(false);
+
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -138,7 +139,10 @@ export default function App() {
   const fetchTasks = useCallback(async (selectedDate: Date) => {
     setTasksLoading(true);
     try {
-      const dateString = selectedDate.toISOString().split("T")[0];
+      const year = selectedDate.getFullYear();
+      const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = selectedDate.getDate().toString().padStart(2, "0");
+      const dateString = `${year}-${month}-${day}`;
       const response = await fetch(`/api/tasks?date=${dateString}`);
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
@@ -165,10 +169,14 @@ export default function App() {
         return;
       }
       setUser(session.user);
+
       try {
         const settingsResponse = await fetch("/api/settings");
-        if (!settingsResponse.ok) throw new Error("Failed to fetch settings");
-        setSettings(await settingsResponse.json());
+        if (!settingsResponse.ok) {
+          throw new Error("Failed to fetch settings");
+        }
+        const fetchedSettings = await settingsResponse.json();
+        setSettings(fetchedSettings);
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred"
@@ -190,8 +198,8 @@ export default function App() {
     if (!newTaskTitle.trim() || isAddingTask) return;
     setIsAddingTask(true);
 
-    const tempId = `temp-${Date.now()}`;
     let finalScheduledTime = null;
+
     if (isTimeSensitive && scheduledTime && date) {
       const [hours, minutes] = scheduledTime.split(":").map(Number);
       const combinedDate = new Date(date);
@@ -199,17 +207,16 @@ export default function App() {
       finalScheduledTime = combinedDate.toISOString();
     }
 
-    const newTask = {
-      id: tempId,
-      title: newTaskTitle,
-      is_time_sensitive: isTimeSensitive,
-      duration_minutes: duration,
-      scheduled_time: finalScheduledTime,
-      is_completed: false,
+    const toLocalISOString = (dateToFormat: Date) => {
+      const year = dateToFormat.getFullYear();
+      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, "0");
+      const day = dateToFormat.getDate().toString().padStart(2, "0");
+      return `${year}-${month}-${day}`;
     };
 
-    setTasks((prev) => [...prev, newTask]);
-    const originalTasks = tasks;
+    const isForToday = date
+      ? new Date().toDateString() === date.toDateString()
+      : true;
 
     try {
       const response = await fetch("/api/tasks", {
@@ -221,13 +228,13 @@ export default function App() {
           duration_minutes: Number(duration),
           scheduled_time: finalScheduledTime,
           user_current_time: new Date().toISOString(),
-          for_date: date?.toISOString().split("T")[0],
-          is_for_today: new Date().toDateString() === date?.toDateString(),
+          for_date: toLocalISOString(date || new Date()),
+          is_for_today: isForToday,
         }),
       });
       if (!response.ok) throw new Error("Failed to add task");
       const addedTask = await response.json();
-      setTasks((prev) => prev.map((t) => (t.id === tempId ? addedTask : t)));
+      setTasks((prev) => [...prev, addedTask]);
       setNewTaskTitle("");
       setIsTimeSensitive(false);
       setDuration(30);
@@ -236,20 +243,12 @@ export default function App() {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
-      setTasks(originalTasks);
     } finally {
       setIsAddingTask(false);
     }
   };
 
   const handleToggleDone = async (taskId: string, currentStatus: boolean) => {
-    const originalTasks = tasks;
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId ? { ...t, is_completed: !currentStatus } : t
-      )
-    );
-
     try {
       const response = await fetch("/api/tasks", {
         method: "PATCH",
@@ -257,18 +256,17 @@ export default function App() {
         body: JSON.stringify({ id: taskId, is_completed: !currentStatus }),
       });
       if (!response.ok) throw new Error("Failed to update task status");
+      const updatedTask = await response.json();
+      setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
-      setTasks(originalTasks);
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    const originalTasks = tasks;
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
-
+    setTasks(tasks.filter((task) => task.id !== taskId));
     try {
       const response = await fetch("/api/tasks", {
         method: "DELETE",
@@ -280,9 +278,11 @@ export default function App() {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
-      setTasks(originalTasks);
     }
   };
+
+  const handleOpenRescheduleModal = (task: Task) => setReschedulingTask(task);
+  const handleCloseRescheduleModal = () => setReschedulingTask(null);
 
   const handleUpdateTaskTime = async (taskId: string, newTime: string) => {
     try {
@@ -294,7 +294,7 @@ export default function App() {
       if (!response.ok) throw new Error("Failed to reschedule task");
       const updatedTask = await response.json();
       setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
-      setReschedulingTask(null);
+      handleCloseRescheduleModal();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
@@ -390,6 +390,7 @@ export default function App() {
                     onToggle={() => setIsTimeSensitive(!isTimeSensitive)}
                   />
                 </div>
+
                 {isTimeSensitive && (
                   <div>
                     <label
@@ -407,6 +408,7 @@ export default function App() {
                     />
                   </div>
                 )}
+
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <label
@@ -430,6 +432,7 @@ export default function App() {
                     }
                   />
                 </div>
+
                 <Button
                   type="submit"
                   className="w-full"
@@ -455,35 +458,35 @@ export default function App() {
               />
             </div>
           </div>
+
           <div className="lg:col-span-2">
             <Timetable
               tasks={tasks}
-              settings={settings!}
+              settings={settings}
               date={date || new Date()}
               tasksLoading={tasksLoading}
               onToggleDone={handleToggleDone}
               onDeleteTask={handleDeleteTask}
-              onReschedule={setReschedulingTask}
+              onReschedule={handleOpenRescheduleModal}
             />
           </div>
         </div>
       </main>
-      <Suspense fallback={<div>Loading...</div>}>
-        {reschedulingTask && (
-          <RescheduleModal
-            task={reschedulingTask}
-            onClose={() => setReschedulingTask(null)}
-            onSave={handleUpdateTaskTime}
-          />
-        )}
-        {isSettingsOpen && (
-          <SettingsModal
-            currentSettings={settings!}
-            onClose={() => setIsSettingsOpen(false)}
-            onSave={handleSaveSettings}
-          />
-        )}
-      </Suspense>
+
+      {reschedulingTask && (
+        <RescheduleModal
+          task={reschedulingTask}
+          onClose={handleCloseRescheduleModal}
+          onSave={handleUpdateTaskTime}
+        />
+      )}
+      {isSettingsOpen && (
+        <SettingsModal
+          currentSettings={settings}
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={handleSaveSettings}
+        />
+      )}
     </div>
   );
 }
