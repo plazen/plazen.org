@@ -98,10 +98,15 @@ export async function POST(request: Request) {
       const timetableStartHour = userSettings?.timetable_start ?? 8;
       const timetableEndHour = userSettings?.timetable_end ?? 18;
 
+      const now = new Date(body.user_current_time);
       const scheduleDay = new Date(body.for_date);
 
-      const timetableStart = new Date(scheduleDay);
+      let timetableStart = new Date(scheduleDay);
       timetableStart.setUTCHours(timetableStartHour, 0, 0, 0);
+
+      if (body.is_for_today && now > timetableStart) {
+        timetableStart = now;
+      }
 
       const timetableEnd = new Date(scheduleDay);
       timetableEnd.setUTCHours(timetableEndHour, 0, 0, 0);
