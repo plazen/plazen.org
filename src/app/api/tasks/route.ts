@@ -128,9 +128,8 @@ export async function POST(request: Request) {
       const freeSlots: { start: Date; end: Date }[] = [];
       let lastEventEnd = timetableStart;
 
-      const isToday = new Date().toDateString() === scheduleDay.toDateString();
-      if (isToday) {
-        const now = new Date();
+      if (body.is_for_today) {
+        const now = new Date(body.user_current_time);
         if (now > timetableStart) {
           lastEventEnd = now;
         }
