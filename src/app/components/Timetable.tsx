@@ -106,17 +106,17 @@ const Timetable: React.FC<TimetableProps> = ({
               className="absolute w-full"
               style={{ top: `${(i / totalHours) * 100}%` }}
             >
-              <span className="text-xs font-mono inline-block">
+              <span className="text-xs font-mono inline-block -translate-y-1/2">
                 {String((startHour + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
         <div className="absolute top-0 bottom-0 left-20 right-0">
-          {Array.from({ length: totalHours + 1 }).map((_, i) => (
+          {Array.from({ length: totalHours }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full border-t border-dashed border-border mt-3"
+              className="absolute w-full border-t border-dashed border-border"
               style={{ top: `${(i / totalHours) * 100}%` }}
             />
           ))}
@@ -145,6 +145,8 @@ const Timetable: React.FC<TimetableProps> = ({
 
             if (top < 0 || top > 100) return null;
 
+            const isShortTask = (event.duration_minutes || 60) < 45;
+
             return (
               <motion.div
                 key={event.id}
@@ -169,15 +171,17 @@ const Timetable: React.FC<TimetableProps> = ({
               >
                 <div>
                   <p
-                    className={`font-semibold text-sm ${
-                      isCompleted ? "line-through" : ""
-                    }`}
+                    className={`font-semibold ${
+                      isShortTask ? "text-xs" : "text-sm"
+                    } ${isCompleted ? "line-through" : ""}`}
                   >
-                    {event.title} &nbsp;
-                    <span className="text-xs opacity-70 font-mono">
-                      {formatTime(event.startTime)} – {formatTime(endTime)}
-                    </span>
+                    {event.title}
                   </p>
+                  {!isShortTask && (
+                    <p className="text-xs opacity-70 font-mono">
+                      {formatTime(event.startTime)} – {formatTime(endTime)}
+                    </p>
+                  )}
                 </div>
 
                 {isCompleted && (
