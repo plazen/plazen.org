@@ -106,17 +106,17 @@ const Timetable: React.FC<TimetableProps> = ({
               className="absolute w-full"
               style={{ top: `${(i / totalHours) * 100}%` }}
             >
-              <span className="text-xs font-mono inline-block -translate-y-1/2">
+              <span className="text-xs font-mono inline-block">
                 {String((startHour + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
         <div className="absolute top-0 bottom-0 left-20 right-0">
-          {Array.from({ length: totalHours }).map((_, i) => (
+          {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full border-t border-dashed border-border"
+              className="absolute w-full border-t border-dashed border-border mt-3"
               style={{ top: `${(i / totalHours) * 100}%` }}
             />
           ))}
@@ -128,11 +128,11 @@ const Timetable: React.FC<TimetableProps> = ({
           {eventsToDisplay.map((event) => {
             const currentStartHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
-            const duration = (event.duration_minutes || 60) / 60;
+            const duration = event.duration_minutes || 60;
             const top = ((currentStartHour - startHour) / totalHours) * 100;
-            const height = (duration / totalHours) * 100;
+            const height = (duration / 60 / totalHours) * 100;
             const endTime = new Date(
-              event.startTime.getTime() + (event.duration_minutes || 60) * 60000
+              event.startTime.getTime() + duration * 60000
             );
             const isCompleted = event.is_completed;
             const baseColor = event.is_time_sensitive
@@ -144,8 +144,6 @@ const Timetable: React.FC<TimetableProps> = ({
               : `linear-gradient(45deg, oklch(0.95 0.01 240 / 0.05), oklch(0.95 0.01 240 / 0.1))`;
 
             if (top < 0 || top > 100) return null;
-
-            const isShortTask = (event.duration_minutes || 60) < 45;
 
             return (
               <motion.div
@@ -159,7 +157,7 @@ const Timetable: React.FC<TimetableProps> = ({
                   y: 0,
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute px-2 py-1 flex flex-col justify-start overflow-hidden text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border"
+                className="absolute p-2 flex flex-col justify-start text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border overflow-hidden"
                 style={{
                   top: `${top}%`,
                   height: `${height}%`,
@@ -172,16 +170,22 @@ const Timetable: React.FC<TimetableProps> = ({
                 <div>
                   <p
                     className={`font-semibold ${
-                      isShortTask ? "text-xs" : "text-sm"
-                    } ${isCompleted ? "line-through" : ""}`}
+                      isCompleted ? "line-through" : ""
+                    } ${
+                      duration >= 60
+                        ? "text-sm"
+                        : duration >= 30
+                        ? "text-xs"
+                        : "text-[10px] leading-tight"
+                    }`}
                   >
                     {event.title}
+                    {duration >= 60 && (
+                      <span className="opacity-70 font-mono ml-2 text-xs">
+                        {formatTime(event.startTime)} – {formatTime(endTime)}
+                      </span>
+                    )}
                   </p>
-                  {!isShortTask && (
-                    <p className="text-xs opacity-70 font-mono">
-                      {formatTime(event.startTime)} – {formatTime(endTime)}
-                    </p>
-                  )}
                 </div>
 
                 {isCompleted && (
