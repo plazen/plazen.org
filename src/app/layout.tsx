@@ -13,49 +13,63 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Plazen – Smart Daily Timetable & Task Scheduler",
+  metadataBase: new URL("https://plazen.org"),
+  title: {
+    default: "Plazen — Let your schedule build itself.",
+    template: "%s | Plazen",
+  },
   description:
-    "Plazen helps you plan your day with a smart, visual timetable. Schedule, track, and complete your tasks with ease.",
+    "Plazen is a modern, open-source task manager that intelligently plans your day for you.",
   keywords: [
-    "timetable",
-    "daily planner",
-    "task scheduler",
+    "Plazen",
+    "task manager",
+    "schedule",
+    "planner",
+    "to-do",
     "productivity",
-    "calendar",
-    "todo",
-    "plazen",
-    "task management",
-    "organizer",
-    "schedule app",
-    "modern planner",
+    "time blocking",
   ],
-  authors: [{ name: "Plazen Team", url: "https://plazen.org/" }],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Plazen – Smart Daily Timetable & Task Scheduler",
-    description:
-      "Plan your day visually, schedule tasks, and boost productivity with Plazen.",
-    url: "https://plazen.org/",
+    type: "website",
+    url: "https://plazen.org",
     siteName: "Plazen",
+    title: "Plazen — Let your schedule build itself.",
+    description:
+      "Add flexible to-dos and Plazen automatically finds the best time in your day.",
     images: [
       {
-        url: "https://plazen.org/favicon.ico",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Plazen – Smart Daily Timetable & Task Scheduler",
+        alt: "Plazen app preview",
       },
     ],
     locale: "en_US",
-    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Plazen – Smart Daily Timetable & Task Scheduler",
+    title: "Plazen — Let your schedule build itself.",
     description:
-      "Plan your day visually, schedule tasks, and boost productivity with Plazen.",
-    images: ["https://plazen.org/favicon.ico"],
-    creator: "@plazen@fosstodon.org",
+      "Add flexible to-dos and Plazen automatically finds the best time in your day.",
+    images: ["/og-image.png"],
   },
-  metadataBase: new URL("https://plazen.org/"),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [{ url: "/favicon.ico" }],
+  },
 };
 
 export default function RootLayout({
