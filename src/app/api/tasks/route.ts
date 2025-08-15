@@ -25,30 +25,37 @@ export async function GET(request: Request) {
   const date = searchParams.get("date");
 
   try {
-    const whereClause: {
-      user_id: string;
-      scheduled_time?: { gte: Date; lt: Date };
-    } = {
-      user_id: session.user.id,
-    };
-
-    if (date) {
-      const startDate = new Date(date);
-      startDate.setUTCHours(0, 0, 0, 0);
-      const endDate = new Date(date);
-      endDate.setUTCHours(23, 59, 59, 999);
-      whereClause.scheduled_time = {
-        gte: startDate,
-        lt: endDate,
-      };
-    }
+    const rangeStart = new Date();
+    rangeStart.setDate(rangeStart.getDate() - 3);
+    rangeStart.setHours(0, 0, 0, 0);
+    const rangeEnd = new Date();
+    rangeEnd.setDate(rangeEnd.getDate() + 4);
+    rangeEnd.setHours(23, 59, 59, 999);
 
     const tasks = await prisma.tasks.findMany({
-      where: whereClause,
+      where: {
+        user_id: session.user.id,
+        scheduled_time: {
+          gte: rangeStart,
+          lt: rangeEnd,
+        },
+      },
       orderBy: { created_at: "asc" },
     });
 
-    const serializableTasks = tasks.map((task) => ({
+    let filteredTasks = tasks;
+    if (date) {
+      filteredTasks = tasks.filter((task) => {
+        if (!task.scheduled_time) return false;
+        const iso = (task.scheduled_time as Date)
+          .toISOString()
+          .replace(/\..*$/, "")
+          .replace("Z", "");
+        const [taskDate] = iso.split("T");
+        return taskDate === date;
+      });
+    }
+    const serializableTasks = filteredTasks.map((task) => ({
       ...task,
       id: task.id.toString(),
     }));
@@ -86,9 +93,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    let scheduledTime = body.scheduled_time
-      ? new Date(body.scheduled_time)
-      : null;
+    let scheduledTime = null;
+    if (body.scheduled_time) {
+      scheduledTime = new Date(body.scheduled_time);
+    }
 
     if (!body.is_time_sensitive) {
       const userSettings = await prisma.userSettings.findUnique({
@@ -100,14 +108,11 @@ export async function POST(request: Request) {
 
       const scheduleDay = new Date(body.for_date);
 
-      const timezoneOffsetMinutes = body.timezone_offset || 0;
-      const offsetInHours = -(timezoneOffsetMinutes / 60);
-
       const timetableStart = new Date(scheduleDay);
-      timetableStart.setUTCHours(timetableStartHour - offsetInHours, 0, 0, 0);
+      timetableStart.setHours(timetableStartHour, 0, 0, 0);
 
       const timetableEnd = new Date(scheduleDay);
-      timetableEnd.setUTCHours(timetableEndHour - offsetInHours, 0, 0, 0);
+      timetableEnd.setHours(timetableEndHour, 0, 0, 0);
 
       const existingTasks = await prisma.tasks.findMany({
         where: {
@@ -120,67 +125,211 @@ export async function POST(request: Request) {
         orderBy: { scheduled_time: "asc" },
       });
 
-      const occupiedSlots = existingTasks.map((task) => {
-        const start = new Date(task.scheduled_time!);
-        const end = new Date(
-          start.getTime() + (task.duration_minutes || 60) * 60000
-        );
-        return { start, end };
-      });
+      function parseLocalDateTimeArr(
+        str: string
+      ): [number, number, number, number, number, number] {
+        const [datePart, timePart] = str.split("T");
+        const [year, month, day] = datePart.split("-").map(Number);
+        const [hour, minute, second] = timePart.split(":").map(Number);
+        return [year, month, day, hour, minute, second];
+      }
+      function toMinutes(
+        arr: [number, number, number, number, number, number]
+      ): number {
+        return arr[3] * 60 + arr[4] + arr[5] / 60;
+      }
+      function compareDateTimeArr(
+        a: [number, number, number, number, number, number],
+        b: [number, number, number, number, number, number]
+      ): number {
+        for (let i = 0; i < a.length; i++) {
+          if (a[i] !== b[i]) return a[i] - b[i];
+        }
+        return 0;
+      }
 
-      const freeSlots: { start: Date; end: Date }[] = [];
-      let lastEventEnd = timetableStart;
+      const occupiedSlots: {
+        start: [number, number, number, number, number, number];
+        end: [number, number, number, number, number, number];
+      }[] = existingTasks
+        .filter((task) => task.scheduled_time)
+        .map((task) => {
+          // scheduled_time is a Date, convert to ISO string without Z and milliseconds
+          const iso = (task.scheduled_time as Date)
+            .toISOString()
+            .replace(/\..*$/, "")
+            .replace("Z", "");
+          const arr = parseLocalDateTimeArr(iso) as [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+          ];
+          const duration = task.duration_minutes || 60;
+          const endArr: [number, number, number, number, number, number] = [
+            ...arr,
+          ];
+          endArr[4] += duration; // add minutes
+          while (endArr[4] >= 60) {
+            endArr[3] += 1;
+            endArr[4] -= 60;
+          }
+          return { start: arr, end: endArr };
+        });
+
+      const freeSlots: {
+        start: [number, number, number, number, number, number];
+        end: [number, number, number, number, number, number];
+      }[] = [];
+      // timetableStart is a Date, convert to [y,m,d,h,m,s]
+      let lastEventEnd: [number, number, number, number, number, number] = [
+        timetableStart.getFullYear(),
+        timetableStart.getMonth() + 1,
+        timetableStart.getDate(),
+        timetableStart.getHours(),
+        timetableStart.getMinutes(),
+        timetableStart.getSeconds(),
+      ];
 
       if (body.is_for_today && body.user_current_time) {
-        const userCurrentTime = new Date(body.user_current_time);
-        if (userCurrentTime > timetableStart) {
-          lastEventEnd = userCurrentTime;
+        const userCurrentArr = parseLocalDateTimeArr(
+          body.user_current_time
+        ) as [number, number, number, number, number, number];
+        if (compareDateTimeArr(userCurrentArr, lastEventEnd) > 0) {
+          lastEventEnd = userCurrentArr;
         }
       }
 
       occupiedSlots.forEach((slot) => {
-        if (slot.start > lastEventEnd) {
+        if (compareDateTimeArr(slot.start, lastEventEnd) > 0) {
           freeSlots.push({ start: lastEventEnd, end: slot.start });
         }
-        lastEventEnd = new Date(
-          Math.max(lastEventEnd.getTime(), slot.end.getTime())
-        );
+        // max of lastEventEnd and slot.end
+        lastEventEnd =
+          compareDateTimeArr(lastEventEnd, slot.end) > 0
+            ? lastEventEnd
+            : slot.end;
       });
 
-      if (lastEventEnd < timetableEnd) {
-        freeSlots.push({ start: lastEventEnd, end: timetableEnd });
+      // timetableEnd is a Date, convert to [y,m,d,h,m,s]
+      const timetableEndArr: [number, number, number, number, number, number] =
+        [
+          timetableEnd.getFullYear(),
+          timetableEnd.getMonth() + 1,
+          timetableEnd.getDate(),
+          timetableEnd.getHours(),
+          timetableEnd.getMinutes(),
+          timetableEnd.getSeconds(),
+        ];
+      if (compareDateTimeArr(lastEventEnd, timetableEndArr) < 0) {
+        freeSlots.push({ start: lastEventEnd, end: timetableEndArr });
       }
 
       const taskDuration = body.duration_minutes || 60;
-      const availableSlots = freeSlots.filter(
+      let availableSlots = freeSlots.filter(
         (slot) =>
-          (slot.end.getTime() - slot.start.getTime()) / 60000 >= taskDuration
+          toMinutes(
+            slot.end as [number, number, number, number, number, number]
+          ) -
+            toMinutes(
+              slot.start as [number, number, number, number, number, number]
+            ) >=
+          taskDuration
       );
+      if (body.is_for_today && body.user_current_time) {
+        const nowArr = parseLocalDateTimeArr(body.user_current_time) as [
+          number,
+          number,
+          number,
+          number,
+          number,
+          number
+        ];
+        availableSlots = availableSlots.filter(
+          (slot) =>
+            compareDateTimeArr(
+              slot.end as [number, number, number, number, number, number],
+              nowArr
+            ) > 0
+        );
+      }
 
       if (availableSlots.length > 0) {
         const randomSlot =
           availableSlots[Math.floor(Math.random() * availableSlots.length)];
-        const maxStartTime = randomSlot.end.getTime() - taskDuration * 60000;
+        let minStart: [number, number, number, number, number, number] =
+          randomSlot.start as [number, number, number, number, number, number];
+        if (body.is_for_today && body.user_current_time) {
+          const nowArr = parseLocalDateTimeArr(body.user_current_time) as [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+          ];
+          if (compareDateTimeArr(nowArr, minStart) > 0) minStart = nowArr;
+        }
+        const maxStartMinutes =
+          toMinutes(
+            randomSlot.end as [number, number, number, number, number, number]
+          ) - taskDuration;
+        const minStartMinutes = toMinutes(minStart);
 
-        if (maxStartTime > randomSlot.start.getTime()) {
-          const randomStartTimeMillis =
-            randomSlot.start.getTime() +
-            Math.random() * (maxStartTime - randomSlot.start.getTime());
-
-          const randomDate = new Date(randomStartTimeMillis);
-          const minutes = randomDate.getMinutes();
-          const roundedMinutes = Math.round(minutes / 15) * 15;
-
-          randomDate.setSeconds(0, 0);
-          randomDate.setMinutes(roundedMinutes);
-
-          if (roundedMinutes >= 60) {
-            randomDate.setHours(randomDate.getHours() + 1, 0);
+        if (maxStartMinutes > minStartMinutes) {
+          // Generate all possible 15-min aligned start times in the slot
+          const possibleStarts: [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+          ][] = [];
+          for (
+            let mins = Math.ceil(minStartMinutes / 15) * 15;
+            mins <= maxStartMinutes;
+            mins += 15
+          ) {
+            const h = Math.floor(mins / 60);
+            const m = mins % 60;
+            const s = 0;
+            const startArr: [number, number, number, number, number, number] = [
+              ...minStart,
+            ];
+            startArr[3] = h;
+            startArr[4] = m;
+            startArr[5] = s;
+            // Check for overlap with occupiedSlots (strict interval intersection)
+            const startMins = mins;
+            const endMins = startMins + taskDuration;
+            let overlaps = false;
+            for (const occ of occupiedSlots) {
+              const occStartMins = toMinutes(occ.start);
+              const occEndMins = toMinutes(occ.end);
+              if (
+                (startMins < occEndMins && endMins > occStartMins) ||
+                startMins === occStartMins
+              ) {
+                overlaps = true;
+                break;
+              }
+            }
+            if (!overlaps) possibleStarts.push(startArr);
           }
-
-          const endTime = new Date(randomDate.getTime() + taskDuration * 60000);
-          if (endTime <= randomSlot.end) {
-            scheduledTime = randomDate;
+          if (possibleStarts.length > 0) {
+            const chosen =
+              possibleStarts[Math.floor(Math.random() * possibleStarts.length)];
+            scheduledTime = `${chosen[0]}-${String(chosen[1]).padStart(
+              2,
+              "0"
+            )}-${String(chosen[2]).padStart(2, "0")}T${String(
+              chosen[3]
+            ).padStart(2, "0")}:${String(chosen[4]).padStart(2, "0")}:${String(
+              chosen[5]
+            ).padStart(2, "0")}.000Z`;
           }
         }
       }

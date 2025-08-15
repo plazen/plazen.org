@@ -66,9 +66,14 @@ const Timetable: React.FC<TimetableProps> = ({
     });
 
   const eventsToDisplay = useMemo(() => {
+    function parseLocal(dateString: string) {
+      const clean = dateString.replace(/Z$/, "");
+      const noMs = clean.replace(/\.\d{3}$/, "");
+      return new Date(noMs);
+    }
     return tasks
       .filter((t) => t.scheduled_time)
-      .map((t) => ({ ...t, startTime: new Date(t.scheduled_time!) }));
+      .map((t) => ({ ...t, startTime: parseLocal(t.scheduled_time!) }));
   }, [tasks]);
 
   const menuOptions = menu.task
