@@ -217,8 +217,8 @@ export default function App() {
     const isForToday = date
       ? new Date().toDateString() === date.toDateString()
       : true;
-
     try {
+      console.log("user_current_time: ", new Date().toISOString());
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

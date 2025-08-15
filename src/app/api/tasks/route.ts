@@ -106,6 +106,11 @@ export async function POST(request: Request) {
       const timetableEnd = new Date(scheduleDay);
       timetableEnd.setUTCHours(timetableEndHour, 0, 0, 0);
 
+      const now = new Date();
+
+      const schedulingStart =
+        body.is_for_today && now > timetableStart ? now : timetableStart;
+
       const existingTasks = await prisma.tasks.findMany({
         where: {
           user_id: session.user.id,
@@ -126,16 +131,12 @@ export async function POST(request: Request) {
       });
 
       const freeSlots: { start: Date; end: Date }[] = [];
-      let lastEventEnd = timetableStart;
-
-      if (body.is_for_today) {
-        const now = new Date(body.user_current_time);
-        if (now > timetableStart) {
-          lastEventEnd = now;
-        }
-      }
+      let lastEventEnd = schedulingStart;
 
       occupiedSlots.forEach((slot) => {
+        if (slot.end < schedulingStart) {
+          return;
+        }
         if (slot.start > lastEventEnd) {
           freeSlots.push({ start: lastEventEnd, end: slot.start });
         }
