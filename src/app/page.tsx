@@ -217,8 +217,8 @@ export default function App() {
     const isForToday = date
       ? new Date().toDateString() === date.toDateString()
       : true;
+
     try {
-      console.log("user_current_time: ", new Date().toISOString());
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -230,8 +230,10 @@ export default function App() {
           user_current_time: new Date().toISOString(),
           for_date: toLocalISOString(date || new Date()),
           is_for_today: isForToday,
+          timezone_offset: new Date().getTimezoneOffset(),
         }),
       });
+      console.log(new Date().getTimezoneOffset(), new Date().toISOString());
       if (!response.ok) throw new Error("Failed to add task");
       const addedTask = await response.json();
       setTasks((prev) => [...prev, addedTask]);

@@ -100,16 +100,14 @@ export async function POST(request: Request) {
 
       const scheduleDay = new Date(body.for_date);
 
+      const timezoneOffsetMinutes = body.timezone_offset || 0;
+      const offsetInHours = -(timezoneOffsetMinutes / 60);
+
       const timetableStart = new Date(scheduleDay);
-      timetableStart.setUTCHours(timetableStartHour, 0, 0, 0);
+      timetableStart.setUTCHours(timetableStartHour - offsetInHours, 0, 0, 0);
 
       const timetableEnd = new Date(scheduleDay);
-      timetableEnd.setUTCHours(timetableEndHour, 0, 0, 0);
-
-      const now = new Date();
-
-      const schedulingStart =
-        body.is_for_today && now > timetableStart ? now : timetableStart;
+      timetableEnd.setUTCHours(timetableEndHour - offsetInHours, 0, 0, 0);
 
       const existingTasks = await prisma.tasks.findMany({
         where: {
@@ -131,12 +129,16 @@ export async function POST(request: Request) {
       });
 
       const freeSlots: { start: Date; end: Date }[] = [];
-      let lastEventEnd = schedulingStart;
+      let lastEventEnd = timetableStart;
+
+      if (body.is_for_today && body.user_current_time) {
+        const userCurrentTime = new Date(body.user_current_time);
+        if (userCurrentTime > timetableStart) {
+          lastEventEnd = userCurrentTime;
+        }
+      }
 
       occupiedSlots.forEach((slot) => {
-        if (slot.end < schedulingStart) {
-          return;
-        }
         if (slot.start > lastEventEnd) {
           freeSlots.push({ start: lastEventEnd, end: slot.start });
         }
