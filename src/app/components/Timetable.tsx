@@ -157,7 +157,9 @@ const Timetable: React.FC<TimetableProps> = ({
                   y: 0,
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute p-2 flex flex-col justify-start text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border overflow-hidden"
+                className={`absolute p-2 flex flex-col text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border overflow-hidden ${
+                  duration < 60 ? "justify-center" : "justify-start"
+                }`}
                 style={{
                   top: `${top}%`,
                   height: `${height}%`,
@@ -165,6 +167,7 @@ const Timetable: React.FC<TimetableProps> = ({
                   right: "0",
                   borderLeft: `3px solid ${baseColor}`,
                   background: gradientBg,
+                  marginTop: duration < 60 ? 0 : undefined,
                 }}
               >
                 <div>
@@ -175,9 +178,20 @@ const Timetable: React.FC<TimetableProps> = ({
                       duration >= 60
                         ? "text-sm"
                         : duration >= 30
-                        ? "text-xs"
-                        : "text-[10px] leading-tight"
-                    }`}
+                        ? "text-[10px] leading-tight" // 30m: smaller font
+                        : "text-[8px] leading-tight" // 15m: even smaller font
+                    } truncate`}
+                    style={{
+                      fontSize:
+                        duration >= 60
+                          ? undefined
+                          : duration >= 30
+                          ? `min(0.75rem, max(0.55rem, calc(1.1rem - 0.03rem * ${event.title.length})))`
+                          : `min(0.65rem, max(0.45rem, calc(0.9rem - 0.035rem * ${event.title.length})))`,
+                      lineHeight: duration < 60 ? 1.1 : undefined,
+                      wordBreak: "break-word",
+                      whiteSpace: "normal",
+                    }}
                   >
                     {event.title}
                     {duration >= 60 && (
