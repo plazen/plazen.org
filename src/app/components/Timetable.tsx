@@ -128,11 +128,11 @@ const Timetable: React.FC<TimetableProps> = ({
           {eventsToDisplay.map((event) => {
             const currentStartHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
-            const duration = (event.duration_minutes || 60) / 60;
+            const duration = event.duration_minutes || 60;
             const top = ((currentStartHour - startHour) / totalHours) * 100;
-            const height = (duration / totalHours) * 100;
+            const height = (duration / 60 / totalHours) * 100;
             const endTime = new Date(
-              event.startTime.getTime() + (event.duration_minutes || 60) * 60000
+              event.startTime.getTime() + duration * 60000
             );
             const isCompleted = event.is_completed;
             const baseColor = event.is_time_sensitive
@@ -157,27 +157,48 @@ const Timetable: React.FC<TimetableProps> = ({
                   y: 0,
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute p-2 flex flex-col justify-between text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border"
+                className={`absolute p-2 flex flex-col text-foreground cursor-pointer rounded-lg backdrop-blur-sm border border-border overflow-hidden ${
+                  duration < 60 ? "justify-center" : "justify-start"
+                }`}
                 style={{
                   top: `${top}%`,
-                  minHeight: "40px",
                   height: `${height}%`,
                   left: "0",
                   right: "0",
                   borderLeft: `3px solid ${baseColor}`,
                   background: gradientBg,
+                  marginTop: duration < 60 ? 0 : undefined,
                 }}
               >
                 <div>
                   <p
-                    className={`font-semibold text-sm ${
+                    className={`font-semibold ${
                       isCompleted ? "line-through" : ""
-                    }`}
+                    } ${
+                      duration >= 60
+                        ? "text-sm"
+                        : duration >= 30
+                        ? "text-[10px] leading-tight" // 30m: smaller font
+                        : "text-[8px] leading-tight" // 15m: even smaller font
+                    } truncate`}
+                    style={{
+                      fontSize:
+                        duration >= 60
+                          ? undefined
+                          : duration >= 30
+                          ? `min(0.75rem, max(0.55rem, calc(1.1rem - 0.03rem * ${event.title.length})))`
+                          : `min(0.65rem, max(0.45rem, calc(0.9rem - 0.035rem * ${event.title.length})))`,
+                      lineHeight: duration < 60 ? 1.1 : undefined,
+                      wordBreak: "break-word",
+                      whiteSpace: "normal",
+                    }}
                   >
-                    {event.title} &nbsp;
-                    <span className="text-xs opacity-70 font-mono">
-                      {formatTime(event.startTime)} – {formatTime(endTime)}
-                    </span>
+                    {event.title}
+                    {duration >= 60 && (
+                      <span className="opacity-70 font-mono ml-2 text-xs">
+                        {formatTime(event.startTime)} – {formatTime(endTime)}
+                      </span>
+                    )}
                   </p>
                 </div>
 

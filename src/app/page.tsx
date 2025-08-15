@@ -230,8 +230,10 @@ export default function App() {
           user_current_time: new Date().toISOString(),
           for_date: toLocalISOString(date || new Date()),
           is_for_today: isForToday,
+          timezone_offset: new Date().getTimezoneOffset(),
         }),
       });
+      console.log(new Date().getTimezoneOffset(), new Date().toISOString());
       if (!response.ok) throw new Error("Failed to add task");
       const addedTask = await response.json();
       setTasks((prev) => [...prev, addedTask]);
