@@ -398,7 +398,15 @@ export async function PATCH(request: Request) {
     }
 
     if (scheduled_time) {
-      dataToUpdate.scheduled_time = new Date(scheduled_time);
+      // Format as fake ISO string: YYYY-MM-DDTHH:mm:ss.000Z (do not shift time)
+      let iso = scheduled_time;
+      // If input is 'YYYY-MM-DDTHH:mm', add ':00.000Z'
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(iso)) {
+        iso = iso + ":00.000Z";
+      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(iso)) {
+        iso = iso + ".000Z";
+      }
+      dataToUpdate.scheduled_time = iso;
       dataToUpdate.is_time_sensitive = true;
     }
 

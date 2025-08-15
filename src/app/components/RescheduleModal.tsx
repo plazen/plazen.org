@@ -23,16 +23,15 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
 }) => {
   const formatForInput = (isoDate: string | null) => {
     if (!isoDate) return "";
-    const date = new Date(isoDate);
-    const localDate = new Date(date.getTime());
-    return localDate.toISOString().slice(0, 16);
+    return isoDate.replace(/:([0-9]{2})(\.[0-9]+)?(Z)?$/, ":$1");
   };
 
   const [newTime, setNewTime] = useState(formatForInput(task.scheduled_time));
 
   const handleSave = () => {
     if (newTime) {
-      onSave(task.id, new Date(newTime).toISOString());
+      onSave(task.id, newTime);
+      console.log(`Task ${task.id} rescheduled to ${newTime}`);
     }
   };
 
