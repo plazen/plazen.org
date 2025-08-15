@@ -233,7 +233,6 @@ export default function App() {
           timezone_offset: new Date().getTimezoneOffset(),
         }),
       });
-      console.log(new Date().getTimezoneOffset(), new Date().toISOString());
       if (!response.ok) throw new Error("Failed to add task");
       const addedTask = await response.json();
       setTasks((prev) => [...prev, addedTask]);

@@ -13,8 +13,63 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Plazen",
-  description: "A modern task management app",
+  metadataBase: new URL("https://plazen.org"),
+  title: {
+    default: "Plazen — Let your schedule build itself.",
+    template: "%s | Plazen",
+  },
+  description:
+    "Plazen is a modern, open-source task manager that intelligently plans your day for you.",
+  keywords: [
+    "Plazen",
+    "task manager",
+    "schedule",
+    "planner",
+    "to-do",
+    "productivity",
+    "time blocking",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "https://plazen.org",
+    siteName: "Plazen",
+    title: "Plazen — Let your schedule build itself.",
+    description:
+      "Add flexible to-dos and Plazen automatically finds the best time in your day.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Plazen app preview",
+      },
+    ],
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Plazen — Let your schedule build itself.",
+    description:
+      "Add flexible to-dos and Plazen automatically finds the best time in your day.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [{ url: "/favicon.ico" }],
+  },
 };
 
 export default function RootLayout({
