@@ -24,8 +24,7 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
   const formatForInput = (isoDate: string | null) => {
     if (!isoDate) return "";
     const date = new Date(isoDate);
-    const timezoneOffset = date.getTimezoneOffset() * 60000;
-    const localDate = new Date(date.getTime() - timezoneOffset);
+    const localDate = new Date(date.getTime());
     return localDate.toISOString().slice(0, 16);
   };
 

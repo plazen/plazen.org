@@ -193,30 +193,35 @@ export default function App() {
     }
   }, [date, fetchTasks, user]);
 
+  const toLocalISOString = (dateToFormat: Date) => {
+    const year = dateToFormat.getFullYear();
+    const month = (dateToFormat.getMonth() + 1).toString().padStart(2, "0");
+    const day = dateToFormat.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim() || isAddingTask) return;
     setIsAddingTask(true);
 
+    const isForToday = date
+      ? new Date().toDateString() === date.toDateString()
+      : true;
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const localTimeString = `${now.getFullYear()}-${pad(
+      now.getMonth() + 1
+    )}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(
+      now.getMinutes()
+    )}:${pad(now.getSeconds())}`;
     let finalScheduledTime = null;
-
     if (isTimeSensitive && scheduledTime && date) {
       const [hours, minutes] = scheduledTime.split(":").map(Number);
       const combinedDate = new Date(date);
       combinedDate.setHours(hours, minutes, 0, 0);
       finalScheduledTime = combinedDate.toISOString();
     }
-
-    const toLocalISOString = (dateToFormat: Date) => {
-      const year = dateToFormat.getFullYear();
-      const month = (dateToFormat.getMonth() + 1).toString().padStart(2, "0");
-      const day = dateToFormat.getDate().toString().padStart(2, "0");
-      return `${year}-${month}-${day}`;
-    };
-
-    const isForToday = date
-      ? new Date().toDateString() === date.toDateString()
-      : true;
 
     try {
       const response = await fetch("/api/tasks", {
@@ -227,7 +232,7 @@ export default function App() {
           is_time_sensitive: isTimeSensitive,
           duration_minutes: Number(duration),
           scheduled_time: finalScheduledTime,
-          user_current_time: new Date().toISOString(),
+          user_current_time: localTimeString,
           for_date: toLocalISOString(date || new Date()),
           is_for_today: isForToday,
           timezone_offset: new Date().getTimezoneOffset(),
