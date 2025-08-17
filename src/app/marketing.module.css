@@ -1,9 +1,13 @@
 /* Dark theme, class-only selectors */
 .theme {
   --bg: #0b0d10;
+  --app: #0b0d10;
+  --app-dim: #080a0c;
   --surface: #0f1217;
+  --surface-dim: #0d1014;
   --border: #1b2230;
   --text: #e6ebf5;
+  --subtle: #a7b1c4;
   --muted: #8b95a7;
   --brand: #7c5cff; /* violet */
   --brand-2: #12d3cf; /* cyan */
@@ -31,14 +35,32 @@
   scroll-behavior: smooth;
 }
 
+@media (max-width: 768px) {
+  .page {
+    scroll-snap-type: none;
+  }
+}
+
 .container {
   max-width: 1120px;
   margin-inline: auto;
   padding-inline: 20px;
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-inline: 12px;
+  }
+}
+
 .header {
-  padding-top: 20px;
+  padding-top: 16px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
@@ -54,11 +76,24 @@
   backdrop-filter: blur(8px);
 }
 
+@media (max-width: 768px) {
+  .header {
+    padding-top: 12px;
+    padding-bottom: 6px;
+  }
+}
+
 .topBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .topBar {
+    gap: 16px;
+  }
 }
 
 .brand {
@@ -82,19 +117,39 @@
 }
 
 .nav {
-  display: inline-flex;
-  gap: 14px;
+  display: flex;
   align-items: center;
+  gap: 32px;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    gap: 12px;
+  }
+
+  .navLink:not(.loginLink) {
+    display: none;
+  }
 }
 
 .navLink {
-  color: var(--muted);
+  text-decoration: none;
   font-size: 14px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  transition: color 0.15s ease, background-color 0.15s ease,
-    border-color 0.15s ease;
-  border: 1px solid transparent;
+  color: var(--subtle);
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .navLink {
+    font-size: 13px;
+  }
 }
 
 .navLink:hover {
@@ -130,25 +185,67 @@
 }
 
 .heroContent {
-  max-width: 800px;
+  text-align: center;
+  max-width: 700px;
   margin: 0 auto;
-  display: grid;
-  gap: 24px;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .heroContent {
+    max-width: 600px;
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroContent {
+    padding: 0 16px;
+  }
 }
 
 .heroTitle {
-  font-size: clamp(36px, 6vw, 64px);
-  line-height: 1.1;
+  font-size: 48px;
   font-weight: 700;
-  color: #ffffff;
-  margin: 0;
+  color: var(--text);
+  margin: 0 0 16px 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 36px;
+    margin: 0 0 12px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 28px;
+    line-height: 1.2;
+  }
 }
 
 .heroSubtitle {
-  color: #c7cfdd;
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.6;
-  margin: 0;
+  font-size: 18px;
+  color: var(--subtle);
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .heroSubtitle {
+    font-size: 16px;
+    margin: 0 0 24px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroSubtitle {
+    font-size: 15px;
+    line-height: 1.6;
+  }
 }
 
 .scrollIndicator {
@@ -206,10 +303,19 @@
 
 .ctaRow {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  gap: 16px;
+  margin: 0 0 24px 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .ctaRow {
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 0 20px 0;
+  }
 }
 
 .buttonPrimary {
@@ -224,6 +330,14 @@
   box-shadow: var(--shadow);
 }
 
+@media (max-width: 480px) {
+  .buttonPrimary {
+    padding: 12px 16px;
+    width: 100%;
+    min-width: 200px;
+  }
+}
+
 .buttonPrimaryLarge {
   display: inline-flex;
   align-items: center;
@@ -236,21 +350,44 @@
   box-shadow: var(--shadow);
 }
 
+@media (max-width: 480px) {
+  .buttonPrimaryLarge {
+    padding: 12px 20px;
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
 .buttonSecondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(27, 34, 48, 0.7);
-  color: #e6ebf5;
+  background: transparent;
+  color: var(--text);
+  font-weight: 500;
   border: 1px solid var(--border);
+}
+
+@media (max-width: 480px) {
+  .buttonSecondary {
+    padding: 12px 16px;
+    width: 100%;
+    min-width: 200px;
+  }
 }
 
 .trustNote {
   color: var(--muted);
   font-size: 13px;
   margin-top: 2px;
+}
+
+@media (max-width: 480px) {
+  .trustNote {
+    font-size: 12px;
+  }
 }
 
 .heroMedia {
@@ -276,19 +413,29 @@
   scroll-snap-stop: always;
 }
 
+@media (max-width: 768px) {
+  .section {
+    height: auto;
+    min-height: 100vh;
+    padding: 60px 0;
+  }
+}
+
 .sectionAlt {
   height: 100vh;
   display: flex;
   align-items: center;
-  background: linear-gradient(
-    180deg,
-    rgba(16, 22, 31, 0.7),
-    rgba(12, 16, 22, 0.7)
-  );
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface), var(--surface-dim));
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+@media (max-width: 768px) {
+  .sectionAlt {
+    height: auto;
+    min-height: 100vh;
+    padding: 60px 0;
+  }
 }
 
 .sectionTitle {
@@ -375,6 +522,8 @@
 @media (max-width: 600px) {
   .featureList {
     grid-template-columns: 1fr;
+    gap: 16px;
+    margin: 24px 0;
   }
 }
 
@@ -405,11 +554,25 @@
   margin-bottom: 8px;
 }
 
+@media (max-width: 480px) {
+  .featureIcon {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+}
+
 .featureName {
   font-weight: 700;
   font-size: 18px;
   color: #e9eef9;
   margin-bottom: 8px;
+}
+
+@media (max-width: 480px) {
+  .featureName {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
 }
 
 .featureDesc {
@@ -492,6 +655,13 @@
   margin-bottom: 10px;
 }
 
+@media (max-width: 480px) {
+  .faqItem {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+}
+
 .faqSummary {
   cursor: pointer;
   font-weight: 600;
@@ -518,6 +688,14 @@
   border-bottom: 1px solid var(--border);
   scroll-snap-align: start;
   scroll-snap-stop: always;
+}
+
+@media (max-width: 768px) {
+  .ctaSection {
+    height: auto;
+    min-height: 100vh;
+    padding: 60px 20px;
+  }
 }
 
 .ctaTitle {
