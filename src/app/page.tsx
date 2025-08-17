@@ -4,16 +4,19 @@ import React from "react";
 import Link from "next/link";
 import styles from "./marketing.module.css";
 import Image from "next/image";
+import Logo from "@/images/logo2.png";
 
-// Adjust these to match your auth and routes:
 const SESSION_COOKIE = "plazen_session";
 const SCHEDULE_PATH = "/schedule";
+
+const PlazenLogo = () => (
+  <Image src={Logo} alt="Plazen Logo" width={50} height={50} />
+);
 
 export default function Page() {
   return <Landing />;
 }
 
-// Client-only redirect component
 import dynamic from "next/dynamic";
 const ClientRedirect = dynamic(
   () =>
@@ -46,7 +49,7 @@ function Landing() {
           <div className={styles.container}>
             <div className={styles.topBar}>
               <div className={styles.brand}>
-                <span className={styles.brandMark} />
+                <PlazenLogo />
                 <span className={styles.brandText}>Plazen</span>
               </div>
               <nav className={styles.nav}>
@@ -69,10 +72,10 @@ function Landing() {
             </div>
           </div>
         </header>
-        <section className={styles.hero}>
-          <div className={styles.heroText}>
-            <h1 className={styles.title}>Your day, planned for you.</h1>
-            <p className={styles.subtitle}>
+        <section className={styles.heroFullscreen}>
+          <div className={styles.heroContent}>
+            <h1 className={styles.heroTitle}>Your day, planned for you.</h1>
+            <p className={styles.heroSubtitle}>
               Plazen turns tasks into time. Add flexible to‑dos, pin hard
               appointments, and let Plazen place everything into a realistic
               daily schedule—no dragging blocks or micromanaging.
@@ -81,7 +84,7 @@ function Landing() {
               <Link href="/login" className={styles.buttonPrimary}>
                 Get started — Log in
               </Link>
-              <a href="#how" className={styles.buttonSecondary}>
+              <a href="#features" className={styles.buttonSecondary}>
                 See how it works
               </a>
             </div>
@@ -90,23 +93,23 @@ function Landing() {
               creators, and focused teams.
             </p>
           </div>
-          <div className={styles.heroMedia}>
-            <Image
-              width={800}
-              height={600}
-              className={styles.heroImage}
-              src="/og-image.png"
-              alt="Plazen daily plan with tasks placed between calendar events"
-              loading="eager"
-            />
-            <Image
-              width={800}
-              height={600}
-              className={styles.mediaImage}
-              src="/images/mobile.png"
-              alt="Mobile view of Plazen with today's plan"
-              loading="lazy"
-            />
+          <div className={styles.scrollIndicator}>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={styles.arrowIcon}
+            >
+              <path
+                d="M7 10L12 15L17 10"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </section>
 
@@ -117,50 +120,49 @@ function Landing() {
             </h2>
             <ul className={styles.featureList}>
               <li className={styles.featureItem}>
+                <div className={styles.featureIcon}>🎯</div>
                 <span className={styles.featureName}>Focus mode</span>
                 <span className={styles.featureDesc}>
                   One task at a time with gentle, timely handoffs.
                 </span>
               </li>
               <li className={styles.featureItem}>
+                <div className={styles.featureIcon}>⏱️</div>
                 <span className={styles.featureName}>Smart durations</span>
                 <span className={styles.featureDesc}>
                   Learns how long tasks really take to improve future plans.
                 </span>
               </li>
               <li className={styles.featureItem}>
+                <div className={styles.featureIcon}>⚡</div>
                 <span className={styles.featureName}>Energy‑aware</span>
                 <span className={styles.featureDesc}>
-                  Schedule deep work when you’re sharp; save admin for later.
+                  Schedule deep work when you&apos;re sharp; save admin for
+                  later.
                 </span>
               </li>
               <li className={styles.featureItem}>
+                <div className={styles.featureIcon}>📅</div>
                 <span className={styles.featureName}>Calendar‑friendly</span>
                 <span className={styles.featureDesc}>
                   Respects your events so plans reflect reality.
                 </span>
               </li>
               <li className={styles.featureItem}>
+                <div className={styles.featureIcon}>🛡️</div>
                 <span className={styles.featureName}>Deadline protection</span>
                 <span className={styles.featureDesc}>
                   Prioritizes time‑sensitive items so nothing slips.
                 </span>
               </li>
               <li className={styles.featureItem}>
+                <div className={styles.featureIcon}>🔧</div>
                 <span className={styles.featureName}>Tweakable</span>
                 <span className={styles.featureDesc}>
                   Nudge a task; Plazen rebalances the rest intelligently.
                 </span>
               </li>
             </ul>
-            <Image
-              width={800}
-              height={600}
-              className={styles.integrationsImage}
-              src="/images/integrations.png"
-              alt="Integrations and calendar syncing"
-              loading="lazy"
-            />
           </div>
         </section>
 
@@ -282,7 +284,7 @@ function Landing() {
         </section>
 
         <section className={styles.ctaSection}>
-          <div className={styles.container}>
+          <div className={styles.ctaContent}>
             <h2 className={styles.ctaTitle}>Ready to reclaim your day?</h2>
             <p className={styles.ctaText}>
               Join people who plan less and accomplish more with Plazen.
@@ -297,23 +299,9 @@ function Landing() {
         <footer className={styles.footer}>
           <div className={`${styles.container} ${styles.footerInner}`}>
             <div className={styles.brand}>
-              <span className={styles.brandMark} />
+              <PlazenLogo />
               <span className={styles.brandText}>Plazen</span>
             </div>
-            <nav className={styles.footerNav}>
-              <a href="#features" className={styles.footerLink}>
-                Features
-              </a>
-              <a href="#how" className={styles.footerLink}>
-                How it works
-              </a>
-              <a href="#faq" className={styles.footerLink}>
-                FAQ
-              </a>
-              <Link href="/login" className={styles.footerLink}>
-                Log in
-              </Link>
-            </nav>
             <p className={styles.copyright}>
               © {new Date().getFullYear()} Plazen
             </p>

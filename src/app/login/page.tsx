@@ -42,7 +42,7 @@ export default function LoginPage() {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        router.push("/");
+        router.push("/schedule");
       }
       setSession(data.session);
     };
@@ -52,7 +52,7 @@ export default function LoginPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        router.push("/");
+        router.push("/schedule");
       }
       setSession(session);
     });
