@@ -56,9 +56,6 @@ function Landing() {
                 <a href="#features" className={styles.navLink}>
                   Features
                 </a>
-                <a href="#faq" className={styles.navLink}>
-                  FAQ
-                </a>
                 <Link
                   href="/login"
                   className={`${styles.navLink} ${styles.loginLink}`}
