@@ -6,8 +6,7 @@ import styles from "./marketing.module.css";
 import Image from "next/image";
 import Logo from "@/images/logo2.png";
 
-const SESSION_COOKIE = "plazen_session";
-const SCHEDULE_PATH = "/schedule";
+const REDIRECT_PATH = "/schedule";
 
 const PlazenLogo = () => (
   <Image src={Logo} alt="Plazen Logo" width={50} height={50} />
@@ -22,17 +21,15 @@ const ClientRedirect = dynamic(
   () =>
     Promise.resolve(function ClientRedirect() {
       React.useEffect(() => {
-        function getCookie(name: string) {
-          if (typeof document === "undefined") return null;
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${name}=`);
-          if (parts.length === 2)
-            return parts.pop()?.split(";").shift() || null;
-          return null;
+        function hasAuthCookie() {
+          if (typeof document === "undefined") return false;
+          return document.cookie
+            .split(";")
+            .some((cookie) => cookie.trim().includes("auth-token"));
         }
-        const token = getCookie(SESSION_COOKIE);
-        if (token) {
-          window.location.href = SCHEDULE_PATH;
+
+        if (hasAuthCookie()) {
+          window.location.href = REDIRECT_PATH;
         }
       }, []);
       return null;
