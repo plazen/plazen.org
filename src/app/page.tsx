@@ -53,9 +53,6 @@ function Landing() {
                 <span className={styles.brandText}>Plazen</span>
               </div>
               <nav className={styles.nav}>
-                <a href="#how" className={styles.navLink}>
-                  How it works
-                </a>
                 <a href="#features" className={styles.navLink}>
                   Features
                 </a>
@@ -128,9 +125,9 @@ function Landing() {
               </li>
               <li className={styles.featureItem}>
                 <div className={styles.featureIcon}>⏱️</div>
-                <span className={styles.featureName}>Smart durations</span>
+                <span className={styles.featureName}>Smart planning</span>
                 <span className={styles.featureDesc}>
-                  Learns how long tasks really take to improve future plans.
+                  Calculates perfect schedules based on your plans.
                 </span>
               </li>
               <li className={styles.featureItem}>
@@ -172,21 +169,21 @@ function Landing() {
             <div className={styles.testimonialGrid}>
               <figure className={styles.testimonial}>
                 <blockquote className={styles.testimonialQuote}>
-                  “I stopped spending 30 minutes every morning shuffling tasks.
-                  Plazen just handles it, so I actually start working.”
+                  I stopped spending 30 minutes every morning deciding when to
+                  do tasks. Plazen just handles it, so I actually start working.
                 </blockquote>
                 <figcaption className={styles.testimonialMeta}>
                   <Image
                     width={800}
                     height={600}
                     className={styles.testimonialAvatar}
-                    src="/images/testimonial-1.jpg"
-                    alt="Samira A."
+                    src="https://avatars.githubusercontent.com/u/175145001?v=4"
+                    alt="Drew S."
                   />
                   <div className={styles.testimonialIdentity}>
-                    <span className={styles.testimonialName}>Samira A.</span>
+                    <span className={styles.testimonialName}>Drew S.</span>
                     <span className={styles.testimonialRole}>
-                      Founder & Researcher
+                      Lead Developer
                     </span>
                   </div>
                 </figcaption>
@@ -194,21 +191,21 @@ function Landing() {
 
               <figure className={styles.testimonial}>
                 <blockquote className={styles.testimonialQuote}>
-                  “My days finally feel realistic. I finish more and worry less.
-                  It’s like a calm project manager in my pocket.”
+                  My day used to be a mess of tasks and meetings. Now I just
+                  focus on what&apos;s next.
                 </blockquote>
                 <figcaption className={styles.testimonialMeta}>
                   <Image
                     width={800}
                     height={600}
                     className={styles.testimonialAvatar}
-                    src="/images/testimonial-2.jpg"
-                    alt="Jon P."
+                    src="https://i.pinimg.com/236x/b2/ea/a0/b2eaa0d4918d54021f9c7aa3fc3d3cf3.jpg"
+                    alt="Preston P."
                   />
                   <div className={styles.testimonialIdentity}>
-                    <span className={styles.testimonialName}>Jon P.</span>
+                    <span className={styles.testimonialName}>Preston P.</span>
                     <span className={styles.testimonialRole}>
-                      Product Designer
+                      Software Engineer
                     </span>
                   </div>
                 </figcaption>
@@ -216,70 +213,26 @@ function Landing() {
 
               <figure className={styles.testimonial}>
                 <blockquote className={styles.testimonialQuote}>
-                  “Pin the must‑dos, let Plazen place the rest. It’s the first
-                  task manager that respects my time.”
+                  It was hard for me to plan my day outside of classes. Now I
+                  can focus on studying and let Plazen plan the rest.
                 </blockquote>
                 <figcaption className={styles.testimonialMeta}>
                   <Image
                     width={800}
                     height={600}
                     className={styles.testimonialAvatar}
-                    src="/images/testimonial-3.jpg"
+                    src="https://i.pinimg.com/236x/06/f4/e2/06f4e292a4dbe804107c6bf6f6616bda.jpg"
                     alt="Nina C."
                   />
                   <div className={styles.testimonialIdentity}>
-                    <span className={styles.testimonialName}>Nina C.</span>
-                    <span className={styles.testimonialRole}>Grad Student</span>
+                    <span className={styles.testimonialName}>Priya</span>
+                    <span className={styles.testimonialRole}>
+                      Medical Student
+                    </span>
                   </div>
                 </figcaption>
               </figure>
             </div>
-          </div>
-        </section>
-
-        <section id="faq" className={styles.sectionAlt}>
-          <div className={styles.container}>
-            <h2 className={styles.sectionTitle}>Frequently asked questions</h2>
-
-            <details className={styles.faqItem}>
-              <summary className={styles.faqSummary}>
-                How is Plazen different from a normal to‑do app?
-              </summary>
-              <p className={styles.faqText}>
-                Most to‑do apps collect tasks. Plazen turns tasks into time. It
-                plans your day automatically, balancing fixed events with
-                flexible work so you don’t have to micromanage your schedule.
-              </p>
-            </details>
-
-            <details className={styles.faqItem}>
-              <summary className={styles.faqSummary}>
-                Can I still drag and drop tasks?
-              </summary>
-              <p className={styles.faqText}>
-                Yes. You can nudge and reorder. Plazen will reflow everything
-                else intelligently, preserving your anchors.
-              </p>
-            </details>
-
-            <details className={styles.faqItem}>
-              <summary className={styles.faqSummary}>
-                Does it work with my calendar?
-              </summary>
-              <p className={styles.faqText}>
-                Plazen respects your calendar events and can sync with popular
-                providers so your schedule stays true to life.
-              </p>
-            </details>
-
-            <details className={styles.faqItem}>
-              <summary className={styles.faqSummary}>
-                Is there a free plan?
-              </summary>
-              <p className={styles.faqText}>
-                Yes. Get started for free and upgrade if you need more power.
-              </p>
-            </details>
           </div>
         </section>
 
