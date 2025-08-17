@@ -327,9 +327,7 @@
   background: rgba(18, 211, 207, 0.9);
   color: rgba(7, 16, 20, 0.95);
   font-weight: 700;
-  box-shadow: 
-    0 4px 16px rgba(18, 211, 207, 0.25),
-    0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 16px rgba(18, 211, 207, 0.25), 0 1px 4px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(18, 211, 207, 0.3);
   transition: all 0.2s ease;
   text-decoration: none;
@@ -338,9 +336,7 @@
 .buttonPrimary:hover {
   background: rgba(18, 211, 207, 1);
   transform: translateY(-1px);
-  box-shadow: 
-    0 6px 20px rgba(18, 211, 207, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 20px rgba(18, 211, 207, 0.3), 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 480px) {
@@ -361,9 +357,7 @@
   color: rgba(7, 16, 20, 0.95);
   font-weight: 700;
   font-size: 16px;
-  box-shadow: 
-    0 6px 20px rgba(18, 211, 207, 0.25),
-    0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 20px rgba(18, 211, 207, 0.25), 0 2px 8px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(18, 211, 207, 0.3);
   transition: all 0.2s ease;
   text-decoration: none;
@@ -373,9 +367,7 @@
 .buttonPrimaryLarge:hover {
   background: rgba(18, 211, 207, 1);
   transform: translateY(-1px);
-  box-shadow: 
-    0 8px 28px rgba(18, 211, 207, 0.3),
-    0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 28px rgba(18, 211, 207, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 480px) {
@@ -710,8 +702,11 @@
 }
 
 .ctaSection {
-  background: 
-    radial-gradient(circle at 50% 30%, rgba(18, 211, 207, 0.08) 0%, transparent 60%),
+  background: radial-gradient(
+      circle at 50% 30%,
+      rgba(18, 211, 207, 0.08) 0%,
+      transparent 60%
+    ),
     linear-gradient(180deg, rgba(11, 13, 16, 0.95), rgba(15, 18, 23, 0.98));
   height: 100vh;
   display: flex;
@@ -726,14 +721,17 @@
 }
 
 .ctaSection::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
-    radial-gradient(800px 400px at 50% 20%, rgba(18, 211, 207, 0.04), transparent);
+  background: radial-gradient(
+    800px 400px at 50% 20%,
+    rgba(18, 211, 207, 0.04),
+    transparent
+  );
   pointer-events: none;
 }
 
@@ -778,9 +776,7 @@
   border: 1px solid rgba(27, 34, 48, 0.8);
   border-radius: 20px;
   backdrop-filter: blur(12px);
-  box-shadow: 
-    0 16px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(18, 211, 207, 0.1),
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(18, 211, 207, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
   position: relative;
   z-index: 1;
