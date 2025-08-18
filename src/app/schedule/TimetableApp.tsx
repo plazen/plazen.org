@@ -215,12 +215,29 @@ export default function TimetableApp() {
   const handleOpenRescheduleModal = (task: Task) => setReschedulingTask(task);
   const handleCloseRescheduleModal = () => setReschedulingTask(null);
 
-  const handleUpdateTaskTime = async (taskId: string, newTime: string) => {
+  const handleUpdateTaskTime = async (
+    taskId: string,
+    newTime: string,
+    newTitle?: string
+  ) => {
     try {
+      const requestBody: {
+        id: string;
+        scheduled_time: string;
+        title?: string;
+      } = {
+        id: taskId,
+        scheduled_time: newTime,
+      };
+
+      if (newTitle) {
+        requestBody.title = newTitle;
+      }
+
       const response = await fetch("/api/tasks", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: taskId, scheduled_time: newTime }),
+        body: JSON.stringify(requestBody),
       });
       if (!response.ok) throw new Error("Failed to reschedule task");
       const updatedTask = await response.json();
