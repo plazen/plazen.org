@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "../components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Logo from "@/images/logo2.png";
 import {
   User as UserIcon,
@@ -75,6 +75,7 @@ export default function AccountPage() {
       setLoading(false);
     };
     getUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, supabase.auth]);
 
   const calculateWeeklyStreak = (

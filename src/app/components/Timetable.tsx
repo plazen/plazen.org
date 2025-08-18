@@ -81,13 +81,6 @@ const Timetable: React.FC<TimetableProps> = ({
       ]
     : [];
 
-  const formattedDate = date.toLocaleDateString(undefined, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   const isToday = new Date().toDateString() === date.toDateString();
 
   return (
