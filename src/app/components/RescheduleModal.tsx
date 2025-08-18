@@ -97,13 +97,6 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
     }
   };
 
-  const setNow = () => {
-    const now = new Date();
-    setSelectedDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
-    setSelectedHour(now.getHours());
-    setSelectedMinute(now.getMinutes());
-  };
-
   return (
     <AnimatePresence>
       <motion.div
