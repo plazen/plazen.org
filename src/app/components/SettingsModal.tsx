@@ -3,11 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
+import { useTheme } from "@/components/theme-provider";
+import { themes, Theme } from "@/lib/theme";
 
 type Settings = {
   timetable_start: number;
   timetable_end: number;
   show_time_needle: boolean;
+  theme: string;
 };
 
 type SettingsModalProps = {
@@ -22,6 +25,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onSave,
 }) => {
   const [settings, setSettings] = useState(currentSettings);
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     setSettings(currentSettings);
@@ -29,6 +33,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSave = () => {
     onSave(settings);
+    // Update the theme context when saving
+    setTheme(settings.theme as Theme);
   };
 
   const handleToggle = () => {
@@ -130,6 +136,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   }`}
                 />
               </button>
+            </div>
+            <div>
+              <label
+                htmlFor="theme"
+                className="block text-sm font-medium text-muted-foreground"
+              >
+                Theme
+              </label>
+              <select
+                id="theme"
+                value={settings.theme}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    theme: e.target.value,
+                  })
+                }
+                className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              >
+                {Object.values(themes).map((theme) => (
+                  <option key={theme.value} value={theme.value}>
+                    {theme.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="mt-6 flex justify-end space-x-3">

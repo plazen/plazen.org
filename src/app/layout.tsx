@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -85,25 +86,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <link rel="me" href="https://fosstodon.org/@plazen" />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider defaultTheme="dark" storageKey="plazen-theme">
+          {children}
 
-        <footer>
-          <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Plazen. Protected under the{" "}
-            <a
-              className="underline underline-offset-3"
-              href="https://github.com/plazen/plazen.org/blob/main/LICENSE"
-            >
-              MIT license
-            </a>
-            .
-          </p>
-        </footer>
+          <footer>
+            <p className="text-center text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} Plazen. Protected under the{" "}
+              <a
+                className="underline underline-offset-3"
+                href="https://github.com/plazen/plazen.org/blob/main/LICENSE"
+              >
+                MIT license
+              </a>
+              .
+            </p>
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );

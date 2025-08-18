@@ -32,6 +32,7 @@ export async function GET() {
           timetable_start: 8,
           timetable_end: 18,
           show_time_needle: true,
+          theme: "dark",
           created_at: new Date(),
           updated_at: new Date(),
         },
@@ -65,7 +66,7 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { timetable_start, timetable_end, show_time_needle } = body;
+    const { timetable_start, timetable_end, show_time_needle, theme } = body;
 
     const updatedSettings = await prisma.userSettings.update({
       where: { user_id: session.user.id },
@@ -73,6 +74,8 @@ export async function PATCH(request: Request) {
         timetable_start,
         timetable_end,
         show_time_needle,
+        theme,
+        updated_at: new Date(),
       },
     });
 
