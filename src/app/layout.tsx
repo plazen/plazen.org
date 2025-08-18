@@ -73,7 +73,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: [{ url: "/favicon.ico" }],
+    icon: [
+      { url: "https://avatars.githubusercontent.com/u/226096442?s=200&v=4" },
+    ],
   },
 };
 
