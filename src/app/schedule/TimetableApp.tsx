@@ -4,12 +4,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import Timetable from "@/app/components/Timetable";
 import RescheduleModal from "@/app/components/RescheduleModal";
 import SettingsModal from "@/app/components/SettingsModal";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
+import TimetableSkeleton from "@/app/components/TimetableSkeleton";
 import { Calendar } from "@/app/components/ui/calendar";
 import { Button } from "@/app/components/ui/button";
 import { Slider } from "@/app/components/ui/slider";
 import { PlusIcon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
+import { motion, AnimatePresence } from "framer-motion";
 
 const durationSteps = [
   15, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360,
@@ -145,7 +148,13 @@ export default function TimetableApp() {
       const [hours, minutes] = scheduledTime.split(":").map(Number);
       const combinedDate = new Date(date);
       combinedDate.setHours(hours, minutes, 0, 0);
-      finalScheduledTime = combinedDate.toISOString();
+      const year = combinedDate.getFullYear();
+      const month = (combinedDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = combinedDate.getDate().toString().padStart(2, "0");
+      const hour = combinedDate.getHours().toString().padStart(2, "0");
+      const minute = combinedDate.getMinutes().toString().padStart(2, "0");
+      const second = combinedDate.getSeconds().toString().padStart(2, "0");
+      finalScheduledTime = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
     }
 
     try {
@@ -254,7 +263,11 @@ export default function TimetableApp() {
   if (loading || !settings) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
-        Loading...
+        <LoadingSpinner
+          size="lg"
+          text="Loading your workspace..."
+          variant="dots"
+        />
       </div>
     );
   }
@@ -294,7 +307,12 @@ export default function TimetableApp() {
           </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg-col-span-1 space-y-8">
+          <motion.div
+            className="lg-col-span-1 space-y-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
             <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
               <h2 className="text-lg font-medium mb-4">Add a New Task</h2>
               <form onSubmit={handleAddTask} className="space-y-4">
@@ -375,16 +393,41 @@ export default function TimetableApp() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isAddingTask}
+                  disabled={isAddingTask || !newTaskTitle.trim()}
                 >
-                  {isAddingTask ? (
-                    "Adding..."
-                  ) : (
-                    <>
-                      <PlusIcon className="mr-2" />
-                      Add to Schedule
-                    </>
-                  )}
+                  <AnimatePresence mode="wait">
+                    {isAddingTask ? (
+                      <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                      >
+                        <motion.div
+                          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        />
+                        Adding task...
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="add"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2"
+                      >
+                        <PlusIcon className="w-4 h-4" />
+                        Add to Schedule
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </Button>
               </form>
             </div>
@@ -396,19 +439,30 @@ export default function TimetableApp() {
                 className="p-4 w-full"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-2">
-            <Timetable
-              tasks={tasks}
-              settings={settings}
-              date={date || new Date()}
-              tasksLoading={tasksLoading}
-              onToggleDone={handleToggleDone}
-              onDeleteTask={handleDeleteTask}
-              onReschedule={handleOpenRescheduleModal}
-            />
-          </div>
+          <motion.div
+            className="lg:col-span-2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+          >
+            {tasksLoading ? (
+              <TimetableSkeleton
+                startHour={settings.timetable_start}
+                endHour={settings.timetable_end}
+              />
+            ) : (
+              <Timetable
+                tasks={tasks}
+                settings={settings}
+                date={date || new Date()}
+                onToggleDone={handleToggleDone}
+                onDeleteTask={handleDeleteTask}
+                onReschedule={handleOpenRescheduleModal}
+              />
+            )}
+          </motion.div>
         </div>
       </main>
 
