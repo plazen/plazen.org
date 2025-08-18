@@ -95,7 +95,15 @@ export async function POST(request: Request) {
 
     let scheduledTime = null;
     if (body.scheduled_time) {
-      scheduledTime = new Date(body.scheduled_time);
+      // Keep as string and format as fake ISO to prevent timezone conversion
+      let iso = body.scheduled_time;
+      // If input is 'YYYY-MM-DDTHH:mm:ss', add '.000Z'
+      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(iso)) {
+        iso = iso + ".000Z";
+      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(iso)) {
+        iso = iso + ":00.000Z";
+      }
+      scheduledTime = iso;
     }
 
     if (!body.is_time_sensitive) {
@@ -192,7 +200,6 @@ export async function POST(request: Request) {
         timetableStart.getMinutes(),
         timetableStart.getSeconds(),
       ];
-
       if (body.is_for_today && body.user_current_time) {
         const userCurrentArr = parseLocalDateTimeArr(
           body.user_current_time

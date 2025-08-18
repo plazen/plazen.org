@@ -148,7 +148,13 @@ export default function TimetableApp() {
       const [hours, minutes] = scheduledTime.split(":").map(Number);
       const combinedDate = new Date(date);
       combinedDate.setHours(hours, minutes, 0, 0);
-      finalScheduledTime = combinedDate.toISOString();
+      const year = combinedDate.getFullYear();
+      const month = (combinedDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = combinedDate.getDate().toString().padStart(2, "0");
+      const hour = combinedDate.getHours().toString().padStart(2, "0");
+      const minute = combinedDate.getMinutes().toString().padStart(2, "0");
+      const second = combinedDate.getSeconds().toString().padStart(2, "0");
+      finalScheduledTime = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
     }
 
     try {
