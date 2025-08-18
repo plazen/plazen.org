@@ -4,31 +4,20 @@ import React, { useState, useEffect, useCallback } from "react";
 import Timetable from "@/app/components/Timetable";
 import RescheduleModal from "@/app/components/RescheduleModal";
 import SettingsModal from "@/app/components/SettingsModal";
+import AddTaskModal from "@/app/components/AddTaskModal";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import TimetableSkeleton from "@/app/components/TimetableSkeleton";
 import { Calendar } from "@/app/components/ui/calendar";
 import { Button } from "@/app/components/ui/button";
-import { Slider } from "@/app/components/ui/slider";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Settings, User2Icon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
-import { motion, AnimatePresence } from "framer-motion";
-
-const durationSteps = [
-  15, 30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360,
-];
-
-const formatDuration = (minutes: number) => {
-  if (minutes < 60) {
-    return `${minutes} minutes`;
-  }
-  const hours = minutes / 60;
-  return `${hours} hour${hours > 1 ? "s" : ""}`;
-};
+import { motion } from "framer-motion";
 
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   type Task = {
     id: string;
     title: string;
@@ -49,12 +38,7 @@ export default function TimetableApp() {
   const [tasksLoading, setTasksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [isTimeSensitive, setIsTimeSensitive] = useState(false);
-  const [duration, setDuration] = useState(30);
-  const [scheduledTime, setScheduledTime] = useState("");
   const [isAddingTask, setIsAddingTask] = useState(false);
-
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -128,9 +112,13 @@ export default function TimetableApp() {
     return `${year}-${month}-${day}`;
   };
 
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim() || isAddingTask) return;
+  const handleAddTask = async (taskData: {
+    title: string;
+    isTimeSensitive: boolean;
+    duration: number;
+    scheduledTime: string;
+  }) => {
+    if (isAddingTask) return;
     setIsAddingTask(true);
 
     const isForToday = date
@@ -144,8 +132,8 @@ export default function TimetableApp() {
       now.getMinutes()
     )}:${pad(now.getSeconds())}`;
     let finalScheduledTime = null;
-    if (isTimeSensitive && scheduledTime && date) {
-      const [hours, minutes] = scheduledTime.split(":").map(Number);
+    if (taskData.isTimeSensitive && taskData.scheduledTime && date) {
+      const [hours, minutes] = taskData.scheduledTime.split(":").map(Number);
       const combinedDate = new Date(date);
       combinedDate.setHours(hours, minutes, 0, 0);
       const year = combinedDate.getFullYear();
@@ -162,9 +150,9 @@ export default function TimetableApp() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: newTaskTitle,
-          is_time_sensitive: isTimeSensitive,
-          duration_minutes: Number(duration),
+          title: taskData.title,
+          is_time_sensitive: taskData.isTimeSensitive,
+          duration_minutes: Number(taskData.duration),
           scheduled_time: finalScheduledTime,
           user_current_time: localTimeString,
           for_date: toLocalISOString(date || new Date()),
@@ -175,10 +163,7 @@ export default function TimetableApp() {
       if (!response.ok) throw new Error("Failed to add task");
       const addedTask = await response.json();
       setTasks((prev) => [...prev, addedTask]);
-      setNewTaskTitle("");
-      setIsTimeSensitive(false);
-      setDuration(30);
-      setScheduledTime("");
+      setIsAddTaskModalOpen(false);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
@@ -274,26 +259,39 @@ export default function TimetableApp() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-      <header className="border-b border-border">
+      <header className="border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-40">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
               <span className="text-xl font-semibold">Plazen</span>
+              <span className="text-sm text-muted-foreground">
+                {date?.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsSettingsOpen(true)}
+                className="h-9 w-9"
               >
-                <span>⚙️</span>
+                <span>
+                  <Settings />
+                </span>
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => (window.location.href = "/account")}
+                className="h-9 w-9"
               >
-                <span>👤</span>
+                <span>
+                  <User2Icon />
+                </span>
               </Button>
             </div>
           </div>
@@ -302,136 +300,24 @@ export default function TimetableApp() {
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div className="bg-destructive/20 border border-destructive text-destructive-foreground rounded-md p-4 mb-6">
-            {error}
-          </div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <motion.div
-            className="lg-col-span-1 space-y-8"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-destructive/20 border border-destructive text-destructive-foreground rounded-lg p-4 mb-6"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Calendar Sidebar */}
+          <motion.div
+            className="lg:w-80 flex-shrink-0"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <div className="bg-card rounded-lg shadow-lg p-6 border border-border">
-              <h2 className="text-lg font-medium mb-4">Add a New Task</h2>
-              <form onSubmit={handleAddTask} className="space-y-4">
-                <div>
-                  <label htmlFor="task-title" className="sr-only">
-                    Task Title
-                  </label>
-                  <input
-                    type="text"
-                    id="task-title"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                    placeholder="e.g., Water the plants"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Time Sensitive?
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsTimeSensitive(!isTimeSensitive)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      isTimeSensitive ? "bg-primary" : "bg-gray-600"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        isTimeSensitive ? "translate-x-5" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {isTimeSensitive && (
-                  <div>
-                    <label
-                      htmlFor="scheduled-time"
-                      className="block text-sm font-medium text-muted-foreground mb-1"
-                    >
-                      Start Time
-                    </label>
-                    <input
-                      type="time"
-                      id="scheduled-time"
-                      value={scheduledTime}
-                      onChange={(e) => setScheduledTime(e.target.value)}
-                      className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label
-                      htmlFor="duration"
-                      className="text-sm font-medium text-muted-foreground"
-                    >
-                      Duration
-                    </label>
-                    <span className="text-sm font-semibold text-foreground">
-                      {formatDuration(duration)}
-                    </span>
-                  </div>
-                  <Slider
-                    id="duration"
-                    min={0}
-                    max={durationSteps.length - 1}
-                    step={1}
-                    value={[durationSteps.indexOf(duration)]}
-                    onValueChange={(value) =>
-                      setDuration(durationSteps[value[0]])
-                    }
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isAddingTask || !newTaskTitle.trim()}
-                >
-                  <AnimatePresence mode="wait">
-                    {isAddingTask ? (
-                      <motion.div
-                        key="loading"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-2"
-                      >
-                        <motion.div
-                          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        />
-                        Adding task...
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="add"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center gap-2"
-                      >
-                        <PlusIcon className="w-4 h-4" />
-                        Add to Schedule
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Button>
-              </form>
-            </div>
-            <div className="bg-card rounded-lg shadow-lg border border-border">
+            <div className="bg-card rounded-xl shadow-lg border border-border overflow-hidden">
               <Calendar
                 mode="single"
                 selected={date}
@@ -441,8 +327,9 @@ export default function TimetableApp() {
             </div>
           </motion.div>
 
+          {/* Main Timetable */}
           <motion.div
-            className="lg:col-span-2"
+            className="flex-1 min-w-0"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
@@ -464,7 +351,31 @@ export default function TimetableApp() {
             )}
           </motion.div>
         </div>
+
+        {/* Floating Action Button */}
+        <motion.div
+          className="fixed bottom-6 right-6 z-50"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", delay: 0.5 }}
+        >
+          <Button
+            onClick={() => setIsAddTaskModalOpen(true)}
+            size="lg"
+            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary hover:bg-primary/90"
+          >
+            <PlusIcon className="h-6 w-6" />
+          </Button>
+        </motion.div>
       </main>
+
+      {/* Modals */}
+      <AddTaskModal
+        isOpen={isAddTaskModalOpen}
+        onClose={() => setIsAddTaskModalOpen(false)}
+        onSubmit={handleAddTask}
+        isLoading={isAddingTask}
+      />
 
       {reschedulingTask && (
         <RescheduleModal
@@ -473,6 +384,7 @@ export default function TimetableApp() {
           onSave={handleUpdateTaskTime}
         />
       )}
+
       {isSettingsOpen && (
         <SettingsModal
           currentSettings={settings}

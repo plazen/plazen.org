@@ -93,9 +93,6 @@ const Timetable: React.FC<TimetableProps> = ({
   return (
     <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
-      <h2 className="text-xl font-bold mb-6 text-foreground tracking-wider">
-        {formattedDate}
-      </h2>
       <div className="relative h-[800px] overflow-y-auto pr-2">
         <div className="absolute top-0 bottom-0 w-16 text-right text-muted-foreground">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
