@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContextMenu from "./ContextMenu";
 import TimeNeedle from "./TimeNeedle";
+import { Calendar, Trash2 } from "lucide-react";
 
 type Task = {
   id: string;
@@ -76,8 +77,17 @@ const Timetable: React.FC<TimetableProps> = ({
 
   const menuOptions = menu.task
     ? [
-        { label: "Delete", onClick: () => onDeleteTask(menu.task!.id) },
-        { label: "Reschedule", onClick: () => onReschedule(menu.task!) },
+        {
+          label: "Reschedule",
+          onClick: () => onReschedule(menu.task!),
+          icon: <Calendar className="w-4 h-4" />,
+        },
+        {
+          label: "Delete",
+          onClick: () => onDeleteTask(menu.task!.id),
+          variant: "destructive" as const,
+          icon: <Trash2 className="w-4 h-4" />,
+        },
       ]
     : [];
 

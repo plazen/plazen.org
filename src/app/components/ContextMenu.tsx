@@ -2,10 +2,13 @@
 
 import React, { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { Trash2 } from "lucide-react";
 
 type MenuOption = {
   label: string;
   onClick: () => void;
+  variant?: "default" | "destructive";
+  icon?: React.ReactNode;
 };
 
 type ContextMenuProps = {
@@ -35,30 +38,68 @@ const ContextMenu: React.FC<ContextMenuProps> = ({
     };
   }, [onClose]);
 
+  // Separate destructive options (like delete) from regular options
+  const regularOptions = options.filter(
+    (option) => option.variant !== "destructive"
+  );
+  const destructiveOptions = options.filter(
+    (option) => option.variant === "destructive"
+  );
+
   return (
     <motion.div
       ref={menuRef}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.1 }}
-      className="fixed z-10 w-48 bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
+      className="fixed z-50 min-w-48 bg-card border border-border rounded-lg shadow-xl backdrop-blur-sm overflow-hidden"
       style={{ top: y, left: x }}
     >
-      <div className="py-1">
-        {options.map((option) => (
-          <button
-            key={option.label}
-            onClick={() => {
-              option.onClick();
-              onClose();
-            }}
-            className="w-full text-left block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 hover:text-white"
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
+      {/* Regular options */}
+      {regularOptions.length > 0 && (
+        <div className="py-1">
+          {regularOptions.map((option, index) => (
+            <button
+              key={`regular-${index}`}
+              onClick={() => {
+                option.onClick();
+                onClose();
+              }}
+              className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors duration-150 focus:outline-none focus:bg-muted/70"
+            >
+              {option.icon && (
+                <span className="text-muted-foreground">{option.icon}</span>
+              )}
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Separator if we have both regular and destructive options */}
+      {regularOptions.length > 0 && destructiveOptions.length > 0 && (
+        <div className="border-t border-border"></div>
+      )}
+
+      {/* Destructive options */}
+      {destructiveOptions.length > 0 && (
+        <div className="py-1">
+          {destructiveOptions.map((option, index) => (
+            <button
+              key={`destructive-${index}`}
+              onClick={() => {
+                option.onClick();
+                onClose();
+              }}
+              className="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors duration-150 focus:outline-none focus:bg-destructive/20"
+            >
+              {option.icon || <Trash2 className="w-4 h-4" />}
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };

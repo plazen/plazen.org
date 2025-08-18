@@ -89,6 +89,19 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+
+        <footer>
+          <p className="text-center text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} Plazen. Protected under the{" "}
+            <a
+              className="underline underline-offset-3"
+              href="https://github.com/plazen/plazen.org/blob/main/LICENSE"
+            >
+              MIT license
+            </a>
+            .
+          </p>
+        </footer>
       </body>
     </html>
   );
