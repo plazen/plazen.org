@@ -13,17 +13,15 @@ import { PlusIcon, Settings, User2Icon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
 import { motion } from "framer-motion";
-import Logo from "@/images/logo2.png";
-import Image from "next/image";
-
-const PlazenLogo = () => {
-  return <Image src={Logo} alt="Plazen Logo" width={70} height={70} priority />;
-};
+import { useTheme } from "@/components/theme-provider";
+import { Theme } from "@/lib/theme";
+import { PlazenLogo } from "@/components/plazen-logo";
 
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const { setTheme } = useTheme();
   type Task = {
     id: string;
     title: string;
@@ -36,6 +34,7 @@ export default function TimetableApp() {
     timetable_start: number;
     timetable_end: number;
     show_time_needle: boolean;
+    theme: string;
   };
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -94,6 +93,11 @@ export default function TimetableApp() {
         }
         const fetchedSettings = await settingsResponse.json();
         setSettings(fetchedSettings);
+
+        // Sync theme with the settings
+        if (fetchedSettings.theme) {
+          setTheme(fetchedSettings.theme as Theme);
+        }
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "An unknown error occurred"
@@ -215,12 +219,29 @@ export default function TimetableApp() {
   const handleOpenRescheduleModal = (task: Task) => setReschedulingTask(task);
   const handleCloseRescheduleModal = () => setReschedulingTask(null);
 
-  const handleUpdateTaskTime = async (taskId: string, newTime: string) => {
+  const handleUpdateTaskTime = async (
+    taskId: string,
+    newTime: string,
+    newTitle?: string
+  ) => {
     try {
+      const requestBody: {
+        id: string;
+        scheduled_time: string;
+        title?: string;
+      } = {
+        id: taskId,
+        scheduled_time: newTime,
+      };
+
+      if (newTitle) {
+        requestBody.title = newTitle;
+      }
+
       const response = await fetch("/api/tasks", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: taskId, scheduled_time: newTime }),
+        body: JSON.stringify(requestBody),
       });
       if (!response.ok) throw new Error("Failed to reschedule task");
       const updatedTask = await response.json();
@@ -269,7 +290,7 @@ export default function TimetableApp() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
-              <PlazenLogo />
+              <PlazenLogo theme={settings?.theme} />
               <span className="text-xl font-semibold">Plazen</span>
               <span className="text-sm text-muted-foreground">
                 {date?.toLocaleDateString("en-US", {

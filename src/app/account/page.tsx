@@ -1,13 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "../components/ui/button";
 import { motion } from "framer-motion";
-import Logo from "@/images/logo2.png";
+import { PlazenLogo } from "@/components/plazen-logo";
 import {
   User as UserIcon,
   Settings,
@@ -25,8 +24,6 @@ import {
   Check,
   X,
 } from "lucide-react";
-
-const PlazenLogo = () => <Image src={Logo} alt="Plazen Logo" width={70} />;
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);

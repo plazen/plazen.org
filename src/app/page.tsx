@@ -4,13 +4,9 @@ import React from "react";
 import Link from "next/link";
 import styles from "./marketing.module.css";
 import Image from "next/image";
-import Logo from "@/images/logo2.png";
+import { PlazenLogo } from "@/components/plazen-logo";
 
 const REDIRECT_PATH = "/schedule";
-
-const PlazenLogo = () => (
-  <Image src={Logo} alt="Plazen Logo" width={50} height={50} />
-);
 
 export default function Page() {
   return <Landing />;
@@ -46,7 +42,7 @@ function Landing() {
           <div className={styles.container}>
             <div className={styles.topBar}>
               <div className={styles.brand}>
-                <PlazenLogo />
+                <PlazenLogo width={50} height={50} />
                 <span className={styles.brandText}>Plazen</span>
               </div>
               <nav className={styles.nav}>
@@ -246,7 +242,7 @@ function Landing() {
         <footer className={styles.footer}>
           <div className={`${styles.container} ${styles.footerInner}`}>
             <div className={styles.brand}>
-              <PlazenLogo />
+              <PlazenLogo width={50} height={50} />
               <span className={styles.brandText}>Plazen</span>
             </div>
             <p className={styles.copyright}>

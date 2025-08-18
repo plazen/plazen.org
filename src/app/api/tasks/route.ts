@@ -385,7 +385,7 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, is_completed, scheduled_time } = body;
+    const { id, is_completed, scheduled_time, title } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -398,10 +398,15 @@ export async function PATCH(request: Request) {
       is_completed?: boolean;
       scheduled_time?: Date;
       is_time_sensitive?: boolean;
+      title?: string;
     } = {};
 
     if (typeof is_completed === "boolean") {
       dataToUpdate.is_completed = is_completed;
+    }
+
+    if (title && typeof title === "string") {
+      dataToUpdate.title = title.trim();
     }
 
     if (scheduled_time) {
