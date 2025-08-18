@@ -59,7 +59,13 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className={`${size === "sm" ? "w-2 h-2" : size === "md" ? "w-3 h-3" : "w-4 h-4"} bg-primary rounded-full`}
+              className={`${
+                size === "sm"
+                  ? "w-2 h-2"
+                  : size === "md"
+                  ? "w-3 h-3"
+                  : "w-4 h-4"
+              } bg-primary rounded-full`}
               animate={{
                 scale: [1, 1.5, 1],
                 opacity: [0.7, 1, 0.7],

@@ -12,7 +12,8 @@ const TimetableSkeleton: React.FC<TimetableSkeletonProps> = ({
   startHour,
   endHour,
 }) => {
-  const totalHours = endHour > startHour ? endHour - startHour : 24 - startHour + endHour;
+  const totalHours =
+    endHour > startHour ? endHour - startHour : 24 - startHour + endHour;
 
   // Generate some mock task positions for skeleton loading
   const mockTasks = [
@@ -26,7 +27,7 @@ const TimetableSkeleton: React.FC<TimetableSkeletonProps> = ({
     <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
-      
+
       {/* Date skeleton */}
       <motion.div
         className="h-6 bg-muted rounded mb-6"
@@ -40,7 +41,7 @@ const TimetableSkeleton: React.FC<TimetableSkeletonProps> = ({
           ease: "easeInOut",
         }}
       />
-      
+
       <div className="relative h-[800px] overflow-y-auto pr-2">
         {/* Time labels skeleton */}
         <div className="absolute top-0 bottom-0 w-16 text-right">

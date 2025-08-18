@@ -257,7 +257,11 @@ export default function TimetableApp() {
   if (loading || !settings) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
-        <LoadingSpinner size="lg" text="Loading your workspace..." variant="dots" />
+        <LoadingSpinner
+          size="lg"
+          text="Loading your workspace..."
+          variant="dots"
+        />
       </div>
     );
   }
@@ -297,7 +301,7 @@ export default function TimetableApp() {
           </div>
         )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <motion.div 
+          <motion.div
             className="lg-col-span-1 space-y-8"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -431,16 +435,16 @@ export default function TimetableApp() {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="lg:col-span-2"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
           >
             {tasksLoading ? (
-              <TimetableSkeleton 
-                startHour={settings.timetable_start} 
-                endHour={settings.timetable_end} 
+              <TimetableSkeleton
+                startHour={settings.timetable_start}
+                endHour={settings.timetable_end}
               />
             ) : (
               <Timetable
