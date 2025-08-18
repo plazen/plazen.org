@@ -13,6 +13,12 @@ import { PlusIcon, Settings, User2Icon } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
 import { motion } from "framer-motion";
+import Logo from "@/images/logo2.png";
+import Image from "next/image";
+
+const PlazenLogo = () => {
+  return <Image src={Logo} alt="Plazen Logo" width={70} height={70} priority />;
+};
 
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -263,6 +269,7 @@ export default function TimetableApp() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
+              <PlazenLogo />
               <span className="text-xl font-semibold">Plazen</span>
               <span className="text-sm text-muted-foreground">
                 {date?.toLocaleDateString("en-US", {
