@@ -47,6 +47,7 @@ export async function GET(request: Request) {
     if (date) {
       filteredTasks = tasks.filter((task) => {
         if (!task.scheduled_time) return false;
+        // Convert the DateTime back to fake ISO format for comparison
         const iso = (task.scheduled_time as Date)
           .toISOString()
           .replace(/\..*$/, "")
@@ -55,6 +56,8 @@ export async function GET(request: Request) {
         return taskDate === date;
       });
     }
+
+    // Convert all scheduled_time fields back to fake ISO format
     const serializableTasks = filteredTasks.map((task) => ({
       ...task,
       id: task.id.toString(),
@@ -162,7 +165,7 @@ export async function POST(request: Request) {
       }[] = existingTasks
         .filter((task) => task.scheduled_time)
         .map((task) => {
-          // scheduled_time is a Date, convert to ISO string without Z and milliseconds
+          // Use the original scheduled_time string parsing
           const iso = (task.scheduled_time as Date)
             .toISOString()
             .replace(/\..*$/, "")

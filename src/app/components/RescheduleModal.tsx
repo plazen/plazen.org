@@ -25,11 +25,18 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
   // Parse ISO string to Date and time
   const parseDateTime = (iso: string | null) => {
     if (!iso) return { date: undefined, hour: 12, minute: 0 };
-    const d = new Date(iso);
+
+    // Parse the "fake ISO" string manually to avoid timezone conversion
+    const clean = iso.replace(/Z$/, "");
+    const noMs = clean.replace(/\.\d{3}$/, "");
+    const [datePart, timePart] = noMs.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+
     return {
-      date: new Date(d.getFullYear(), d.getMonth(), d.getDate()),
-      hour: d.getHours(),
-      minute: d.getMinutes(),
+      date: new Date(year, month - 1, day), // Create local date without timezone conversion
+      hour: hour,
+      minute: minute,
     };
   };
 
