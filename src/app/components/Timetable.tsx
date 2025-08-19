@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContextMenu from "./ContextMenu";
 import TimeNeedle from "./TimeNeedle";
-import { Calendar, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 type Task = {
   id: string;
@@ -35,10 +35,13 @@ const Timetable: React.FC<TimetableProps> = ({
   date,
   onToggleDone,
   onDeleteTask,
-  onReschedule,
+  onReschedule: onEdit,
 }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
     { x: 0, y: 0, task: null }
+  );
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(
+    null
   );
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
@@ -46,7 +49,38 @@ const Timetable: React.FC<TimetableProps> = ({
     setMenu({ x: e.clientX, y: e.clientY, task });
   };
 
+  const handleTouchStart = (e: React.TouchEvent, task: Task) => {
+    const timer = setTimeout(() => {
+      const touch = e.touches[0];
+      setMenu({ x: touch.clientX, y: touch.clientY, task });
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
   const closeMenu = () => setMenu({ ...menu, task: null });
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
 
   const { timetable_start: startHour, timetable_end: endHour } = settings;
   const totalHours = useMemo(() => {
@@ -99,9 +133,9 @@ const Timetable: React.FC<TimetableProps> = ({
   const menuOptions = menu.task
     ? [
         {
-          label: "Reschedule",
-          onClick: () => onReschedule(menu.task!),
-          icon: <Calendar className="w-4 h-4" />,
+          label: "Edit",
+          onClick: () => onEdit(menu.task!),
+          icon: <Pencil className="w-4 h-4" />,
         },
         {
           label: "Delete",
@@ -117,24 +151,25 @@ const Timetable: React.FC<TimetableProps> = ({
   return (
     <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
-      <div className="relative h-[800px] overflow-y-auto pr-2">
-        <div className="absolute top-0 bottom-0 w-16 text-right text-muted-foreground">
+      <div className="relative h-[800px] overflow-y-auto pr-2 pt-2">
+        <div className="absolute top-2 bottom-0 w-16 text-right text-muted-foreground">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full flex items-center justify-end"
+              className="absolute w-full flex items-center justify-end pr-6"
               style={{
                 top: `${(i / totalHours) * 100}%`,
                 transform: "translateY(-50%)",
+                minHeight: "20px",
               }}
             >
-              <span className="text-xs font-mono inline-block">
+              <span className="text-xs font-mono inline-block leading-none">
                 {String((startHour + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
-        <div className="absolute top-0 bottom-0 left-20 right-0">
+        <div className="absolute top-2 bottom-0 left-12 right-0">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
@@ -185,6 +220,9 @@ const Timetable: React.FC<TimetableProps> = ({
                 layout
                 onClick={() => onToggleDone(event.id, isCompleted)}
                 onContextMenu={(e) => handleContextMenu(e, event)}
+                onTouchStart={(e) => handleTouchStart(e, event)}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{
                   opacity: isCompleted ? 0.5 : 1,
