@@ -4,7 +4,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContextMenu from "./ContextMenu";
 import TimeNeedle from "./TimeNeedle";
-import { Calendar, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 type Task = {
   id: string;
@@ -35,7 +35,7 @@ const Timetable: React.FC<TimetableProps> = ({
   date,
   onToggleDone,
   onDeleteTask,
-  onReschedule,
+  onReschedule: onEdit,
 }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
     { x: 0, y: 0, task: null }
@@ -133,9 +133,9 @@ const Timetable: React.FC<TimetableProps> = ({
   const menuOptions = menu.task
     ? [
         {
-          label: "Reschedule",
-          onClick: () => onReschedule(menu.task!),
-          icon: <Calendar className="w-4 h-4" />,
+          label: "Edit",
+          onClick: () => onEdit(menu.task!),
+          icon: <Pencil className="w-4 h-4" />,
         },
         {
           label: "Delete",

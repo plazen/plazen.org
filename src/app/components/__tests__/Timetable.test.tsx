@@ -159,7 +159,7 @@ describe("Timetable Component", () => {
     // Use a different date (not today)
     const propsWithDifferentDate = {
       ...mockProps,
-      date: new Date("2025-08-20"),
+      date: new Date("2025-08-1"),
     };
 
     render(<Timetable {...propsWithDifferentDate} />);
@@ -183,18 +183,18 @@ describe("Timetable Component", () => {
     fireEvent.contextMenu(morningMeeting);
 
     expect(screen.getByTestId("context-menu")).toBeInTheDocument();
-    expect(screen.getByText("Reschedule")).toBeInTheDocument();
+    expect(screen.getByText("Edit")).toBeInTheDocument();
     expect(screen.getByText("Delete")).toBeInTheDocument();
   });
 
-  it("should handle reschedule action from context menu", () => {
+  it("should handle edit action from context menu", () => {
     render(<Timetable {...mockProps} />);
 
     const morningMeeting = screen.getByText("Morning Meeting");
     fireEvent.contextMenu(morningMeeting);
 
-    const rescheduleButton = screen.getByText("Reschedule");
-    fireEvent.click(rescheduleButton);
+    const editButton = screen.getByText("Edit");
+    fireEvent.click(editButton);
 
     // The component passes the task with a startTime property added
     expect(mockProps.onReschedule).toHaveBeenCalledWith(

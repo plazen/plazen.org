@@ -67,7 +67,7 @@ describe("RescheduleModal Component", () => {
   it("should render modal when open", () => {
     render(<RescheduleModal {...mockProps} />);
 
-    expect(screen.getByText("Reschedule Task")).toBeInTheDocument();
+    expect(screen.getByText("Edit Task")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Test Task")).toBeInTheDocument();
   });
 
