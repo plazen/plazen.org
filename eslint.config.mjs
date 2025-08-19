@@ -14,6 +14,13 @@ const eslintConfig = [
   {
     ignores: ["src/generated/prisma"],
   },
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

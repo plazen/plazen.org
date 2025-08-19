@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextRequest } from "next/server";
 import { GET, POST, PATCH, DELETE } from "@/app/api/tasks/route";
 import prisma from "@/lib/prisma";
@@ -8,7 +9,7 @@ jest.mock("@/lib/prisma");
 jest.mock("@supabase/ssr");
 jest.mock("next/headers");
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = prisma as any;
 const mockCreateServerClient = createServerClient as jest.MockedFunction<
   typeof createServerClient
 >;
