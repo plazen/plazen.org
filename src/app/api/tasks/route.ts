@@ -24,12 +24,37 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
 
+  console.log("🔍 API GET /api/tasks - Requested date:", date);
+
   try {
-    const rangeStart = new Date();
-    rangeStart.setDate(rangeStart.getDate() - 3);
+    let rangeStart = new Date();
+    let rangeEnd = new Date();
+
+    if (date) {
+      // If a specific date is requested, expand range to include that date
+      const requestedDate = new Date(date);
+      const today = new Date();
+
+      // Set range to cover from 3 days before today to 4 days after today,
+      // but expand to include the requested date if it's outside this range
+      rangeStart.setDate(today.getDate() - 3);
+      rangeEnd.setDate(today.getDate() + 4);
+
+      // Expand range if requested date is outside
+      if (requestedDate < rangeStart) {
+        rangeStart = new Date(requestedDate);
+      }
+      if (requestedDate > rangeEnd) {
+        rangeEnd = new Date(requestedDate);
+        rangeEnd.setDate(rangeEnd.getDate() + 1); // Include the full day
+      }
+    } else {
+      // Default range: 3 days ago to 4 days from now
+      rangeStart.setDate(rangeStart.getDate() - 3);
+      rangeEnd.setDate(rangeEnd.getDate() + 4);
+    }
+
     rangeStart.setHours(0, 0, 0, 0);
-    const rangeEnd = new Date();
-    rangeEnd.setDate(rangeEnd.getDate() + 4);
     rangeEnd.setHours(23, 59, 59, 999);
 
     const tasks = await prisma.tasks.findMany({
@@ -43,18 +68,52 @@ export async function GET(request: Request) {
       orderBy: { created_at: "asc" },
     });
 
+    console.log(
+      "📊 API GET /api/tasks - Total tasks found in range:",
+      tasks.length
+    );
+    console.log(
+      "📅 API GET /api/tasks - Date range:",
+      rangeStart.toISOString(),
+      "to",
+      rangeEnd.toISOString()
+    );
+    if (date) {
+      console.log("🎯 API GET /api/tasks - Requested date:", date);
+    }
+
     let filteredTasks = tasks;
     if (date) {
+      console.log("🎯 API GET /api/tasks - Filtering by date:", date);
       filteredTasks = tasks.filter((task) => {
         if (!task.scheduled_time) return false;
-        // Convert the DateTime back to fake ISO format for comparison
-        const iso = (task.scheduled_time as Date)
-          .toISOString()
-          .replace(/\..*$/, "")
-          .replace("Z", "");
-        const [taskDate] = iso.split("T");
-        return taskDate === date;
+
+        // Create a local date for comparison without timezone conversion
+        const taskDateTime = task.scheduled_time as Date;
+
+        // Extract the date part in local timezone
+        const taskYear = taskDateTime.getFullYear();
+        const taskMonth = (taskDateTime.getMonth() + 1)
+          .toString()
+          .padStart(2, "0");
+        const taskDay = taskDateTime.getDate().toString().padStart(2, "0");
+        const taskDateString = `${taskYear}-${taskMonth}-${taskDay}`;
+
+        console.log(
+          `📝 Task "${task.title}" - scheduled_time:`,
+          taskDateTime,
+          "-> date string:",
+          taskDateString,
+          "matches:",
+          taskDateString === date
+        );
+
+        return taskDateString === date;
       });
+      console.log(
+        "✅ API GET /api/tasks - Filtered tasks count:",
+        filteredTasks.length
+      );
     }
 
     // Convert all scheduled_time fields back to fake ISO format
