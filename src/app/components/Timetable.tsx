@@ -152,11 +152,11 @@ const Timetable: React.FC<TimetableProps> = ({
     <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
       <div className="relative h-[800px] overflow-y-auto pr-2 pt-2">
-        <div className="absolute top-2 bottom-0 w-20 text-right text-muted-foreground">
+        <div className="absolute top-2 bottom-0 w-16 text-right text-muted-foreground">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full flex items-center justify-end pr-2"
+              className="absolute w-full flex items-center justify-end pr-6"
               style={{
                 top: `${(i / totalHours) * 100}%`,
                 transform: "translateY(-50%)",
@@ -169,7 +169,7 @@ const Timetable: React.FC<TimetableProps> = ({
             </div>
           ))}
         </div>
-        <div className="absolute top-2 bottom-0 left-24 right-0">
+        <div className="absolute top-2 bottom-0 left-12 right-0">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
@@ -178,7 +178,7 @@ const Timetable: React.FC<TimetableProps> = ({
             />
           ))}
         </div>
-        <div className="relative h-full ml-20">
+        <div className="relative h-full ml-16">
           {settings.show_time_needle && isToday && (
             <TimeNeedle startHour={startHour} endHour={endHour} />
           )}
