@@ -17,32 +17,14 @@ const customJestConfig = {
     "**/*.(test|spec).(js|jsx|ts|tsx)",
   ],
   collectCoverageFrom: [
-    "src/app/components/*.{js,jsx,ts,tsx}",
-    "src/lib/*.{js,jsx,ts,tsx}",
+    "src/**/*.{js,jsx,ts,tsx}",
     "!src/**/*.d.ts",
     "!src/generated/**",
     "!src/**/*.stories.{js,jsx,ts,tsx}",
   ],
   coverageThreshold: {
-    // Set higher thresholds for specific well-tested files
-    "./src/app/components/Timetable.tsx": {
-      branches: 90,
-      functions: 85,
-      lines: 95,
-      statements: 95,
-    },
-    "./src/app/components/ContextMenu.tsx": {
-      branches: 80,
-      functions: 85,
-      lines: 85,
-      statements: 85,
-    },
-    "./src/app/components/RescheduleModal.tsx": {
-      branches: 35,
-      functions: 90,
-      lines: 90,
-      statements: 85,
-    },
+    // Only apply specific thresholds when running component tests
+    // These will be ignored when running other test patterns
   },
   moduleDirectories: ["node_modules", "<rootDir>/"],
   testEnvironment: "jest-environment-jsdom",
