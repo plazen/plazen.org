@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContextMenu from "./ContextMenu";
 import TimeNeedle from "./TimeNeedle";
@@ -40,13 +40,47 @@ const Timetable: React.FC<TimetableProps> = ({
   const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
     { x: 0, y: 0, task: null }
   );
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
     e.preventDefault();
     setMenu({ x: e.clientX, y: e.clientY, task });
   };
 
+  const handleTouchStart = (e: React.TouchEvent, task: Task) => {
+    const timer = setTimeout(() => {
+      const touch = e.touches[0];
+      setMenu({ x: touch.clientX, y: touch.clientY, task });
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
   const closeMenu = () => setMenu({ ...menu, task: null });
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
 
   const { timetable_start: startHour, timetable_end: endHour } = settings;
   const totalHours = useMemo(() => {
@@ -186,6 +220,9 @@ const Timetable: React.FC<TimetableProps> = ({
                 layout
                 onClick={() => onToggleDone(event.id, isCompleted)}
                 onContextMenu={(e) => handleContextMenu(e, event)}
+                onTouchStart={(e) => handleTouchStart(e, event)}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{
                   opacity: isCompleted ? 0.5 : 1,
