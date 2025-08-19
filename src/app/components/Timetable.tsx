@@ -57,18 +57,39 @@ const Timetable: React.FC<TimetableProps> = ({
     }
   }, [startHour, endHour]);
 
-  const formatTime = (date: Date): string =>
-    date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-
   const eventsToDisplay = useMemo(() => {
     function parseLocal(dateString: string) {
+      console.log("Received date:", dateString);
       const clean = dateString.replace(/Z$/, "");
       const noMs = clean.replace(/\.\d{3}$/, "");
-      return new Date(noMs);
+      // Parse as local time by splitting the ISO string and return object with Date-like methods
+      const [datePart, timePart] = noMs.split("T");
+      const [year, month, day] = datePart.split("-").map(Number);
+      const [hour, minute, second = 0] = timePart.split(":").map(Number);
+
+      // Create a Date-like object that uses the raw local time values without Date objects
+      const localTime = {
+        getHours: () => hour,
+        getMinutes: () => minute,
+        getTime: () => {
+          return (
+            ((year - 1970) * 365.25 * 24 * 60 * 60 +
+              (month - 1) * 30.44 * 24 * 60 * 60 +
+              (day - 1) * 24 * 60 * 60 +
+              hour * 60 * 60 +
+              minute * 60 +
+              second) *
+            1000
+          );
+        },
+        // Add toLocaleTimeString for formatTime compatibility
+        toLocaleTimeString: () => {
+          const paddedHour = String(hour).padStart(2, "0");
+          const paddedMinute = String(minute).padStart(2, "0");
+          return `${paddedHour}:${paddedMinute}`;
+        },
+      };
+      return localTime as Date; // Type assertion for compatibility
     }
     return tasks
       .filter((t) => t.scheduled_time)
@@ -101,8 +122,11 @@ const Timetable: React.FC<TimetableProps> = ({
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full"
-              style={{ top: `${(i / totalHours) * 100}%` }}
+              className="absolute w-full flex items-center justify-end"
+              style={{
+                top: `${(i / totalHours) * 100}%`,
+                transform: "translateY(-50%)",
+              }}
             >
               <span className="text-xs font-mono inline-block">
                 {String((startHour + i) % 24).padStart(2, "0")}:00
@@ -114,7 +138,7 @@ const Timetable: React.FC<TimetableProps> = ({
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
-              className="absolute w-full border-t border-dashed border-border mt-3"
+              className="absolute w-full border-t border-dashed border-border"
               style={{ top: `${(i / totalHours) * 100}%` }}
             />
           ))}
@@ -127,14 +151,23 @@ const Timetable: React.FC<TimetableProps> = ({
             const currentStartHour =
               event.startTime.getHours() + event.startTime.getMinutes() / 60;
             const duration = event.duration_minutes || 60;
-            const top =
-              ((currentStartHour - startHour) / totalHours) * 100 +
-              ((100 / totalHours) * (event.startTime.getMinutes() / 15)) / 15 +
-              ((100 / totalHours) * (event.startTime.getMinutes() / 30)) / 30;
-            const height = ((duration + 10) / 60 / totalHours) * 100;
-            const endTime = new Date(
-              event.startTime.getTime() + duration * 60000
-            );
+
+            // Simple positioning: calculate offset from timetable start
+            const hoursFromStart = currentStartHour - startHour;
+            const top = (hoursFromStart / totalHours) * 100;
+
+            const height = (duration / 60 / totalHours) * 100;
+            const endTime = {
+              toLocaleTimeString: () => {
+                const endMinutes = event.startTime.getMinutes() + duration;
+                const endHour =
+                  event.startTime.getHours() + Math.floor(endMinutes / 60);
+                const finalMinute = endMinutes % 60;
+                const paddedHour = String(endHour % 24).padStart(2, "0");
+                const paddedMinute = String(finalMinute).padStart(2, "0");
+                return `${paddedHour}:${paddedMinute}`;
+              },
+            };
             const isCompleted = event.is_completed;
             const baseColor = event.is_time_sensitive
               ? "hsl(var(--primary))"
@@ -196,7 +229,8 @@ const Timetable: React.FC<TimetableProps> = ({
                     {event.title}
                     {duration >= 60 && (
                       <span className="opacity-70 font-mono ml-2 text-xs">
-                        {formatTime(event.startTime)} – {formatTime(endTime)}
+                        {event.startTime.toLocaleTimeString()} –{" "}
+                        {endTime.toLocaleTimeString()}
                       </span>
                     )}
                   </p>
