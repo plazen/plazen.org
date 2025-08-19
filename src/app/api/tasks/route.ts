@@ -88,16 +88,12 @@ export async function GET(request: Request) {
       filteredTasks = tasks.filter((task) => {
         if (!task.scheduled_time) return false;
 
-        // Create a local date for comparison without timezone conversion
+        // Extract the date part directly from the ISO string to avoid timezone conversion
         const taskDateTime = task.scheduled_time as Date;
+        const isoString = taskDateTime.toISOString();
 
-        // Extract the date part in local timezone
-        const taskYear = taskDateTime.getFullYear();
-        const taskMonth = (taskDateTime.getMonth() + 1)
-          .toString()
-          .padStart(2, "0");
-        const taskDay = taskDateTime.getDate().toString().padStart(2, "0");
-        const taskDateString = `${taskYear}-${taskMonth}-${taskDay}`;
+        // Extract date part from ISO string (YYYY-MM-DD)
+        const taskDateString = isoString.split("T")[0];
 
         console.log(
           `📝 Task "${task.title}" - scheduled_time:`,
