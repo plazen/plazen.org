@@ -114,7 +114,7 @@ export default function AddTaskModal({
                 id="task-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-lg bg-input border border-border text-foreground px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-colors"
+                className="w-full rounded-xl bg-input border border-border text-foreground px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-colors"
                 placeholder="e.g., Water the plants"
                 autoFocus
               />
@@ -164,7 +164,7 @@ export default function AddTaskModal({
                     id="scheduled-time"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    className="w-full rounded-lg bg-input border border-border text-foreground px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-colors"
+                    className="w-full rounded-xl bg-input border border-border text-foreground px-3 py-2 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-colors"
                   />
                 </motion.div>
               )}
@@ -175,7 +175,7 @@ export default function AddTaskModal({
                 <label className="text-sm font-medium text-foreground">
                   Duration
                 </label>
-                <span className="text-sm font-semibold text-primary bg-primary/10 px-2 py-1 rounded-md">
+                <span className="text-sm font-semibold text-primary bg-primary/10 px-2 py-1 rounded-xl">
                   {formatDuration(duration)}
                 </span>
               </div>

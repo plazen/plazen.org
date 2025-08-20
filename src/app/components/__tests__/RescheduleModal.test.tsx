@@ -113,7 +113,7 @@ describe("RescheduleModal Component", () => {
     render(<RescheduleModal {...mockProps} />);
 
     // The date button shows the formatted date instead of "Pick date" when a date is selected
-    const dateButton = screen.getByText("8/19/2025");
+    const dateButton = screen.getByText("Tue, Aug 19");
     fireEvent.click(dateButton);
 
     // Should show calendar

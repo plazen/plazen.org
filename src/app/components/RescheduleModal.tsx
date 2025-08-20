@@ -105,28 +105,23 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 dark:bg-black/80 backdrop-blur-[6px]"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md"
         onClick={onClose}
       >
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-          className="relative rounded-2xl shadow-2xl p-8 w-full max-w-md border border-border backdrop-blur-2xl"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(30,32,40,0.92) 60%, rgba(40,44,60,0.88) 100%)",
-            boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.18)",
-            border: "1.5px solid rgba(80,80,100,0.25)",
-          }}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          transition={{ type: "spring", duration: 0.5 }}
+          className="relative bg-card border border-border rounded-2xl shadow-2xl p-6 w-full max-w-lg mx-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xl font-bold shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm ring-1 ring-primary/20">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -138,15 +133,20 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
                 <path d="m15 5 4 4" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold leading-7 text-foreground">
-              Edit Task
-            </h3>
+            <div>
+              <h3 className="text-xl font-semibold text-card-foreground">
+                Edit Task
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Update your task details and schedule
+              </p>
+            </div>
           </div>
-          {/* Rename input */}
-          <div className="mb-5">
+          {/* Task name input */}
+          <div className="space-y-2 mb-6">
             <label
               htmlFor="task-title"
-              className="block text-sm font-medium text-foreground mb-1 px-1"
+              className="block text-sm font-medium text-card-foreground"
             >
               Task name
             </label>
@@ -155,25 +155,27 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
               type="text"
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="mt-1 block w-full rounded-lg bg-zinc-900/80 dark:bg-zinc-800/80 border border-zinc-700 text-foreground placeholder:text-zinc-500 shadow-inner focus:border-primary focus:ring-2 focus:ring-primary/30 px-3 py-2 text-base transition-all duration-150"
-              placeholder="Enter new task name"
+              className="w-full rounded-xl bg-input border border-border text-foreground placeholder:text-muted-foreground shadow-sm focus:border-ring focus:ring-2 focus:ring-ring/20 px-4 py-3 text-base transition-all duration-200 outline-none"
+              placeholder="Enter task name"
               maxLength={100}
               autoFocus
             />
           </div>
-          {/* Date/time input with 'Now' button */}
-          <div className="mb-6 flex flex-col gap-2">
-            <label className="block text-sm font-medium text-foreground mb-1 px-1">
-              New scheduled time
+
+          {/* Date and time section */}
+          <div className="space-y-4 mb-8">
+            <label className="block text-sm font-medium text-card-foreground">
+              Scheduled time
             </label>
-            <div className="flex gap-4 items-center">
-              {/* Date picker button */}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Date picker */}
               <div className="relative">
                 <button
                   ref={calendarBtnRef}
                   type="button"
                   onClick={() => setCalendarOpen((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-900/80 dark:bg-zinc-800/80 border border-zinc-700 text-foreground font-medium shadow hover:bg-primary/80 hover:text-white transition-all"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-input border border-border text-card-foreground hover:bg-accent hover:border-ring transition-all duration-200 shadow-sm"
                   aria-haspopup="dialog"
                   aria-expanded={calendarOpen}
                 >
@@ -182,22 +184,29 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
                     height="18"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="1.7"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     viewBox="0 0 24 24"
+                    className="text-muted-foreground"
                   >
                     <rect x="3" y="4" width="18" height="18" rx="4" />
                     <path d="M16 2v4M8 2v4M3 10h18" />
                   </svg>
-                  {selectedDate
-                    ? selectedDate.toLocaleDateString()
-                    : "Pick date"}
+                  <span className="flex-1 text-left">
+                    {selectedDate
+                      ? selectedDate.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "Select date"}
+                  </span>
                 </button>
                 {calendarOpen && (
                   <div
                     ref={calendarDropdownRef}
-                    className="absolute left-0 mt-2 z-50 bg-zinc-900/95 dark:bg-zinc-800/95 border border-zinc-700 rounded-xl shadow-2xl p-4"
+                    className="absolute left-0 mt-2 z-50 bg-popover border border-border rounded-xl shadow-2xl p-4"
                     style={{ minWidth: 280 }}
                   >
                     <Calendar
@@ -217,12 +226,14 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
                   </div>
                 )}
               </div>
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
+
+              {/* Time picker */}
+              <div className="flex gap-2 items-center">
+                <div className="flex-1">
                   <select
                     value={selectedHour}
                     onChange={(e) => setSelectedHour(Number(e.target.value))}
-                    className="rounded-lg bg-zinc-900/80 dark:bg-zinc-800/80 border border-zinc-700 text-foreground px-2 py-1 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                    className="w-full rounded-xl bg-input border border-border text-card-foreground px-3 py-3 focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all duration-200 outline-none"
                   >
                     {Array.from({ length: 24 }).map((_, h) => (
                       <option key={h} value={h}>
@@ -230,11 +241,15 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
                       </option>
                     ))}
                   </select>
-                  <span className="text-foreground font-semibold">:</span>
+                </div>
+                <div className="text-muted-foreground font-medium text-lg">
+                  :
+                </div>
+                <div className="flex-1">
                   <select
                     value={selectedMinute}
                     onChange={(e) => setSelectedMinute(Number(e.target.value))}
-                    className="rounded-lg bg-zinc-900/80 dark:bg-zinc-800/80 border border-zinc-700 text-foreground px-2 py-1 focus:border-primary focus:ring-2 focus:ring-primary/30"
+                    className="w-full rounded-xl bg-input border border-border text-card-foreground px-3 py-3 focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all duration-200 outline-none"
                   >
                     {Array.from({ length: 60 }, (_, m) => m)
                       .filter((m) => m % 5 === 0)
@@ -248,17 +263,14 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex justify-end gap-3 mt-2">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium"
-            >
+          {/* Action buttons */}
+          <div className="flex justify-end gap-3 pt-2 border-t border-border">
+            <Button variant="outline" onClick={onClose} className="px-6 py-2.5">
               Cancel
             </Button>
             <Button
               onClick={handleSave}
-              className="px-4 py-2 rounded-lg font-semibold shadow-sm"
+              className="px-6 py-2.5 shadow-sm"
               disabled={!selectedDate || !newTitle.trim()}
             >
               Save Changes
