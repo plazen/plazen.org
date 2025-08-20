@@ -96,11 +96,6 @@ const RescheduleModal: React.FC<RescheduleModalProps> = ({
     const iso = getCombinedISO();
     if (iso && newTitle.trim()) {
       onSave(task.id, iso, newTitle.trim());
-      console.log(
-        `Task ${
-          task.id
-        } renamed to '${newTitle.trim()}' and rescheduled to ${iso}`
-      );
     }
   };
 

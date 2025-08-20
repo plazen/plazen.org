@@ -93,7 +93,6 @@ const Timetable: React.FC<TimetableProps> = ({
 
   const eventsToDisplay = useMemo(() => {
     function parseLocal(dateString: string) {
-      console.log("Received date:", dateString);
       const clean = dateString.replace(/Z$/, "");
       const noMs = clean.replace(/\.\d{3}$/, "");
       // Parse as local time by splitting the ISO string and return object with Date-like methods

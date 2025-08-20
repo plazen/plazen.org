@@ -60,21 +60,11 @@ export default function TimetableApp() {
       const day = selectedDate.getDate().toString().padStart(2, "0");
       const dateString = `${year}-${month}-${day}`;
 
-      console.log("🚀 Frontend fetchTasks - Selected date:", selectedDate);
-      console.log("📤 Frontend fetchTasks - Sending date string:", dateString);
-
       const response = await fetch(`/api/tasks?date=${dateString}`);
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
       const fetchedTasks = await response.json();
-
-      console.log(
-        "📥 Frontend fetchTasks - Received tasks:",
-        fetchedTasks.length,
-        "tasks"
-      );
-      console.log("📋 Frontend fetchTasks - Tasks data:", fetchedTasks);
 
       setTasks(fetchedTasks);
     } catch (err: unknown) {

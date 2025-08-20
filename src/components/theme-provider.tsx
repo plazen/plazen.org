@@ -62,14 +62,6 @@ export function ThemeProvider({
     root.classList.remove("light", "dark");
     root.classList.add(effectiveTheme);
 
-    // Debug logging
-    console.log(
-      "Theme applied:",
-      effectiveTheme,
-      "Classes:",
-      root.classList.toString()
-    );
-
     // Store theme in localStorage
     localStorage.setItem(storageKey, theme);
   }, [theme, effectiveTheme, storageKey]);
