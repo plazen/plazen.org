@@ -7,9 +7,10 @@ import SettingsModal from "@/app/components/SettingsModal";
 import AddTaskModal from "@/app/components/AddTaskModal";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import TimetableSkeleton from "@/app/components/TimetableSkeleton";
+import { RoutineTasksManager } from "@/app/components/RoutineTasksManager";
 import { Calendar } from "@/app/components/ui/calendar";
 import { Button } from "@/app/components/ui/button";
-import { PlusIcon, Settings, User2Icon } from "lucide-react";
+import { PlusIcon, Settings, User2Icon, RefreshCw } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
 import { motion } from "framer-motion";
@@ -46,6 +47,7 @@ export default function TimetableApp() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,8 +61,11 @@ export default function TimetableApp() {
       const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
       const day = selectedDate.getDate().toString().padStart(2, "0");
       const dateString = `${year}-${month}-${day}`;
+      const timezoneOffset = new Date().getTimezoneOffset();
 
-      const response = await fetch(`/api/tasks?date=${dateString}`);
+      const response = await fetch(
+        `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
@@ -311,6 +316,17 @@ export default function TimetableApp() {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setIsRoutineTasksOpen(true)}
+                className="h-9 w-9"
+                title="Routine Tasks"
+              >
+                <span>
+                  <RefreshCw />
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setIsSettingsOpen(true)}
                 className="h-9 w-9"
               >
@@ -426,6 +442,34 @@ export default function TimetableApp() {
           onClose={() => setIsSettingsOpen(false)}
           onSave={handleSaveSettings}
         />
+      )}
+
+      {isRoutineTasksOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-background rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Routine Tasks</h2>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsRoutineTasksOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ×
+                </Button>
+              </div>
+              <RoutineTasksManager
+                onClose={() => {
+                  setIsRoutineTasksOpen(false);
+                  // Refresh tasks when routine tasks are generated
+                  if (date) {
+                    fetchTasks(date);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

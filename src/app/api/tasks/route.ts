@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import {
+  shouldGenerateRoutineTasksForToday,
+  autoGenerateRoutineTasksForToday,
+} from "@/lib/routineTasksService";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +27,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const date = searchParams.get("date");
+  const timezoneOffset = parseInt(searchParams.get("timezoneOffset") || "0");
 
   console.log("🔍 API GET /api/tasks - Requested date:", date);
 
@@ -56,6 +61,24 @@ export async function GET(request: Request) {
 
     rangeStart.setHours(0, 0, 0, 0);
     rangeEnd.setHours(23, 59, 59, 999);
+
+    // Auto-generate routine tasks for the specific date if it's requested and needed
+    if (date) {
+      const shouldGenerate = await shouldGenerateRoutineTasksForToday(
+        session.user.id,
+        date,
+        timezoneOffset
+      );
+      if (shouldGenerate) {
+        console.log("🔄 Auto-generating routine tasks for date:", date);
+        const generatedTasks = await autoGenerateRoutineTasksForToday(
+          session.user.id,
+          date,
+          timezoneOffset
+        );
+        console.log(`🔄 Generated ${generatedTasks.length} routine tasks`);
+      }
+    }
 
     const tasks = await prisma.tasks.findMany({
       where: {
