@@ -7,8 +7,9 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,7 +57,7 @@ export async function PATCH(
 
     const updatedRoutineTask = await prisma.routine_tasks.update({
       where: {
-        id: params.id,
+        id,
         user_id: session.user.id,
       },
       data: dataToUpdate,
@@ -74,8 +75,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,7 +96,7 @@ export async function DELETE(
   try {
     await prisma.routine_tasks.delete({
       where: {
-        id: params.id,
+        id,
         user_id: session.user.id,
       },
     });
