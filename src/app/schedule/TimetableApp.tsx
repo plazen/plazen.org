@@ -256,8 +256,13 @@ export default function TimetableApp() {
         body: JSON.stringify(requestBody),
       });
       if (!response.ok) throw new Error("Failed to reschedule task");
-      const updatedTask = await response.json();
-      setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
+
+      // Refetch tasks to ensure the timetable reflects the current date correctly
+      // This handles cases where tasks are moved to different dates
+      if (date) {
+        await fetchTasks(date);
+      }
+
       handleCloseRescheduleModal();
     } catch (err) {
       setError(
