@@ -57,7 +57,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          className="bg-card rounded-lg shadow-xl p-6 w-full max-w-md border border-border"
+          className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border"
           onClick={(e) => e.stopPropagation()}
         >
           <h3 className="text-lg font-medium leading-6 text-foreground mb-4">
@@ -81,7 +81,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       timetable_start: parseInt(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                  className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
@@ -107,7 +107,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       timetable_end: parseInt(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                  className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
@@ -153,7 +153,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     theme: e.target.value,
                   })
                 }
-                className="mt-1 block w-full rounded-md bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
               >
                 {Object.values(themes).map((theme) => (
                   <option key={theme.value} value={theme.value}>

@@ -7,9 +7,10 @@ import SettingsModal from "@/app/components/SettingsModal";
 import AddTaskModal from "@/app/components/AddTaskModal";
 import LoadingSpinner from "@/app/components/LoadingSpinner";
 import TimetableSkeleton from "@/app/components/TimetableSkeleton";
+import { RoutineTasksManager } from "@/app/components/RoutineTasksManager";
 import { Calendar } from "@/app/components/ui/calendar";
 import { Button } from "@/app/components/ui/button";
-import { PlusIcon, Settings, User2Icon } from "lucide-react";
+import { PlusIcon, Settings, User2Icon, RefreshCw } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
 import { motion } from "framer-motion";
@@ -46,6 +47,7 @@ export default function TimetableApp() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,22 +61,15 @@ export default function TimetableApp() {
       const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
       const day = selectedDate.getDate().toString().padStart(2, "0");
       const dateString = `${year}-${month}-${day}`;
+      const timezoneOffset = new Date().getTimezoneOffset();
 
-      console.log("🚀 Frontend fetchTasks - Selected date:", selectedDate);
-      console.log("📤 Frontend fetchTasks - Sending date string:", dateString);
-
-      const response = await fetch(`/api/tasks?date=${dateString}`);
+      const response = await fetch(
+        `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
       const fetchedTasks = await response.json();
-
-      console.log(
-        "📥 Frontend fetchTasks - Received tasks:",
-        fetchedTasks.length,
-        "tasks"
-      );
-      console.log("📋 Frontend fetchTasks - Tasks data:", fetchedTasks);
 
       setTasks(fetchedTasks);
     } catch (err: unknown) {
@@ -256,8 +251,13 @@ export default function TimetableApp() {
         body: JSON.stringify(requestBody),
       });
       if (!response.ok) throw new Error("Failed to reschedule task");
-      const updatedTask = await response.json();
-      setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
+
+      // Refetch tasks to ensure the timetable reflects the current date correctly
+      // This handles cases where tasks are moved to different dates
+      if (date) {
+        await fetchTasks(date);
+      }
+
       handleCloseRescheduleModal();
     } catch (err) {
       setError(
@@ -303,7 +303,9 @@ export default function TimetableApp() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
               <PlazenLogo theme={settings?.theme} />
-              <span className="text-xl font-semibold">Plazen</span>
+              <span className="text-xl font-semibold hidden sm:block">
+                Plazen
+              </span>
               <span className="text-sm text-muted-foreground">
                 {date?.toLocaleDateString("en-US", {
                   weekday: "long",
@@ -313,6 +315,17 @@ export default function TimetableApp() {
               </span>
             </div>
             <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsRoutineTasksOpen(true)}
+                className="h-9 w-9"
+                title="Routine Tasks"
+              >
+                <span>
+                  <RefreshCw />
+                </span>
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -431,6 +444,34 @@ export default function TimetableApp() {
           onClose={() => setIsSettingsOpen(false)}
           onSave={handleSaveSettings}
         />
+      )}
+
+      {isRoutineTasksOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-background rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Routine Tasks</h2>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsRoutineTasksOpen(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ×
+                </Button>
+              </div>
+              <RoutineTasksManager
+                onClose={() => {
+                  setIsRoutineTasksOpen(false);
+                  // Refresh tasks when routine tasks are generated
+                  if (date) {
+                    fetchTasks(date);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
