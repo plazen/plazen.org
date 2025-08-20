@@ -303,7 +303,9 @@ export default function TimetableApp() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-3">
               <PlazenLogo theme={settings?.theme} />
-              <span className="text-xl font-semibold">Plazen</span>
+              <span className="text-xl font-semibold hidden sm:block">
+                Plazen
+              </span>
               <span className="text-sm text-muted-foreground">
                 {date?.toLocaleDateString("en-US", {
                   weekday: "long",
