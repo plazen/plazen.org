@@ -190,13 +190,36 @@ export default function AccountPage() {
   };
 
   const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      alert("User is not authenticated. Unable to delete account.");
+      return;
+    }
+
     if (
       confirm(
         "Are you sure you want to delete your account? This action cannot be undone."
       )
     ) {
-      // In a real app, you'd implement account deletion
-      alert("Account deletion would be implemented here.");
+      try {
+        // Delete the user account using Supabase Admin API
+        const { error: deleteUserError } = await supabase.auth.admin.deleteUser(
+          user.id
+        );
+
+        if (deleteUserError) {
+          throw new Error(
+            "Failed to delete user account: " + deleteUserError.message
+          );
+        }
+
+        alert("Your account has been successfully deleted.");
+        router.push("/login");
+      } catch (error) {
+        console.error("Account deletion failed:", error);
+        alert(
+          "An error occurred while deleting your account. Please try again."
+        );
+      }
     }
   };
 
