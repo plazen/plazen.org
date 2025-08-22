@@ -112,7 +112,7 @@ export default function LoginPage() {
           // | "azure"
           | "apple",
         options: {
-          redirectTo: `https://plazen.org/schedule`,
+          redirectTo: `/schedule`,
         },
       });
       if (error) throw error;
