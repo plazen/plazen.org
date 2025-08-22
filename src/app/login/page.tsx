@@ -111,9 +111,6 @@ export default function LoginPage() {
           // | "linkedin_oidc"
           // | "azure"
           | "apple",
-        options: {
-          redirectTo: `/schedule`,
-        },
       });
       if (error) throw error;
     } catch (error) {
