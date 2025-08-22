@@ -24,6 +24,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -41,6 +42,7 @@ export default function AccountPage() {
     email: true,
     taskReminders: true,
   });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createBrowserClient(
@@ -65,6 +67,7 @@ export default function AccountPage() {
             session.user.email?.split("@")[0] ||
             ""
         );
+        setAvatarUrl(session.user.user_metadata?.avatar_url || null);
         await fetchStats();
       } else {
         router.push("/login");
@@ -187,13 +190,36 @@ export default function AccountPage() {
   };
 
   const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      alert("User is not authenticated. Unable to delete account.");
+      return;
+    }
+
     if (
       confirm(
         "Are you sure you want to delete your account? This action cannot be undone."
       )
     ) {
-      // In a real app, you'd implement account deletion
-      alert("Account deletion would be implemented here.");
+      try {
+        // Delete the user account using Supabase Admin API
+        const { error: deleteUserError } = await supabase.auth.admin.deleteUser(
+          user.id
+        );
+
+        if (deleteUserError) {
+          throw new Error(
+            "Failed to delete user account: " + deleteUserError.message
+          );
+        }
+
+        alert("Your account has been successfully deleted.");
+        router.push("/login");
+      } catch (error) {
+        console.error("Account deletion failed:", error);
+        alert(
+          "An error occurred while deleting your account. Please try again."
+        );
+      }
     }
   };
 
@@ -267,9 +293,19 @@ export default function AccountPage() {
           <div className="bg-card rounded-xl shadow-lg border border-border p-8 mb-8">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-8 h-8 text-white" />
-                </div>
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt="User Avatar"
+                    width={64}
+                    height={64}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
+                    <UserIcon className="w-8 h-8 text-white" />
+                  </div>
+                )}
                 <div>
                   <div className="flex items-center gap-2">
                     {editingDisplayName ? (

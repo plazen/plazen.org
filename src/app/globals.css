@@ -120,3 +120,85 @@ body {
   --color-input: oklch(0.18 0.01 240);
   --color-ring: oklch(0.7 0.1 190);
 }
+
+/* Supabase Auth UI Custom Styles */
+.supabase-auth-ui_ui {
+  --auth-ui-primary: var(--color-primary);
+  --auth-ui-background: var(--color-card);
+  --auth-ui-foreground: var(--color-foreground);
+  --auth-ui-border: var(--color-border);
+  --auth-ui-input-background: var(--color-input);
+}
+
+/* Make social auth buttons square and icon-only */
+.supabase-auth-ui_ui button[data-supabase-auth-type="social"] {
+  min-width: 48px !important;
+  width: 48px !important;
+  height: 48px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Hide text in social buttons, keep only icons */
+.supabase-auth-ui_ui button[data-supabase-auth-type="social"] span {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Make sure icons are visible */
+.supabase-auth-ui_ui button[data-supabase-auth-type="social"] svg,
+.supabase-auth-ui_ui button[data-supabase-auth-type="social"] img {
+  width: 20px !important;
+  height: 20px !important;
+  margin: 0 !important;
+}
+
+/* Container for social buttons to display in a grid */
+.supabase-auth-ui_ui .supabase-auth-ui_ui-social-auth {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Hover effects for social buttons */
+.supabase-auth-ui_ui button[data-supabase-auth-type="social"]:hover {
+  opacity: 0.8 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Focus states */
+.supabase-auth-ui_ui button[data-supabase-auth-type="social"]:focus {
+  outline: 2px solid var(--color-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Form styling improvements */
+.supabase-auth-ui_ui input {
+  background: var(--color-input) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-foreground) !important;
+  border-radius: 8px !important;
+}
+
+.supabase-auth-ui_ui input:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px var(--color-primary) !important;
+}
+
+.supabase-auth-ui_ui label {
+  color: var(--color-foreground) !important;
+  font-weight: 500 !important;
+}
+
+.supabase-auth-ui_ui .supabase-auth-ui_ui-divider {
+  background: var(--color-border) !important;
+  margin: 16px 0 !important;
+}
