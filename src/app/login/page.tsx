@@ -112,7 +112,7 @@ export default function LoginPage() {
           // | "azure"
           | "apple",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `https://plazen.org/schedule`,
         },
       });
       if (error) throw error;
