@@ -89,7 +89,7 @@ export default function LoginPage() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        router.push("/auth/callback");
+        router.push("/");
       }
     });
 
@@ -129,7 +129,7 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${window.location.origin}`,
           },
         });
         if (error) throw error;
