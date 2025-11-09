@@ -5,18 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { themes, Theme } from "@/lib/theme";
+import { Info } from "lucide-react";
 
 type Settings = {
   timetable_start: number;
   timetable_end: number;
   show_time_needle: boolean;
   theme: string;
+  telegram_id: string | null; // Add new field
 };
 
 type SettingsModalProps = {
   currentSettings: Settings;
   onClose: () => void;
-  onSave: (newSettings: Settings) => void;
+  onSave: (newSettings: Omit<Settings, "theme"> & { theme: string }) => void; // Ensure theme is a string
 };
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -25,14 +27,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onSave,
 }) => {
   const [settings, setSettings] = useState(currentSettings);
+  // Add state for the new telegram_id field
+  const [telegramId, setTelegramId] = useState(
+    currentSettings.telegram_id || ""
+  );
   const { setTheme } = useTheme();
 
   useEffect(() => {
     setSettings(currentSettings);
+    setTelegramId(currentSettings.telegram_id || "");
   }, [currentSettings]);
 
   const handleSave = () => {
-    onSave(settings);
+    onSave({
+      ...settings,
+      telegram_id: telegramId, // Include the new field on save
+    });
     // Update the theme context when saving
     setTheme(settings.theme as Theme);
   };
@@ -161,6 +171,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* New Telegram Chat ID Field */}
+            <div>
+              <label
+                htmlFor="telegram-id"
+                className="block text-sm font-medium text-muted-foreground"
+              >
+                Telegram Chat ID
+              </label>
+              <input
+                id="telegram-id"
+                type="text"
+                value={telegramId}
+                onChange={(e) => setTelegramId(e.target.value)}
+                placeholder="Talk to the bot to get your ID"
+                className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              />
+              <div className="mt-2 flex items-start space-x-2 text-xs text-muted-foreground p-2 bg-input/50 rounded-lg">
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  To get this, find your Plazen bot on Telegram and send the
+                  `/start` command.
+                </span>
+              </div>
             </div>
           </div>
           <div className="mt-6 flex justify-end space-x-3">
