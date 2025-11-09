@@ -87,10 +87,10 @@ export default function LoginPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        router.push("/schedule");
-      }
       setSession(session);
+      if (session) {
+        router.push("/auth/callback");
+      }
     });
 
     return () => {
@@ -111,9 +111,6 @@ export default function LoginPage() {
           // | "linkedin_oidc"
           // | "azure"
           | "apple",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
       });
       if (error) throw error;
     } catch (error) {

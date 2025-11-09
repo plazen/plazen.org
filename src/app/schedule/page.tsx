@@ -14,7 +14,20 @@ export default async function SchedulePage() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const authCode = cookieStore.get("authCode")?.value;
+  if (authCode) {
+    const { error } = await supabase.auth.exchangeCodeForSession(authCode);
+    if (!error) {
+      cookieStore.delete("authCode");
+      redirect("/schedule");
+    } else {
+      console.error("Error exchanging auth code:", error);
+      redirect("/login?error=" + error.message);
+    }
+  }
+
   if (!session) {
+    console.log("No session found, redirecting to login.");
     redirect("/login");
   }
   // Render the client timetable app
