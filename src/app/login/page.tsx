@@ -169,7 +169,7 @@ export default function LoginPage() {
           {!showEmailForm ? (
             <>
               {/* Social Login Providers */}
-              <div className="grid hidden grid-cols-4 gap-3 mb-6">
+              <div className="grid grid-cols-4 gap-3 mb-6">
                 {socialProviders.map((provider) => {
                   const Icon = provider.icon;
                   return (
