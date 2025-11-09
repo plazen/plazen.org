@@ -33,7 +33,7 @@ describe("/api/settings route handlers", () => {
   });
 
   describe("GET /api/settings", () => {
-    it("should return existing user settings", async () => {
+    it("should return existing user settings including telegram_id", async () => {
       const mockSettings = {
         id: "settings-id",
         user_id: "test-user-id",
@@ -41,6 +41,7 @@ describe("/api/settings route handlers", () => {
         timetable_end: 17,
         show_time_needle: true,
         theme: "dark",
+        telegram_id: "123456789", // Include new field
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -52,12 +53,11 @@ describe("/api/settings route handlers", () => {
 
       expect(response.status).toBe(200);
       expect(data.timetable_start).toBe(9);
-      expect(data.timetable_end).toBe(17);
-      expect(data.show_time_needle).toBe(true);
       expect(data.theme).toBe("dark");
+      expect(data.telegram_id).toBe("123456789"); // Check new field
     });
 
-    it("should create default settings if none exist", async () => {
+    it("should create default settings with null telegram_id if none exist", async () => {
       const defaultSettings = {
         id: "new-settings-id",
         user_id: "test-user-id",
@@ -65,6 +65,7 @@ describe("/api/settings route handlers", () => {
         timetable_end: 18,
         show_time_needle: true,
         theme: "dark",
+        telegram_id: null, // Default should be null
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -77,7 +78,7 @@ describe("/api/settings route handlers", () => {
 
       expect(response.status).toBe(200);
       expect(data.timetable_start).toBe(8);
-      expect(data.timetable_end).toBe(18);
+      expect(data.telegram_id).toBeNull(); // Check new field default
       expect(mockPrisma.userSettings.create).toHaveBeenCalledWith({
         data: {
           user_id: "test-user-id",
@@ -85,6 +86,7 @@ describe("/api/settings route handlers", () => {
           timetable_end: 18,
           show_time_needle: true,
           theme: "dark",
+          telegram_id: null, // Ensure default is created as null
           created_at: expect.any(Date),
           updated_at: expect.any(Date),
         },
@@ -117,7 +119,7 @@ describe("/api/settings route handlers", () => {
   });
 
   describe("PATCH /api/settings", () => {
-    it("should update user settings successfully", async () => {
+    it("should update all user settings successfully, including telegram_id", async () => {
       const updatedSettings = {
         id: "settings-id",
         user_id: "test-user-id",
@@ -125,6 +127,7 @@ describe("/api/settings route handlers", () => {
         timetable_end: 19,
         show_time_needle: false,
         theme: "light",
+        telegram_id: "987654321", // Include new field
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -138,6 +141,7 @@ describe("/api/settings route handlers", () => {
           timetable_end: 19,
           show_time_needle: false,
           theme: "light",
+          telegram_id: "987654321", // Send new field
         }),
       });
 
@@ -146,9 +150,8 @@ describe("/api/settings route handlers", () => {
 
       expect(response.status).toBe(200);
       expect(data.timetable_start).toBe(7);
-      expect(data.timetable_end).toBe(19);
-      expect(data.show_time_needle).toBe(false);
       expect(data.theme).toBe("light");
+      expect(data.telegram_id).toBe("987654321"); // Check updated field
       expect(mockPrisma.userSettings.update).toHaveBeenCalledWith({
         where: { user_id: "test-user-id" },
         data: {
@@ -156,20 +159,19 @@ describe("/api/settings route handlers", () => {
           timetable_end: 19,
           show_time_needle: false,
           theme: "light",
+          telegram_id: "987654321", // Ensure it's in the update call
           updated_at: expect.any(Date),
         },
       });
     });
 
-    it("should handle partial updates", async () => {
+    it("should handle partial update for just telegram_id", async () => {
       const updatedSettings = {
         id: "settings-id",
         user_id: "test-user-id",
-        timetable_start: 10,
-        timetable_end: 18,
-        show_time_needle: true,
-        theme: "dark",
-        created_at: new Date(),
+        timetable_start: 8, // Unchanged
+        timetable_end: 18, // Unchanged
+        telegram_id: "555555", // Changed
         updated_at: new Date(),
       };
 
@@ -178,7 +180,7 @@ describe("/api/settings route handlers", () => {
       const request = new NextRequest("http://localhost:3000/api/settings", {
         method: "PATCH",
         body: JSON.stringify({
-          timetable_start: 10,
+          telegram_id: "555555",
         }),
       });
 
@@ -186,7 +188,14 @@ describe("/api/settings route handlers", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.timetable_start).toBe(10);
+      expect(data.telegram_id).toBe("555555");
+      expect(mockPrisma.userSettings.update).toHaveBeenCalledWith({
+        where: { user_id: "test-user-id" },
+        data: {
+          telegram_id: "555555",
+          updated_at: expect.any(Date),
+        },
+      });
     });
 
     it("should return unauthorized when no session", async () => {

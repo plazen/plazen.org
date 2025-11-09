@@ -45,6 +45,7 @@ export async function GET() {
           timetable_end: 18,
           show_time_needle: true,
           theme: "dark",
+          telegram_id: null, // Add new field
           created_at: new Date(),
           updated_at: new Date(),
         },
@@ -78,17 +79,39 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { timetable_start, timetable_end, show_time_needle, theme } = body;
+    const {
+      timetable_start,
+      timetable_end,
+      show_time_needle,
+      theme,
+      telegram_id, // Get the new field from the request
+    } = body;
+
+    const dataToUpdate: {
+      timetable_start?: number;
+      timetable_end?: number;
+      show_time_needle?: boolean;
+      theme?: string;
+      telegram_id?: string | null;
+      updated_at: Date;
+    } = {
+      updated_at: new Date(),
+    };
+
+    // Conditionally add fields to update object
+    if (timetable_start !== undefined)
+      dataToUpdate.timetable_start = timetable_start;
+    if (timetable_end !== undefined) dataToUpdate.timetable_end = timetable_end;
+    if (show_time_needle !== undefined)
+      dataToUpdate.show_time_needle = show_time_needle;
+    if (theme !== undefined) dataToUpdate.theme = theme;
+    if (telegram_id !== undefined)
+      console.log("Updating telegram_id to:", telegram_id);
+    dataToUpdate.telegram_id = telegram_id || null;
 
     const updatedSettings = await prisma.userSettings.update({
       where: { user_id: session.user.id },
-      data: {
-        timetable_start,
-        timetable_end,
-        show_time_needle,
-        theme,
-        updated_at: new Date(),
-      },
+      data: dataToUpdate,
     });
 
     return NextResponse.json(updatedSettings, { status: 200 });
