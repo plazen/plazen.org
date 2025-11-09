@@ -5,6 +5,9 @@ import Link from "next/link";
 import styles from "./marketing.module.css";
 import Image from "next/image";
 import { PlazenLogo } from "@/components/plazen-logo";
+import { createBrowserClient } from "@supabase/ssr"; // Import the client
+import type { SupabaseClient } from "@supabase/supabase-js";
+import dynamic from "next/dynamic";
 
 const REDIRECT_PATH = "/schedule";
 
@@ -12,24 +15,41 @@ export default function Page() {
   return <Landing />;
 }
 
-import dynamic from "next/dynamic";
 const ClientRedirect = dynamic(
-  () =>
-    Promise.resolve(function ClientRedirect() {
-      React.useEffect(() => {
-        function hasAuthCookie() {
-          if (typeof document === "undefined") return false;
-          return document.cookie
-            .split(";")
-            .some((cookie) => cookie.trim().includes("auth-token"));
-        }
+  () => {
+    return Promise.resolve(function ClientRedirectComponent() {
+      const [supabase, setSupabase] = React.useState<SupabaseClient | null>(
+        null
+      );
 
-        if (hasAuthCookie()) {
-          window.location.href = REDIRECT_PATH;
-        }
+      React.useEffect(() => {
+        // Create the client only on the browser
+        const supabaseClient = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        setSupabase(supabaseClient);
       }, []);
+
+      React.useEffect(() => {
+        if (supabase) {
+          const checkSession = async () => {
+            // Use the official Supabase method to check the session
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            if (session) {
+              // Only redirect if there is a valid, active session
+              window.location.href = REDIRECT_PATH;
+            }
+          };
+          checkSession();
+        }
+      }, [supabase]);
+
       return null;
-    }),
+    });
+  },
   { ssr: false }
 );
 
