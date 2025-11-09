@@ -34,6 +34,7 @@ export default function TimetableApp() {
   type Settings = {
     timetable_start: number;
     timetable_end: number;
+    telegram_id: string | null;
     show_time_needle: boolean;
     theme: string;
   };
