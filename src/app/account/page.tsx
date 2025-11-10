@@ -39,9 +39,7 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [notifications, setNotifications] = useState({
-    // [MODIFIED]
-    email_updates: true,
-    notifications: false,
+    notifications: true,
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -69,15 +67,12 @@ export default function AccountPage() {
             ""
         );
         setAvatarUrl(session.user.user_metadata?.avatar_url || null);
-
-        // [MODIFIED] Fetch settings
         try {
           const settingsResponse = await fetch("/api/settings");
           if (settingsResponse.ok) {
             const fetchedSettings = await settingsResponse.json();
             setNotifications({
-              email_updates: fetchedSettings.email_updates ?? true,
-              notifications: fetchedSettings.notifications ?? false,
+              notifications: fetchedSettings.notifications ?? true,
             });
           }
         } catch (error) {
