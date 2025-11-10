@@ -39,8 +39,7 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [notifications, setNotifications] = useState({
-    email: true,
-    taskReminders: true,
+    notifications: true,
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -68,6 +67,18 @@ export default function AccountPage() {
             ""
         );
         setAvatarUrl(session.user.user_metadata?.avatar_url || null);
+        try {
+          const settingsResponse = await fetch("/api/settings");
+          if (settingsResponse.ok) {
+            const fetchedSettings = await settingsResponse.json();
+            setNotifications({
+              notifications: fetchedSettings.notifications ?? true,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch settings:", error);
+        }
+
         await fetchStats();
       } else {
         router.push("/login");
@@ -165,9 +176,31 @@ export default function AccountPage() {
     }
   };
 
-  const handleUpdateNotifications = async (key: string, value: boolean) => {
+  const handleUpdateNotifications = async (
+    // [MODIFIED]
+    key: "email_updates" | "notifications",
+    value: boolean
+  ) => {
+    // Optimistically update UI
     setNotifications((prev) => ({ ...prev, [key]: value }));
-    // In a real app, you'd save this to your database
+
+    // Send update to API
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update settings");
+      }
+      // Successfully saved
+    } catch (error) {
+      console.error("Failed to save notification settings:", error);
+      // Revert optimistic update on error
+      setNotifications((prev) => ({ ...prev, [key]: !value }));
+      alert("Failed to save settings. Please try again.");
+    }
   };
 
   const handleExportData = async () => {
@@ -484,28 +517,30 @@ export default function AccountPage() {
                   Notifications
                 </h3>
                 <div className="space-y-4">
-                  {Object.entries(notifications).map(([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between"
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">
+                      Task Reminders
+                    </label>
+                    <button
+                      onClick={() =>
+                        handleUpdateNotifications(
+                          "notifications",
+                          !notifications.notifications
+                        )
+                      }
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        notifications.notifications ? "bg-primary" : "bg-muted"
+                      }`}
                     >
-                      <label className="text-sm font-medium">
-                        {key === "email" ? "Email Updates" : "Task Reminders"}
-                      </label>
-                      <button
-                        onClick={() => handleUpdateNotifications(key, !value)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          value ? "bg-primary" : "bg-muted"
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          notifications.notifications
+                            ? "translate-x-5"
+                            : "translate-x-0"
                         }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            value ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  ))}
+                      />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
 

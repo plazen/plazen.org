@@ -45,7 +45,8 @@ export async function GET() {
           timetable_end: 18,
           show_time_needle: true,
           theme: "dark",
-          telegram_id: null, // Add new field
+          telegram_id: null,
+          notifications: true,
           created_at: new Date(),
           updated_at: new Date(),
         },
@@ -84,7 +85,8 @@ export async function PATCH(request: Request) {
       timetable_end,
       show_time_needle,
       theme,
-      telegram_id, // Get the new field from the request
+      telegram_id,
+      notifications,
     } = body;
 
     const dataToUpdate: {
@@ -93,6 +95,7 @@ export async function PATCH(request: Request) {
       show_time_needle?: boolean;
       theme?: string;
       telegram_id?: string | null;
+      notifications?: boolean;
       updated_at: Date;
     } = {
       updated_at: new Date(),
@@ -105,9 +108,11 @@ export async function PATCH(request: Request) {
     if (show_time_needle !== undefined)
       dataToUpdate.show_time_needle = show_time_needle;
     if (theme !== undefined) dataToUpdate.theme = theme;
-    if (telegram_id !== undefined)
+    if (telegram_id !== undefined) {
       console.log("Updating telegram_id to:", telegram_id);
-    dataToUpdate.telegram_id = telegram_id || null;
+      dataToUpdate.telegram_id = telegram_id || null;
+    }
+    if (notifications !== undefined) dataToUpdate.notifications = notifications;
 
     const updatedSettings = await prisma.userSettings.update({
       where: { user_id: session.user.id },
