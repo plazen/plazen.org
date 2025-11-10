@@ -42,6 +42,7 @@ describe("/api/settings route handlers", () => {
         show_time_needle: true,
         theme: "dark",
         telegram_id: "123456789", // Include new field
+        notifications: true,
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -87,6 +88,7 @@ describe("/api/settings route handlers", () => {
           show_time_needle: true,
           theme: "dark",
           telegram_id: null, // Ensure default is created as null
+          notifications: true,
           created_at: expect.any(Date),
           updated_at: expect.any(Date),
         },
