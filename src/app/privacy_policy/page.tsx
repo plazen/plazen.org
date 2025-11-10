@@ -1,9 +1,5 @@
 import React from 'react';
 
-// This component assumes Tailwind CSS is available in your project.
-// It now includes the "Lexend" font from Google Fonts for a more unique,
-// modern, and slick feel.
-
 export default function App() {
   return (
     <>
@@ -21,7 +17,6 @@ export default function App() {
           <article className="prose prose-invert prose-lg max-w-none">
             <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
             <p className="text-gray-400">Effective Date: November 10, 2025</p>
-
             <h3>1. Introduction</h3>
             <p>Welcome to Plazen. This Privacy Policy describes how Plazen ("we," "us," or "our") collects, uses, and shares information in connection with your use of our website, plazen.org (the "Website"), and our associated Telegram Bot (the "Bot").</p>
             <p>Your privacy is important to us. By using our Website or Bot, you agree to the collection and use of information in accordance with this policy.</p>
@@ -81,11 +76,10 @@ export default function App() {
             <p>We may update this Privacy Policy from time to time. We will notify you of any significant changes by posting the new policy on our Website. We encourage you to review this policy periodically.</p>
 
             <h3>9. Contact Us</h3>
-            <p>If you have any questions about this Privacy Policy, please contact us at: [Your Support Email Address]</p>
+            <p>If you have any questions about this Privacy Policy, please contact us at: support@plazen.org</p>
           
           </article>
         </div>
       </div>
     </>
   );
-}
