@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
+import { Lexend, Geist_Mono } from "next/font/google"; // [MODIFIED]
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+
+const lexend = Lexend({
+  // [MODIFIED]
+  variable: "--font-geist-sans", // We keep this variable name to match globals.css
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"], // Added weights to match your privacy page
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://plazen.org"),
@@ -77,7 +90,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <link rel="me" href="https://fosstodon.org/@plazen" />
-      <body className="font-lexend">
+      <body
+        className={`${lexend.variable} ${geistMono.variable} antialiased`} // [MODIFIED]
+      >
         <ThemeProvider defaultTheme="dark" storageKey="plazen-theme">
           {children}
 
