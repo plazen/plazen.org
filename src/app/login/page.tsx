@@ -89,7 +89,7 @@ export default function LoginPage() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        router.push("/auth/callback");
+        router.push("/");
       }
     });
 
@@ -129,7 +129,7 @@ export default function LoginPage() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${window.location.origin}`,
           },
         });
         if (error) throw error;
@@ -155,127 +155,129 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md mx-auto">
-        <div className="flex justify-center mb-6">
-          <PlazenLogo />
-        </div>
+    <div className="font-lexend">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md mx-auto">
+          <div className="flex justify-center mb-6">
+            <PlazenLogo />
+          </div>
 
-        <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
-          <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
-            Welcome to Plazen
-          </h1>
+          <div className="bg-card rounded-lg shadow-lg p-8 border border-border">
+            <h1 className="text-2xl font-bold text-center mb-6 text-foreground">
+              Welcome to Plazen
+            </h1>
 
-          {!showEmailForm ? (
-            <>
-              {/* Social Login Providers */}
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                {socialProviders.map((provider) => {
-                  const Icon = provider.icon;
-                  return (
-                    <Button
-                      key={provider.id}
-                      variant="outline"
-                      size="sm"
-                      className={`h-12 w-12 p-0 ${provider.bgColor} border-0 text-white hover:text-white transition-all duration-200 hover:scale-105`}
-                      onClick={() => handleSocialLogin(provider.id)}
-                      disabled={loading}
-                      title={`Sign in with ${provider.name}`}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </Button>
-                  );
-                })}
-              </div>
-
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
+            {!showEmailForm ? (
+              <>
+                {/* Social Login Providers */}
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                  {socialProviders.map((provider) => {
+                    const Icon = provider.icon;
+                    return (
+                      <Button
+                        key={provider.id}
+                        variant="outline"
+                        size="sm"
+                        className={`h-12 w-12 p-0 ${provider.bgColor} border-0 text-white hover:text-white transition-all duration-200 hover:scale-105`}
+                        onClick={() => handleSocialLogin(provider.id)}
+                        disabled={loading}
+                        title={`Sign in with ${provider.name}`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </Button>
+                    );
+                  })}
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
 
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowEmailForm(true)}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Continue with Email
-              </Button>
-            </>
-          ) : (
-            <>
-              {/* Email Form */}
-              <form onSubmit={handleEmailAuth} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium mb-2"
-                  >
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setEmail(e.target.value)
-                    }
-                    required
-                  />
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium mb-2"
-                  >
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setPassword(e.target.value)
-                    }
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-                </Button>
-              </form>
 
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                >
-                  {isSignUp
-                    ? "Already have an account? Sign in"
-                    : "Don't have an account? Sign up"}
-                </button>
-              </div>
-
-              <div className="mt-4">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   className="w-full"
-                  onClick={() => setShowEmailForm(false)}
+                  onClick={() => setShowEmailForm(true)}
                 >
-                  ← Back to social login
+                  <Mail className="mr-2 h-4 w-4" />
+                  Continue with Email
                 </Button>
-              </div>
-            </>
-          )}
+              </>
+            ) : (
+              <>
+                {/* Email Form */}
+                <form onSubmit={handleEmailAuth} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium mb-2"
+                    >
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setEmail(e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium mb-2"
+                    >
+                      Password
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setPassword(e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+                  </Button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                  >
+                    {isSignUp
+                      ? "Already have an account? Sign in"
+                      : "Don't have an account? Sign up"}
+                  </button>
+                </div>
+
+                <div className="mt-4">
+                  <Button
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => setShowEmailForm(false)}
+                  >
+                    ← Back to social login
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "@/components/theme-provider";
 import { Theme } from "@/lib/theme";
 import { PlazenLogo } from "@/components/plazen-logo";
+import "../globals.css";
 
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -298,182 +299,184 @@ export default function TimetableApp() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-      <header className="border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-40">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <PlazenLogo theme={settings?.theme} />
-              <span className="text-xl font-semibold hidden sm:block">
-                Plazen
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {date?.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsRoutineTasksOpen(true)}
-                className="h-9 w-9"
-                title="Routine Tasks"
-              >
-                <span>
-                  <RefreshCw />
+    <div className="font-lexend">
+      <div className="min-h-screen bg-background text-foreground font-lexend antialiased">
+        <header className="border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-40">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <PlazenLogo theme={settings?.theme} />
+                <span className="text-xl font-semibold hidden sm:block">
+                  Plazen
                 </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSettingsOpen(true)}
-                className="h-9 w-9"
-              >
-                <span>
-                  <Settings />
+                <span className="text-sm text-muted-foreground">
+                  {date?.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => (window.location.href = "/account")}
-                className="h-9 w-9"
-              >
-                <span>
-                  <User2Icon />
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-destructive/20 border border-destructive text-destructive-foreground rounded-lg p-4 mb-6"
-          >
-            {error}
-          </motion.div>
-        )}
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Calendar Sidebar */}
-          <motion.div
-            className="lg:w-80 flex-shrink-0"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            <div className="bg-card rounded-xl shadow-lg border border-border overflow-hidden">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="p-4 w-full"
-              />
-            </div>
-          </motion.div>
-
-          {/* Main Timetable */}
-          <motion.div
-            className="flex-1 min-w-0"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-          >
-            {tasksLoading ? (
-              <TimetableSkeleton
-                startHour={settings.timetable_start}
-                endHour={settings.timetable_end}
-              />
-            ) : (
-              <Timetable
-                tasks={tasks}
-                settings={settings}
-                date={date || new Date()}
-                onToggleDone={handleToggleDone}
-                onDeleteTask={handleDeleteTask}
-                onReschedule={handleOpenRescheduleModal}
-              />
-            )}
-          </motion.div>
-        </div>
-
-        {/* Floating Action Button */}
-        <motion.div
-          className="fixed bottom-6 right-6 z-50"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", delay: 0.5 }}
-        >
-          <Button
-            onClick={() => setIsAddTaskModalOpen(true)}
-            size="lg"
-            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary hover:bg-primary/90"
-          >
-            <PlusIcon className="h-6 w-6" />
-          </Button>
-        </motion.div>
-      </main>
-
-      {/* Modals */}
-      <AddTaskModal
-        isOpen={isAddTaskModalOpen}
-        onClose={() => setIsAddTaskModalOpen(false)}
-        onSubmit={handleAddTask}
-        isLoading={isAddingTask}
-      />
-
-      {reschedulingTask && (
-        <RescheduleModal
-          task={reschedulingTask}
-          onClose={handleCloseRescheduleModal}
-          onSave={handleUpdateTaskTime}
-        />
-      )}
-
-      {isSettingsOpen && (
-        <SettingsModal
-          currentSettings={settings}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={handleSaveSettings}
-        />
-      )}
-
-      {isRoutineTasksOpen && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-background rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Routine Tasks</h2>
+              </div>
+              <div className="flex items-center space-x-2">
                 <Button
                   variant="ghost"
-                  onClick={() => setIsRoutineTasksOpen(false)}
-                  className="text-muted-foreground hover:text-foreground"
+                  size="icon"
+                  onClick={() => setIsRoutineTasksOpen(true)}
+                  className="h-9 w-9"
+                  title="Routine Tasks"
                 >
-                  ×
+                  <span>
+                    <RefreshCw />
+                  </span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="h-9 w-9"
+                >
+                  <span>
+                    <Settings />
+                  </span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => (window.location.href = "/account")}
+                  className="h-9 w-9"
+                >
+                  <span>
+                    <User2Icon />
+                  </span>
                 </Button>
               </div>
-              <RoutineTasksManager
-                onClose={() => {
-                  setIsRoutineTasksOpen(false);
-                  // Refresh tasks when routine tasks are generated
-                  if (date) {
-                    fetchTasks(date);
-                  }
-                }}
-              />
             </div>
           </div>
-        </div>
-      )}
+        </header>
+
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-destructive/20 border border-destructive text-destructive-foreground rounded-lg p-4 mb-6"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Calendar Sidebar */}
+            <motion.div
+              className="lg:w-80 flex-shrink-0"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <div className="bg-card rounded-xl shadow-lg border border-border overflow-hidden">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="p-4 w-full"
+                />
+              </div>
+            </motion.div>
+
+            {/* Main Timetable */}
+            <motion.div
+              className="flex-1 min-w-0"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+            >
+              {tasksLoading ? (
+                <TimetableSkeleton
+                  startHour={settings.timetable_start}
+                  endHour={settings.timetable_end}
+                />
+              ) : (
+                <Timetable
+                  tasks={tasks}
+                  settings={settings}
+                  date={date || new Date()}
+                  onToggleDone={handleToggleDone}
+                  onDeleteTask={handleDeleteTask}
+                  onReschedule={handleOpenRescheduleModal}
+                />
+              )}
+            </motion.div>
+          </div>
+
+          {/* Floating Action Button */}
+          <motion.div
+            className="fixed bottom-6 right-6 z-50"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 0.5 }}
+          >
+            <Button
+              onClick={() => setIsAddTaskModalOpen(true)}
+              size="lg"
+              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-primary hover:bg-primary/90"
+            >
+              <PlusIcon className="h-6 w-6" />
+            </Button>
+          </motion.div>
+        </main>
+
+        {/* Modals */}
+        <AddTaskModal
+          isOpen={isAddTaskModalOpen}
+          onClose={() => setIsAddTaskModalOpen(false)}
+          onSubmit={handleAddTask}
+          isLoading={isAddingTask}
+        />
+
+        {reschedulingTask && (
+          <RescheduleModal
+            task={reschedulingTask}
+            onClose={handleCloseRescheduleModal}
+            onSave={handleUpdateTaskTime}
+          />
+        )}
+
+        {isSettingsOpen && (
+          <SettingsModal
+            currentSettings={settings}
+            onClose={() => setIsSettingsOpen(false)}
+            onSave={handleSaveSettings}
+          />
+        )}
+
+        {isRoutineTasksOpen && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-background rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Routine Tasks</h2>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsRoutineTasksOpen(false)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    ×
+                  </Button>
+                </div>
+                <RoutineTasksManager
+                  onClose={() => {
+                    setIsRoutineTasksOpen(false);
+                    // Refresh tasks when routine tasks are generated
+                    if (date) {
+                      fetchTasks(date);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

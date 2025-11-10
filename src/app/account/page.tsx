@@ -259,309 +259,322 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-40">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div
-              className="flex items-center space-x-3 cursor-pointer"
-              onClick={() => router.push("/schedule")}
-            >
-              <PlazenLogo />
-              <span className="text-xl font-semibold">Plazen</span>
+    <div className="font-lexend">
+      <div className="min-h-screen bg-background text-foreground font-lexend">
+        <header className="border-b border-border backdrop-blur-sm bg-background/95 sticky top-0 z-40">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div
+                className="flex items-center space-x-3 cursor-pointer"
+                onClick={() => router.push("/schedule")}
+              >
+                <PlazenLogo />
+                <span className="text-xl font-semibold">Plazen</span>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/schedule")}
+                className="flex items-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Back to Schedule
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/schedule")}
-              className="flex items-center gap-2"
-            >
-              <Calendar className="w-4 h-4" />
-              Back to Schedule
-            </Button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
-        >
-          {/* Profile Header */}
-          <div className="bg-card rounded-xl shadow-lg border border-border p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="User Avatar"
-                    width={64}
-                    height={64}
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
-                    <UserIcon className="w-8 h-8 text-white" />
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    {editingDisplayName ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={tempDisplayName}
-                          onChange={(e) => setTempDisplayName(e.target.value)}
-                          className="text-xl font-bold bg-input border border-border rounded px-2 py-1"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleUpdateDisplayName();
-                            if (e.key === "Escape") {
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl mx-auto"
+          >
+            {/* Profile Header */}
+            <div className="bg-card rounded-xl shadow-lg border border-border p-8 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-4">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="User Avatar"
+                      width={64}
+                      height={64}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
+                      <UserIcon className="w-8 h-8 text-white" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      {editingDisplayName ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={tempDisplayName}
+                            onChange={(e) => setTempDisplayName(e.target.value)}
+                            className="text-xl font-bold bg-input border border-border rounded px-2 py-1"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleUpdateDisplayName();
+                              if (e.key === "Escape") {
+                                setEditingDisplayName(false);
+                                setTempDisplayName(displayName);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleUpdateDisplayName}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
                               setEditingDisplayName(false);
                               setTempDisplayName(displayName);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={handleUpdateDisplayName}
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingDisplayName(false);
-                            setTempDisplayName(displayName);
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold">{displayName}</h1>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setEditingDisplayName(true)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <h1 className="text-2xl font-bold">{displayName}</h1>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEditingDisplayName(true)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      {user.email}
+                    </p>
                   </div>
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    {user.email}
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Member since</p>
+                  <p className="font-medium">
+                    {new Date(user.created_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </p>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Member since</p>
-                <p className="font-medium">
-                  {new Date(user.created_at).toLocaleDateString("en-US", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
               </div>
             </div>
-          </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-card rounded-lg border border-border p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Tasks</p>
-                  <p className="text-2xl font-bold">{stats.totalTasks}</p>
-                </div>
-                <Target className="w-8 h-8 text-blue-500" />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-card rounded-lg border border-border p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {stats.completedTasks}
-                  </p>
-                </div>
-                <Check className="w-8 h-8 text-green-500" />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-card rounded-lg border border-border p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Weekly Streak</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {stats.weeklyStreak}
-                  </p>
-                </div>
-                <BarChart3 className="w-8 h-8 text-orange-500" />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-card rounded-lg border border-border p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Duration</p>
-                  <p className="text-2xl font-bold">{stats.avgTaskDuration}m</p>
-                </div>
-                <Clock className="w-8 h-8 text-purple-500" />
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Completion Rate Progress */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-card rounded-xl border border-border p-6 mb-8"
-          >
-            <h3 className="text-lg font-semibold mb-4">Task Completion Rate</h3>
-            <div className="w-full bg-muted rounded-full h-4 mb-2">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${completionRate}%` }}
-                transition={{ delay: 0.7, duration: 1 }}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 h-4 rounded-full"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {completionRate.toFixed(1)}% of tasks completed
-            </p>
-          </motion.div>
-
-          {/* Settings Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Notification Settings */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-card rounded-xl border border-border p-6"
-            >
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Notifications
-              </h3>
-              <div className="space-y-4">
-                {Object.entries(notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between">
-                    <label className="text-sm font-medium">
-                      {key === "email" ? "Email Updates" : "Task Reminders"}
-                    </label>
-                    <button
-                      onClick={() => handleUpdateNotifications(key, !value)}
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        value ? "bg-primary" : "bg-muted"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          value ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-card rounded-lg border border-border p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Tasks</p>
+                    <p className="text-2xl font-bold">{stats.totalTasks}</p>
                   </div>
-                ))}
-              </div>
-            </motion.div>
+                  <Target className="w-8 h-8 text-blue-500" />
+                </div>
+              </motion.div>
 
-            {/* Account Actions */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-card rounded-lg border border-border p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Completed</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {stats.completedTasks}
+                    </p>
+                  </div>
+                  <Check className="w-8 h-8 text-green-500" />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-card rounded-lg border border-border p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Weekly Streak
+                    </p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {stats.weeklyStreak}
+                    </p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-orange-500" />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-card rounded-lg border border-border p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Avg Duration
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {stats.avgTaskDuration}m
+                    </p>
+                  </div>
+                  <Clock className="w-8 h-8 text-purple-500" />
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Completion Rate Progress */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 }}
-              className="bg-card rounded-xl border border-border p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="bg-card rounded-xl border border-border p-6 mb-8"
             >
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Account Actions
+              <h3 className="text-lg font-semibold mb-4">
+                Task Completion Rate
               </h3>
-              <div className="space-y-3">
-                <Button
-                  variant="outline"
-                  onClick={handleExportData}
-                  className="w-full justify-start"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export My Data
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => router.push("/schedule")}
-                  className="w-full justify-start"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  View Schedule
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleLogout}
-                  className="w-full justify-start"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
+              <div className="w-full bg-muted rounded-full h-4 mb-2">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${completionRate}%` }}
+                  transition={{ delay: 0.7, duration: 1 }}
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 h-4 rounded-full"
+                />
               </div>
+              <p className="text-sm text-muted-foreground">
+                {completionRate.toFixed(1)}% of tasks completed
+              </p>
             </motion.div>
-          </div>
 
-          {/* Danger Zone */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="bg-card rounded-xl border border-destructive/20 p-6 mt-8"
-          >
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-destructive">
-              <Shield className="w-5 h-5" />
-              Danger Zone
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              These actions are irreversible. Please proceed with caution.
-            </p>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAccount}
-              className="flex items-center gap-2"
+            {/* Settings Sections */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Notification Settings */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+                className="bg-card rounded-xl border border-border p-6"
+              >
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Bell className="w-5 h-5" />
+                  Notifications
+                </h3>
+                <div className="space-y-4">
+                  {Object.entries(notifications).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between"
+                    >
+                      <label className="text-sm font-medium">
+                        {key === "email" ? "Email Updates" : "Task Reminders"}
+                      </label>
+                      <button
+                        onClick={() => handleUpdateNotifications(key, !value)}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                          value ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            value ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Account Actions */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7 }}
+                className="bg-card rounded-xl border border-border p-6"
+              >
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Account Actions
+                </h3>
+                <div className="space-y-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleExportData}
+                    className="w-full justify-start"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export My Data
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/schedule")}
+                    className="w-full justify-start"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    View Schedule
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleLogout}
+                    className="w-full justify-start"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Danger Zone */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="bg-card rounded-xl border border-destructive/20 p-6 mt-8"
             >
-              <Trash2 className="w-4 h-4" />
-              Delete Account
-            </Button>
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-destructive">
+                <Shield className="w-5 h-5" />
+                Danger Zone
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                These actions are irreversible. Please proceed with caution.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAccount}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Account
+              </Button>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
