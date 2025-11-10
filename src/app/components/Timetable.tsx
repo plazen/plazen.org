@@ -148,10 +148,10 @@ const Timetable: React.FC<TimetableProps> = ({
   const isToday = new Date().toDateString() === date.toDateString();
 
   return (
-    <div className="bg-card rounded-xl shadow-2xl p-6 relative overflow-hidden border border-border">
+    <div className="bg-card rounded-xl shadow-2xl p-4 relative border border-border">
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
-      <div className="relative h-[800px] overflow-y-auto pr-2 pt-2">
-        <div className="absolute top-2 bottom-0 w-16 text-right text-muted-foreground">
+      <div className="relative h-[850px] overflow-y-auto pr-2 py-2">
+        <div className="absolute top-3 bottom-3 w-16 text-right text-muted-foreground">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
@@ -168,7 +168,7 @@ const Timetable: React.FC<TimetableProps> = ({
             </div>
           ))}
         </div>
-        <div className="absolute top-2 bottom-0 left-12 right-0">
+        <div className="absolute top-3 bottom-3 left-12 right-0">
           {Array.from({ length: totalHours + 1 }).map((_, i) => (
             <div
               key={i}
