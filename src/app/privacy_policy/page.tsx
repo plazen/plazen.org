@@ -18,7 +18,8 @@ export default function App() {
             <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
             <p className="text-gray-400">Effective Date: November 10, 2025</p>
             <h3>1. Introduction</h3>
-            <p>Welcome to Plazen. This Privacy Policy describes how Plazen ("we," "us," or "our") collects, uses, and shares information in connection with your use of our website, plazen.org (the "Website"), and our associated Telegram Bot (the "Bot").</p>
+            {/* FIX: Escaped double quotes */}
+            <p>Welcome to Plazen. This Privacy Policy describes how Plazen (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) collects, uses, and shares information in connection with your use of our website, plazen.org (the &ldquo;Website&rdquo;), and our associated Telegram Bot (the &ldquo;Bot&rdquo;).</p>
             <p>Your privacy is important to us. By using our Website or Bot, you agree to the collection and use of information in accordance with this policy.</p>
 
             <h3>2. Information We Collect</h3>
@@ -65,11 +66,13 @@ export default function App() {
             <p>You have control over your information.</p>
             <ul>
                 <li><strong>Access and Update:</strong> You can access and update your main Plazen account data (like your tasks) through the primary Plazen application.</li>
-                <li><strong>Unlink the Bot:</strong> You can revoke the Bot's access at any time by simply removing your Telegram Chat ID from your Plazen account settings in the main application. This will break the connection, and the Bot will no longer be able to fetch your schedule.</li>
+                {/* FIX: Escaped single quote (apostrophe) */}
+                <li><strong>Unlink the Bot:</strong> You can revoke the Bot&rsquo;s access at any time by simply removing your Telegram Chat ID from your Plazen account settings in the main application. This will break the connection, and the Bot will no longer be able to fetch your schedule.</li>
                 <li><strong>Account Deletion:</strong> To delete all of your Plazen data, including your linked Chat ID and all your tasks, you must delete your Plazen account through our main application.</li>
             </ul>
 
-            <h3>7. Children's Privacy</h3>
+            {/* FIX: Escaped single quote (apostrophe) */}
+            <h3>7. Children&rsquo;s Privacy</h3>
             <p>Our services are not directed to individuals under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected such information, we will take steps to delete it.</p>
 
             <h3>8. Changes to This Privacy Policy</h3>
