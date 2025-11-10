@@ -39,7 +39,6 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [notifications, setNotifications] = useState({
-    email: true,
     taskReminders: true,
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -490,7 +489,7 @@ export default function AccountPage() {
                       className="flex items-center justify-between"
                     >
                       <label className="text-sm font-medium">
-                        {key === "email" ? "Email Updates" : "Task Reminders"}
+                        {"Task Reminders"}
                       </label>
                       <button
                         onClick={() => handleUpdateNotifications(key, !value)}
