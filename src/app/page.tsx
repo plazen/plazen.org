@@ -55,7 +55,7 @@ const ClientRedirect = dynamic(
 
 function Landing() {
   return (
-    <>
+    <div className="font-lexend">
       <ClientRedirect />
       <main className={`${styles.page} ${styles.theme}`}>
         <header className={styles.header}>
@@ -271,6 +271,6 @@ function Landing() {
           </div>
         </footer>
       </main>
-    </>
+    </div>
   );
 }

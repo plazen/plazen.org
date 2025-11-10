@@ -32,5 +32,10 @@ export default async function SchedulePage() {
   }
   // Render the client timetable app
   const TimetableApp = (await import("./TimetableApp")).default;
-  return <TimetableApp />;
+
+  return (
+    <div className="font-lexend">
+      <TimetableApp />
+    </div>
+  );
 }

@@ -1,9 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap");
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
   --radius: 12px;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -39,12 +38,17 @@ html {
 
 * {
   scroll-behavior: smooth;
+  font-family: "Lexend", sans-serif;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
-  font-family: var(--font-sans);
+  font-family: "Lexend", sans-serif;
+}
+
+.font-lexend {
+  font-family: "Lexend", sans-serif;
 }
 
 /* Custom Scrollbar for a cleaner look */
