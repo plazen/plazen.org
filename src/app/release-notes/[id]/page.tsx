@@ -1,30 +1,29 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { PlazenLogo } from "@/components/plazen-logo";
 import Link from "next/link";
-import LoadingSpinner from "@/app/components/LoadingSpinner";
 import ReactMarkdown from "react-markdown";
+import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
 
 type ReleaseNote = {
   id: string;
-  version: string;
-  topic: string;
-  text: string;
-  date: string;
+  version: string | null;
+  topic: string | null;
+  text: string | null;
+  date: Date | null;
 };
 
 const MarkdownStyles = () => (
   <style>
     {`
-      .prose-custom h2 {
-        font-size: 1.5rem;
+      .font-lexend {
+        font-family: 'Lexend', sans-serif;
+      }
+      .prose-custom h2, .prose-custom h3 {
         font-weight: 600;
         color: white;
-        margin-top: 2em;
-        margin-bottom: 1em;
-        border-bottom: 1px solid var(--color-border);
-        padding-bottom: 0.5em;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
       }
       .prose-custom p {
         line-height: 1.7;
@@ -41,6 +40,11 @@ const MarkdownStyles = () => (
       .prose-custom a {
         color: var(--color-primary);
         text-decoration: underline;
+        text-decoration-offset: 2px;
+      }
+      .prose-custom a:hover {
+        color: var(--color-primary-foreground);
+        background: var(--color-primary);
       }
       .prose-custom code {
         background-color: var(--color-input);
@@ -63,31 +67,24 @@ const MarkdownStyles = () => (
   </style>
 );
 
-export default function SingleReleaseNotePage({
+export default async function SingleReleaseNotePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const [note, setNote] = useState<ReleaseNote | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = await params;
+  let note: ReleaseNote | null = null;
+  try {
+    note = await prisma.release_notes.findUnique({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("Failed to fetch release note", error);
+  }
 
-  useEffect(() => {
-    if (!params.id) return;
-    const fetchNote = async () => {
-      try {
-        const res = await fetch(`/api/release-notes/${params.id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setNote(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch release note", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNote();
-  }, [params.id]);
+  if (!note) {
+    notFound();
+  }
 
   return (
     <div className="font-lexend">
@@ -102,34 +99,27 @@ export default function SingleReleaseNotePage({
           </Link>
 
           <article className="prose prose-invert prose-lg max-w-none prose-custom">
-            {loading ? (
-              <div className="py-20">
-                <LoadingSpinner text="Loading note..." />
-              </div>
-            ) : note ? (
-              <>
-                <div className="flex justify-between items-center mb-2">
-                  <h1 className="text-4xl font-bold text-white !m-0">
-                    {note.topic}
-                  </h1>
-                  <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full flex-shrink-0">
-                    {note.version}
-                  </span>
-                </div>
-                <p className="text-gray-400 !m-0">
-                  {new Date(note.date).toLocaleDateString("en-US", {
+            <div className="flex justify-between items-center mb-2">
+              <h1 className="text-4xl font-bold text-white !m-0">
+                {note.topic}
+              </h1>
+              <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full flex-shrink-0">
+                {note.version}
+              </span>
+            </div>
+            <p className="text-gray-400 !m-0">
+              {note.date
+                ? new Date(note.date).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
-                  })}
-                </p>
-                <hr />
+                  })
+                : "No date"}
+            </p>
+            <hr />
 
-                <ReactMarkdown>{note.text || ""}</ReactMarkdown>
-              </>
-            ) : (
-              <p>Note not found.</p>
-            )}
+            {/* This is where the markdown is rendered */}
+            <ReactMarkdown>{note.text || ""}</ReactMarkdown>
           </article>
         </div>
       </div>
