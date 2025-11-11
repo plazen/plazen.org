@@ -10,14 +10,27 @@ import TimetableSkeleton from "@/app/components/TimetableSkeleton";
 import { RoutineTasksManager } from "@/app/components/RoutineTasksManager";
 import { Calendar } from "@/app/components/ui/calendar";
 import { Button } from "@/app/components/ui/button";
-import { PlusIcon, Settings, User2Icon, RefreshCw } from "lucide-react";
+import {
+  PlusIcon,
+  Settings,
+  User2Icon,
+  RefreshCw,
+  AlertCircle,
+  X,
+} from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/components/theme-provider";
 import { Theme } from "@/lib/theme";
 import { PlazenLogo } from "@/components/plazen-logo";
 import "../globals.css";
+
+type Notification = {
+  id: string;
+  message: string | null;
+  show: boolean;
+};
 
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -50,6 +63,11 @@ export default function TimetableApp() {
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
+    string[]
+  >([]);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -106,6 +124,15 @@ export default function TimetableApp() {
         // Sync theme with the settings
         if (fetchedSettings.theme) {
           setTheme(fetchedSettings.theme as Theme);
+        }
+        try {
+          const notificationsResponse = await fetch("/api/notifications");
+          if (notificationsResponse.ok) {
+            const fetchedNotifications = await notificationsResponse.json();
+            setNotifications(fetchedNotifications);
+          }
+        } catch (err) {
+          console.error("Failed to fetch notifications:", err);
         }
       } catch (err: unknown) {
         setError(
@@ -285,6 +312,9 @@ export default function TimetableApp() {
       );
     }
   };
+  const handleDismissNotification = (id: string) => {
+    setDismissedNotificationIds((prev) => [...prev, id]);
+  };
 
   if (loading || !settings) {
     return (
@@ -297,6 +327,9 @@ export default function TimetableApp() {
       </div>
     );
   }
+  const activeNotifications = notifications.filter(
+    (n) => !dismissedNotificationIds.includes(n.id)
+  );
 
   return (
     <div className="font-lexend">
@@ -355,6 +388,32 @@ export default function TimetableApp() {
         </header>
 
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <AnimatePresence>
+            {activeNotifications.map((notification) => (
+              <motion.div
+                key={notification.id}
+                layout
+                initial={{ opacity: 0, y: -20, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -20, height: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="bg-blue-500/10 border border-blue-400/30 text-blue-100 rounded-lg p-4 mb-6 flex items-start justify-between gap-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-300" />
+                  <p className="text-sm">{notification.message}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 flex-shrink-0 text-blue-200 hover:bg-blue-400/20 hover:text-white"
+                  onClick={() => handleDismissNotification(notification.id)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
