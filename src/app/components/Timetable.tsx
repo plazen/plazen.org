@@ -82,14 +82,14 @@ const Timetable: React.FC<TimetableProps> = ({
     };
   }, [longPressTimer]);
 
-  const { timetable_start: startHour, timetable_end: endHour } = settings;
-  const totalHours = useMemo(() => {
-    if (endHour > startHour) {
-      return endHour - startHour;
-    } else {
-      return 24 - startHour + endHour;
-    }
-  }, [startHour, endHour]);
+  // const { timetable_start: startHour, timetable_end: endHour } = settings;
+  // const totalHours = useMemo(() => {
+  //   if (endHour > startHour) {
+  //     return endHour - startHour;
+  //   } else {
+  //     return 24 - startHour + endHour;
+  //   }
+  // }, [startHour, endHour]);
 
   const eventsToDisplay = useMemo(() => {
     function parseLocal(dateString: string) {
@@ -152,34 +152,34 @@ const Timetable: React.FC<TimetableProps> = ({
       <div className="absolute inset-0 bg-[radial-gradient(theme(colors.foreground)_/_0.5,transparent_0.5px)] [background-size:16px_16px] opacity-5"></div>
       <div className="relative h-[850px] overflow-y-auto pr-2 py-2">
         <div className="absolute top-3 bottom-3 w-16 text-right text-muted-foreground">
-          {Array.from({ length: totalHours + 1 }).map((_, i) => (
+          {Array.from({ length: 24 + 1 }).map((_, i) => (
             <div
               key={i}
               className="absolute w-full flex items-center justify-end pr-6"
               style={{
-                top: `${(i / totalHours) * 100}%`,
+                top: `${(i / 24) * 100}%`,
                 transform: "translateY(-50%)",
                 minHeight: "20px",
               }}
             >
               <span className="text-xs font-mono inline-block leading-none">
-                {String((startHour + i) % 24).padStart(2, "0")}:00
+                {String((0 + i) % 24).padStart(2, "0")}:00
               </span>
             </div>
           ))}
         </div>
         <div className="absolute top-3 bottom-3 left-12 right-0">
-          {Array.from({ length: totalHours + 1 }).map((_, i) => (
+          {Array.from({ length: 24 + 1 }).map((_, i) => (
             <div
               key={i}
               className="absolute w-full border-t border-dashed border-border"
-              style={{ top: `${(i / totalHours) * 100}%` }}
+              style={{ top: `${(i / 24) * 100}%` }}
             />
           ))}
         </div>
         <div className="relative h-full ml-16">
           {settings.show_time_needle && isToday && (
-            <TimeNeedle startHour={startHour} endHour={endHour} />
+            <TimeNeedle startHour={0} endHour={24} />
           )}
           {eventsToDisplay.map((event) => {
             const currentStartHour =
@@ -187,10 +187,10 @@ const Timetable: React.FC<TimetableProps> = ({
             const duration = event.duration_minutes || 60;
 
             // Simple positioning: calculate offset from timetable start
-            const hoursFromStart = currentStartHour - startHour;
-            const top = (hoursFromStart / totalHours) * 100;
+            const hoursFromStart = currentStartHour - 0;
+            const top = (hoursFromStart / 24) * 100;
 
-            const height = (duration / 60 / totalHours) * 100;
+            const height = (duration / 60 / 24) * 100;
             const endTime = {
               toLocaleTimeString: () => {
                 const endMinutes = event.startTime.getMinutes() + duration;
