@@ -451,6 +451,31 @@ model oauth_consents {
   @@schema("auth")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model release_notes {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  version    String?
+  topic      String?
+  text       String?
+  date       DateTime? @default(now()) @db.Timestamptz(6)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model documentation_entries {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topic      String?
+  text       String?
+  category   String?
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+
+  @@schema("public")
+}
+
 enum aal_level {
   aal1
   aal2
