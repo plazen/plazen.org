@@ -1,4 +1,5 @@
 import prisma from "./prisma";
+import { encrypt, decrypt } from "./encryption"; // [MODIFIED] Import helpers
 
 export interface RoutineTask {
   id: string;
@@ -53,9 +54,7 @@ export async function shouldGenerateRoutineTasksForToday(
         gte: requestedDateStart,
         lte: requestedDateEnd,
       },
-      title: {
-        contains: "[Routine]",
-      },
+      is_from_routine: true, // [MODIFIED] Use the new boolean flag
     },
   });
 
@@ -103,7 +102,6 @@ export async function autoGenerateRoutineTasksForToday(
     return [];
   }
 
-  // Generate random times for routine tasks
   const generatedTasks: GeneratedTask[] = [];
   const usedTimeSlots: { start: number; end: number }[] = [];
 
@@ -116,35 +114,35 @@ export async function autoGenerateRoutineTasksForToday(
     );
     const endTime = startTime + routineTask.duration_minutes;
 
-    // Add to used time slots to avoid overlap
     usedTimeSlots.push({ start: startTime, end: endTime });
 
-    // Create scheduled time for the task
     const scheduledDateTime = new Date(dateString + "T00:00:00.000Z");
     scheduledDateTime.setMinutes(scheduledDateTime.getMinutes() + startTime);
 
-    // Create the task in database
+    const decryptedTitle = decrypt(routineTask.title);
+    const encryptedTitle = encrypt(decryptedTitle);
+
     const createdTask = await prisma.tasks.create({
       data: {
         user_id: userId,
-        title: `[Routine] ${routineTask.title}`,
+        title: encryptedTitle,
         duration_minutes: routineTask.duration_minutes,
         is_time_sensitive: true,
         scheduled_time: scheduledDateTime,
         is_completed: false,
+        is_from_routine: true,
       },
     });
 
-    generatedTasks.push(createdTask);
+    generatedTasks.push({
+      ...createdTask,
+      title: decrypt(createdTask.title),
+    });
   }
 
   return generatedTasks;
 }
 
-/**
- * Generate a random time slot that doesn't overlap with existing slots
- * Snaps to 15-minute intervals (:00, :15, :30, :45)
- */
 function generateRandomTimeSlot(
   duration: number,
   usedTimeSlots: { start: number; end: number }[],
@@ -155,7 +153,6 @@ function generateRandomTimeSlot(
   const dayEndMinutes = timetableEndHour * 60;
   const maxAttempts = 100;
 
-  // Function to snap time to 15-minute intervals
   const snapTo15Minutes = (minutes: number): number => {
     const remainder = minutes % 15;
     if (remainder === 0) return minutes;
@@ -168,10 +165,8 @@ function generateRandomTimeSlot(
       Math.random() * (latestStart - dayStartMinutes) + dayStartMinutes
     );
 
-    // Snap to 15-minute interval
     const snappedStart = snapTo15Minutes(randomStart);
 
-    // Make sure snapped time is still within bounds
     if (
       snappedStart < dayStartMinutes ||
       snappedStart + duration > dayEndMinutes
@@ -179,7 +174,6 @@ function generateRandomTimeSlot(
       continue;
     }
 
-    // Check for overlaps
     const hasOverlap = usedTimeSlots.some(
       (slot) =>
         !(snappedStart >= slot.end || snappedStart + duration <= slot.start)
@@ -190,15 +184,11 @@ function generateRandomTimeSlot(
     }
   }
 
-  // Fallback: return snapped start time
   return snapTo15Minutes(dayStartMinutes);
 }
 
-/**
- * Get all routine tasks for a user
- */
 export async function getRoutineTasks(userId: string): Promise<RoutineTask[]> {
-  return await prisma.routine_tasks.findMany({
+  const tasks = await prisma.routine_tasks.findMany({
     where: {
       user_id: userId,
       is_active: true,
@@ -207,54 +197,77 @@ export async function getRoutineTasks(userId: string): Promise<RoutineTask[]> {
       created_at: "desc",
     },
   });
+
+  return tasks.map((task) => ({
+    ...task,
+    title: decrypt(task.title),
+  }));
 }
 
-/**
- * Create a new routine task
- */
 export async function createRoutineTask(
   userId: string,
   title: string,
   duration: number
 ): Promise<RoutineTask> {
-  return await prisma.routine_tasks.create({
+  const encryptedTitle = encrypt(title);
+
+  const createdTask = await prisma.routine_tasks.create({
     data: {
       user_id: userId,
-      title,
+      title: encryptedTitle,
       duration_minutes: duration,
       is_active: true,
     },
   });
+
+  return {
+    ...createdTask,
+    title: decrypt(createdTask.title),
+  };
 }
 
-/**
- * Update a routine task
- */
 export async function updateRoutineTask(
   id: string,
   userId: string,
   data: { title?: string; duration_minutes?: number; is_active?: boolean }
 ): Promise<RoutineTask | null> {
-  return await prisma.routine_tasks.update({
+  if (data.title !== undefined) {
+    data.title = encrypt(data.title);
+  }
+
+  const updatedTask = await prisma.routine_tasks.update({
     where: {
       id,
       user_id: userId,
     },
     data,
   });
+
+  if (updatedTask) {
+    return {
+      ...updatedTask,
+      title: decrypt(updatedTask.title),
+    };
+  }
+  return null;
 }
 
-/**
- * Delete a routine task
- */
 export async function deleteRoutineTask(
   id: string,
   userId: string
 ): Promise<RoutineTask | null> {
-  return await prisma.routine_tasks.delete({
+  const deletedTask = await prisma.routine_tasks.delete({
     where: {
       id,
       user_id: userId,
     },
   });
+
+  if (deletedTask) {
+    return {
+      ...deletedTask,
+      title: decrypt(deletedTask.title),
+    };
+  }
+  return null;
 }
