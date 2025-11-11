@@ -6,6 +6,7 @@ import {
   shouldGenerateRoutineTasksForToday,
   autoGenerateRoutineTasksForToday,
 } from "@/lib/routineTasksService";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export const dynamic = "force-dynamic";
 
@@ -131,7 +132,7 @@ export async function GET(request: Request) {
         const taskDateString = isoString.split("T")[0];
 
         console.log(
-          `📝 Task "${task.title}" - scheduled_time:`,
+          `📝 Task "${decrypt(task.title)}" - scheduled_time:`, // [MODIFIED] Decrypt for logging
           taskDateTime,
           "-> date string:",
           taskDateString,
@@ -147,10 +148,11 @@ export async function GET(request: Request) {
       );
     }
 
-    // Convert all scheduled_time fields back to fake ISO format
+    // [MODIFIED] Decrypt titles before sending to client
     const serializableTasks = filteredTasks.map((task) => ({
       ...task,
       id: task.id.toString(),
+      title: decrypt(task.title), // Decrypt the title
     }));
 
     return NextResponse.json(serializableTasks, { status: 200 });
@@ -435,20 +437,26 @@ export async function POST(request: Request) {
       }
     }
 
+    // [MODIFIED] Encrypt the title before saving
+    const encryptedTitle = encrypt(body.title);
+
     const newTask = await prisma.tasks.create({
       data: {
         user_id: session.user.id,
-        title: body.title,
+        title: encryptedTitle, // [MODIFIED] Save encrypted title
         duration_minutes: body.duration_minutes || 60,
         is_time_sensitive: body.is_time_sensitive,
         scheduled_time: scheduledTime,
         is_completed: false,
+        is_from_routine: false, // [MODIFIED] Set default
       },
     });
 
+    // [MODIFIED] Decrypt the title for the response
     const serializableNewTask = {
       ...newTask,
       id: newTask.id.toString(),
+      title: decrypt(newTask.title),
     };
 
     return NextResponse.json(serializableNewTask, { status: 201 });
@@ -498,8 +506,9 @@ export async function PATCH(request: Request) {
       dataToUpdate.is_completed = is_completed;
     }
 
+    // [MODIFIED] Encrypt title if it's being updated
     if (title && typeof title === "string") {
-      dataToUpdate.title = title.trim();
+      dataToUpdate.title = encrypt(title.trim());
     }
 
     if (scheduled_time) {
@@ -530,9 +539,11 @@ export async function PATCH(request: Request) {
       data: dataToUpdate,
     });
 
+    // [MODIFIED] Decrypt title for the response
     const serializableUpdatedTask = {
       ...updatedTask,
       id: updatedTask.id.toString(),
+      title: decrypt(updatedTask.title),
     };
 
     return NextResponse.json(serializableUpdatedTask, { status: 200 });

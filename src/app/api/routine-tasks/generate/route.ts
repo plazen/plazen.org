@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export const dynamic = "force-dynamic";
 
@@ -302,24 +303,27 @@ export async function POST(request: Request) {
               chosen[5]
             ).padStart(2, "0")}.000Z`;
 
-            // Create the task
+            const decryptedTitle = decrypt(routineTask.title);
+            const encryptedTitle = encrypt(decryptedTitle);
+
             const newTask = await prisma.tasks.create({
               data: {
                 user_id: session.user.id,
-                title: `🔄 ${routineTask.title}`,
+                title: encryptedTitle,
                 duration_minutes: routineTask.duration_minutes,
                 is_time_sensitive: false,
                 scheduled_time: scheduledTime,
                 is_completed: false,
+                is_from_routine: true,
               },
             });
 
             createdTasks.push({
               ...newTask,
               id: newTask.id.toString(),
+              title: decrypt(newTask.title),
             });
 
-            // Add this task to occupied slots for next iteration
             const endArr: [number, number, number, number, number, number] = [
               ...chosen,
             ];
