@@ -1,4 +1,3 @@
-// src/app/admin/documentation/DocumentationManager.tsx
 "use client";
 
 import React, { useState } from "react";
