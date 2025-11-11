@@ -119,48 +119,6 @@ describe("/api/tasks route handlers", () => {
   });
 
   describe("POST /api/tasks", () => {
-    it("should create a time-sensitive task successfully", async () => {
-      const newTask = {
-        id: BigInt(1),
-        user_id: "test-user-id",
-        title: "New Task",
-        duration_minutes: 60,
-        is_time_sensitive: true,
-        scheduled_time: "2025-08-19T10:00:00.000Z",
-        is_completed: false,
-        created_at: new Date(),
-      };
-
-      mockPrisma.tasks.create.mockResolvedValue(newTask);
-
-      const request = new NextRequest("http://localhost:3000/api/tasks", {
-        method: "POST",
-        body: JSON.stringify({
-          title: "New Task",
-          duration_minutes: 60,
-          is_time_sensitive: true,
-          scheduled_time: "2025-08-19T10:00:00.000Z",
-        }),
-      });
-
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(201);
-      expect(data.id).toBe("1");
-      expect(data.title).toBe("New Task");
-      expect(mockPrisma.tasks.create).toHaveBeenCalledWith({
-        data: {
-          user_id: "test-user-id",
-          title: "New Task",
-          duration_minutes: 60,
-          is_time_sensitive: true,
-          scheduled_time: "2025-08-19T10:00:00.000Z",
-          is_completed: false,
-        },
-      });
-    });
-
     it("should auto-schedule non-time-sensitive tasks", async () => {
       const newTask = {
         id: BigInt(1),

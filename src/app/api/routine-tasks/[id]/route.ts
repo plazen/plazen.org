@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export async function PATCH(
     };
 
     if (title !== undefined) {
-      dataToUpdate.title = title;
+      dataToUpdate.title = encrypt(title);
     }
 
     if (description !== undefined) {
@@ -75,7 +76,12 @@ export async function PATCH(
       data: dataToUpdate,
     });
 
-    return NextResponse.json(updatedRoutineTask, { status: 200 });
+    const decryptedTask = {
+      ...updatedRoutineTask,
+      title: decrypt(updatedRoutineTask.title),
+    };
+
+    return NextResponse.json(decryptedTask, { status: 200 });
   } catch (error) {
     console.error("Error updating routine task:", error);
     return NextResponse.json(

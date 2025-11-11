@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { encrypt, decrypt } from "@/lib/encryption";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,12 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(routineTasks);
+    const decryptedTasks = routineTasks.map((task) => ({
+      ...task,
+      title: decrypt(task.title),
+    }));
+
+    return NextResponse.json(decryptedTasks);
   } catch (error) {
     console.error("Error fetching routine tasks:", error);
     return NextResponse.json(
@@ -81,16 +87,23 @@ export async function POST(request: Request) {
       );
     }
 
+    const encryptedTitle = encrypt(title);
+
     const routineTask = await prisma.routine_tasks.create({
       data: {
         user_id: session.user.id,
-        title,
+        title: encryptedTitle,
         description: description || null,
         duration_minutes: parseInt(duration_minutes),
       },
     });
 
-    return NextResponse.json(routineTask, { status: 201 });
+    const decryptedTask = {
+      ...routineTask,
+      title: decrypt(routineTask.title),
+    };
+
+    return NextResponse.json(decryptedTask, { status: 201 });
   } catch (error) {
     console.error("Error creating routine task:", error);
     return NextResponse.json(

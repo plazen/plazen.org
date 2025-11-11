@@ -1,8 +1,7 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Trash2, Plus, Clock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface RoutineTask {
   id: string;
@@ -137,79 +136,98 @@ function RoutineTasksManager({ onClose }: RoutineTasksManagerProps) {
         </div>
       </div>
 
-      {/* Add Dialog */}
-      {isAddDialogOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Add Routine Task</h3>
-                <p className="text-muted-foreground text-sm">
-                  Create a routine task that can be automatically scheduled.
-                </p>
+      <AnimatePresence>
+        {isAddDialogOpen && (
+          <motion.div
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsAddDialogOpen(false)}
+          >
+            <motion.div
+              className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Add Routine Task</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Create a routine task that can be automatically scheduled.
+                  </p>
+                </div>
+
+                <form onSubmit={handleAddTask} className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="title" className="text-sm font-medium">
+                      Title
+                    </label>
+                    <input
+                      id="title"
+                      type="text"
+                      value={newTask.title}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewTask({ ...newTask, title: e.target.value })
+                      }
+                      placeholder="e.g., Daily workout, Meditation, Reading..."
+                      className="w-full px-4 py-3 border border-border rounded-xl bg-input focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="duration" className="text-sm font-medium">
+                      Duration (minutes)
+                    </label>
+                    <input
+                      id="duration"
+                      type="number"
+                      min="5"
+                      max="480"
+                      step="5"
+                      value={newTask.duration_minutes}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewTask({
+                          ...newTask,
+                          duration_minutes: parseInt(e.target.value) || 30,
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-border rounded-xl bg-input focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsAddDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" className="shadow-sm">
+                      Add Task
+                    </Button>
+                  </div>
+                </form>
               </div>
-
-              <form onSubmit={handleAddTask} className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="title" className="text-sm font-medium">
-                    Title
-                  </label>
-                  <input
-                    id="title"
-                    type="text"
-                    value={newTask.title}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setNewTask({ ...newTask, title: e.target.value })
-                    }
-                    placeholder="e.g., Daily workout, Meditation, Reading..."
-                    className="w-full px-4 py-3 border border-border rounded-xl bg-input focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all outline-none"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="duration" className="text-sm font-medium">
-                    Duration (minutes)
-                  </label>
-                  <input
-                    id="duration"
-                    type="number"
-                    min="5"
-                    max="480"
-                    step="5"
-                    value={newTask.duration_minutes}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setNewTask({
-                        ...newTask,
-                        duration_minutes: parseInt(e.target.value) || 30,
-                      })
-                    }
-                    className="w-full px-4 py-3 border border-border rounded-xl bg-input focus:border-ring focus:ring-2 focus:ring-ring/20 transition-all outline-none"
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="shadow-sm">
-                    Add Task
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       {routineTasks.length === 0 ? (
-        <div className="border border-dashed border-border rounded-2xl p-12 text-center bg-card/50">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          className="border border-dashed border-border rounded-2xl p-12 text-center bg-card/50"
+        >
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Clock className="w-8 h-8 text-primary" />
           </div>
@@ -225,48 +243,61 @@ function RoutineTasksManager({ onClose }: RoutineTasksManagerProps) {
             <Plus className="w-4 h-4 mr-2" />
             Add Your First Task
           </Button>
-        </div>
+        </motion.div>
       ) : (
         <div className="grid gap-4">
-          {routineTasks.map((task) => (
-            <div
-              key={task.id}
-              className="group bg-card border border-border rounded-2xl p-6 hover:shadow-lg hover:border-ring/20 transition-all duration-200"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {task.title}
-                  </h3>
-                  {task.description && (
-                    <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                      {task.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-sm text-secondary-foreground font-medium">
-                      <Clock className="w-3.5 h-3.5" />
-                      {formatDuration(task.duration_minutes)}
-                    </span>
-                    {task.is_active && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                        Active
-                      </span>
+          <AnimatePresence>
+            {routineTasks.map((task) => (
+              <motion.div
+                key={task.id}
+                layout
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{
+                  opacity: 0,
+                  height: 0,
+                  padding: 0,
+                  margin: 0,
+                  transition: { duration: 0.2 },
+                }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="group bg-card border border-border rounded-2xl p-6 hover:shadow-lg hover:border-ring/20 transition-all duration-200 overflow-hidden"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                      {task.title}
+                    </h3>
+                    {task.description && (
+                      <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                        {task.description}
+                      </p>
                     )}
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary rounded-full text-sm text-secondary-foreground font-medium">
+                        <Clock className="w-3.5 h-3.5" />
+                        {formatDuration(task.duration_minutes)}
+                      </span>
+                      {task.is_active && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-medium">
+                          <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          Active
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteTask(task.id)}
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>
