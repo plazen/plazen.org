@@ -38,41 +38,8 @@ export default function ReleaseNotesPage() {
     <div className="font-lexend">
       <style>
         {`
-          .font-lexend {
-            font-family: 'Lexend', sans-serif;
-          }
-          .prose-custom h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: white;
-            margin-top: 2em;
-            margin-bottom: 1em;
-            border-bottom: 1px solid var(--color-border);
-            padding-bottom: 0.5em;
-          }
-          .prose-custom p {
-            line-height: 1.7;
-            white-space: pre-wrap;
-          }
-          .prose-custom .note-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5em;
-          }
-          .prose-custom .version-tag {
-            font-size: 0.875rem;
-            font-weight: 500;
-            padding: 0.25em 0.75em;
-            border-radius: 9999px;
-            background-color: var(--color-primary-foreground);
+          .note-item:hover h2 {
             color: var(--color-primary);
-            background-color: oklch(0.7 0.1 190 / 0.1);
-            color: oklch(0.7 0.1 190);
-          }
-          .prose-custom .date {
-            font-size: 0.875rem;
-            color: var(--color-muted-foreground);
           }
         `}
       </style>
@@ -85,7 +52,7 @@ export default function ReleaseNotesPage() {
             </span>
           </Link>
 
-          <article className="prose prose-invert prose-lg max-w-none prose-custom">
+          <article className="prose prose-invert prose-lg max-w-none">
             <h1 className="text-4xl font-bold text-white mb-6">
               Release Notes
             </h1>
@@ -99,22 +66,31 @@ export default function ReleaseNotesPage() {
                 <LoadingSpinner text="Loading notes..." />
               </div>
             ) : (
-              <section>
+              <section className="space-y-8 mt-12 not-prose">
                 {notes.map((note) => (
-                  <div key={note.id} className="mb-10">
-                    <div className="note-header">
-                      <h2 className="!m-0 !border-0 !p-0">{note.topic}</h2>
-                      <span className="version-tag">{note.version}</span>
+                  <Link
+                    href={`/release-notes/${note.id}`}
+                    key={note.id}
+                    className="block no-underline note-item group"
+                  >
+                    <div className="p-6 border border-border rounded-xl transition-all duration-200 hover:border-primary/50 hover:shadow-lg bg-card/50 hover:bg-card">
+                      <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-2xl font-semibold text-white !m-0 !p-0 !border-0 transition-colors duration-200">
+                          {note.topic}
+                        </h2>
+                        <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full flex-shrink-0">
+                          {note.version}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 !m-0">
+                        {new Date(note.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
                     </div>
-                    <p className="date !m-0">
-                      {new Date(note.date).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                    <p className="mt-4">{note.text}</p>
-                  </div>
+                  </Link>
                 ))}
               </section>
             )}
