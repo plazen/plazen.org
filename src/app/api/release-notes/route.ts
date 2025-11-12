@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const releaseNotes = await prisma.release_notes.findMany({
       orderBy: {
-        date: "desc",
+        version: "desc",
       },
     });
 
