@@ -17,6 +17,7 @@ import {
   RefreshCw,
   AlertCircle,
   X,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
@@ -66,6 +67,8 @@ export default function TimetableApp() {
   const [reschedulingTask, setReschedulingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
+
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
@@ -369,6 +372,15 @@ export default function TimetableApp() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setIsCalendarOpen(true)}
+                  className="h-9 w-9 lg:hidden"
+                  title="View Calendar"
+                >
+                  <CalendarIcon className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setIsRoutineTasksOpen(true)}
                   className="h-9 w-9"
                   title="Routine Tasks"
@@ -443,9 +455,8 @@ export default function TimetableApp() {
           )}
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Calendar Sidebar */}
             <motion.div
-              className="lg:w-80 flex-shrink-0"
+              className="lg:w-80 flex-shrink-0 hidden lg:block"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
@@ -460,7 +471,6 @@ export default function TimetableApp() {
               </div>
             </motion.div>
 
-            {/* Main Timetable */}
             <motion.div
               className="flex-1 min-w-0"
               initial={{ opacity: 0, x: 20 }}
@@ -485,7 +495,6 @@ export default function TimetableApp() {
             </motion.div>
           </div>
 
-          {/* Floating Action Button */}
           <motion.div
             className="fixed bottom-6 right-6 z-50"
             initial={{ scale: 0 }}
@@ -502,7 +511,49 @@ export default function TimetableApp() {
           </motion.div>
         </main>
 
-        {/* Modals */}
+        <AnimatePresence>
+          {isCalendarOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+                onClick={() => setIsCalendarOpen(false)}
+              />
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                className="fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[calc(100vw-4rem)] bg-card border-r border-border shadow-2xl lg:hidden"
+              >
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                  <h3 className="font-semibold text-foreground">Calendar</h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsCalendarOpen(false)}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => {
+                    setDate(newDate);
+                    setIsCalendarOpen(false);
+                  }}
+                  className="p-4 w-full"
+                />
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         <AddTaskModal
           isOpen={isAddTaskModalOpen}
           onClose={() => setIsAddTaskModalOpen(false)}
