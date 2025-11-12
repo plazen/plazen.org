@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/components/theme-provider";
 import { Theme } from "@/lib/theme";
 import { PlazenLogo } from "@/components/plazen-logo";
+import ReactMarkdown from "react-markdown";
 import "../globals.css";
 
 type Notification = {
@@ -31,6 +32,8 @@ type Notification = {
   message: string | null;
   show: boolean;
 };
+
+const DISMISSED_NOTIFICATIONS_KEY = "plazen_dismissed_notifications";
 
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -65,9 +68,16 @@ export default function TimetableApp() {
   const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
+
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
     string[]
-  >([]);
+  >(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+    const stored = localStorage.getItem(DISMISSED_NOTIFICATIONS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  });
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -150,6 +160,13 @@ export default function TimetableApp() {
       fetchTasks(date);
     }
   }, [date, fetchTasks, user]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      DISMISSED_NOTIFICATIONS_KEY,
+      JSON.stringify(dismissedNotificationIds)
+    );
+  }, [dismissedNotificationIds]);
 
   const toLocalISOString = (dateToFormat: Date) => {
     const year = dateToFormat.getFullYear();
@@ -281,8 +298,6 @@ export default function TimetableApp() {
       });
       if (!response.ok) throw new Error("Failed to reschedule task");
 
-      // Refetch tasks to ensure the timetable reflects the current date correctly
-      // This handles cases where tasks are moved to different dates
       if (date) {
         await fetchTasks(date);
       }
@@ -401,7 +416,10 @@ export default function TimetableApp() {
               >
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-300" />
-                  <p className="text-sm">{notification.message}</p>
+                  <div className="text-sm max-w-none notification-markdown">
+                    {" "}
+                    <ReactMarkdown>{notification.message || ""}</ReactMarkdown>
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
