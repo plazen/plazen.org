@@ -1,4 +1,6 @@
+import Link from "next/link";
 import React from "react";
+import { PlazenLogo } from "@/components/plazen-logo";
 
 export default function App() {
   return (
@@ -15,6 +17,15 @@ export default function App() {
         </style>
         <div className="bg-black text-gray-300 min-h-screen p-8 md:p-12 lg:p-16">
           <div className="max-w-3xl mx-auto">
+            <Link
+              href="/schedule"
+              className="flex items-center gap-3 mb-8 group"
+            >
+              <PlazenLogo />
+              <span className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+                Plazen
+              </span>
+            </Link>
             <article className="prose prose-invert prose-lg max-w-none">
               <h1 className="text-4xl font-bold text-white mb-4">
                 Privacy Policy

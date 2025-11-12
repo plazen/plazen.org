@@ -206,3 +206,25 @@ body {
   background: var(--color-border) !important;
   margin: 16px 0 !important;
 }
+
+.notification-markdown a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: var(--color-ring); /* Or a specific blue if you prefer */
+}
+
+.notification-markdown a:hover {
+  opacity: 0.8;
+}
+
+.notification-markdown p {
+  margin: 0;
+}
+.notification-markdown ul,
+.notification-markdown ol {
+  margin: 0.5em 0 0.5em 1.5em;
+  padding-left: 0.5em;
+}
+.notification-markdown li {
+  margin-bottom: 0.25em;
+}
