@@ -62,11 +62,13 @@ export default async function AdminTicketPage({
   }
 
   return (
-    <TicketView
-      initialTicket={ticket}
-      currentUserId={session.user.id}
-      isAdmin={true}
-      allLabels={allLabels}
-    />
+    <div className="p-8 container mx-auto max-w-6xl min-h-screen">
+      <TicketView
+        initialTicket={ticket}
+        currentUserId={session.user.id}
+        isAdmin={true}
+        allLabels={allLabels}
+      />
+    </div>
   );
 }

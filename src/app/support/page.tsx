@@ -24,7 +24,7 @@ export default async function SupportPage() {
   });
 
   return (
-    <div className="container max-w-4xl mx-auto py-10 px-4">
+    <div className="container max-w-4xl min-h-screen mx-auto py-10 px-4">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">Support Tickets</h1>

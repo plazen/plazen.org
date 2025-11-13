@@ -29,7 +29,7 @@ export default function NewTicketPage() {
   };
 
   return (
-    <div className="container max-w-2xl mx-auto py-10 px-4">
+    <div className="container max-w-2xl h-full mx-auto py-10 px-4">
       <Link
         href="/support"
         className="text-sm text-muted-foreground hover:text-primary flex items-center mb-6 transition-colors"

@@ -31,7 +31,7 @@ export default async function AdminSupportPage() {
   });
 
   return (
-    <div className="p-8 container mx-auto max-w-6xl">
+    <div className="p-8 container mx-auto max-w-6xl min-h-screen">
       <h1 className="text-3xl font-bold mb-8">Admin Support Dashboard</h1>
 
       {/* Add the Label Manager here */}
