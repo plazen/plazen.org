@@ -62,12 +62,15 @@ function Landing() {
           <div className={styles.container}>
             <div className={styles.topBar}>
               <div className={styles.brand}>
-                <PlazenLogo width={50} height={50} />
+                <PlazenLogo width={32} height={32} />
                 <span className={styles.brandText}>Plazen</span>
               </div>
               <nav className={styles.nav}>
                 <a href="#features" className={styles.navLink}>
                   Features
+                </a>
+                <a href="#security" className={styles.navLink}>
+                  Security
                 </a>
                 <Link
                   href="/login"
@@ -184,8 +187,8 @@ function Landing() {
                 </blockquote>
                 <figcaption className={styles.testimonialMeta}>
                   <Image
-                    width={800}
-                    height={600}
+                    width={40}
+                    height={40}
                     className={styles.testimonialAvatar}
                     src="https://avatars.githubusercontent.com/u/175145001?v=4"
                     alt="Drew S."
@@ -206,8 +209,8 @@ function Landing() {
                 </blockquote>
                 <figcaption className={styles.testimonialMeta}>
                   <Image
-                    width={800}
-                    height={600}
+                    width={40}
+                    height={40}
                     className={styles.testimonialAvatar}
                     src="https://i.pinimg.com/236x/b2/ea/a0/b2eaa0d4918d54021f9c7aa3fc3d3cf3.jpg"
                     alt="Preston P."
@@ -228,11 +231,11 @@ function Landing() {
                 </blockquote>
                 <figcaption className={styles.testimonialMeta}>
                   <Image
-                    width={800}
-                    height={600}
+                    width={40}
+                    height={40}
                     className={styles.testimonialAvatar}
                     src="https://i.pinimg.com/236x/06/f4/e2/06f4e292a4dbe804107c6bf6f6616bda.jpg"
-                    alt="Nina C."
+                    alt="Priya"
                   />
                   <div className={styles.testimonialIdentity}>
                     <span className={styles.testimonialName}>Priya</span>
@@ -242,6 +245,81 @@ function Landing() {
                   </div>
                 </figcaption>
               </figure>
+            </div>
+          </div>
+        </section>
+
+        <section id="security" className={styles.sectionAlt}>
+          <div className={styles.container}>
+            <div className={styles.securityContent}>
+              <div className={styles.securityText}>
+                <h2 className={styles.sectionTitle}>Your Data, Secured.</h2>
+                <p className={styles.securitySubtitle}>
+                  We take your privacy seriously. Your task data is yours alone,
+                  protected with industry-leading encryption.
+                </p>
+                <ul className={styles.securityList}>
+                  <li className={styles.securityListItem}>
+                    <div className={styles.securityIcon}>🔒</div>
+                    <div className={styles.securityItemText}>
+                      <strong>AES-256-GCM Encryption</strong>
+                      <p>
+                        Your data is encrypted at rest using the same standard
+                        trusted by banks and governments.
+                      </p>
+                    </div>
+                  </li>
+                  <li className={styles.securityListItem}>
+                    <div className={styles.securityIcon}>🛡️</div>
+                    <div className={styles.securityItemText}>
+                      <strong>Authenticated Encryption</strong>
+                      <p>
+                        We use GCM, which not only encrypts your data but also
+                        ensures it cannot be tampered with.
+                      </p>
+                    </div>
+                  </li>
+                  <li className={styles.securityListItem}>
+                    <div className={styles.securityIcon}>🔑</div>
+                    <div className={styles.securityItemText}>
+                      <strong>Isolated & Private</strong>
+                      <p>
+                        Your data is encrypted with a key unique to your
+                        environment, keeping it totally isolated.
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div className={styles.securityVisual}>
+                <svg
+                  className={styles.securitySvg}
+                  width="200"
+                  height="200"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path
+                    d="M19 11H5C3.89543 11 3 11.8954 3 13V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V13C21 11.8954 20.1046 11 19 11Z"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M7 11V7C7 4.79086 8.79086 3 11 3H13C15.2091 3 17 4.79086 17 7V11"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12 16.5V16.51"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
         </section>
@@ -262,7 +340,7 @@ function Landing() {
         <footer className={styles.footer}>
           <div className={`${styles.container} ${styles.footerInner}`}>
             <div className={styles.brand}>
-              <PlazenLogo width={50} height={50} />
+              <PlazenLogo width={28} height={28} />
               <span className={styles.brandText}>Plazen</span>
             </div>
             <p className={styles.copyright}>
