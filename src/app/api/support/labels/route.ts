@@ -56,10 +56,41 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(label, { status: 201 });
   } catch (error) {
-    console.error(error);
     return NextResponse.json(
-      { error: "Label already exists or invalid data" },
+      { error: "Label already exists" },
       { status: 409 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+  );
+
+  if (!(await isAdmin(supabase))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "ID is required" }, { status: 400 });
+  }
+
+  try {
+    await prisma.support_labels.delete({
+      where: { id },
+    });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to delete label" },
+      { status: 500 }
     );
   }
 }

@@ -34,7 +34,7 @@ async function getAllLabels() {
 export default async function AdminTicketPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -49,8 +49,8 @@ export default async function AdminTicketPage({
   if (!session || session.user.email !== process.env.ADMIN_EMAIL) {
     redirect("/schedule");
   }
-
-  const ticket = await getTicket(params.id);
+  const { id } = await params;
+  const ticket = await getTicket(id);
   const allLabels = await getAllLabels();
 
   if (!ticket) {

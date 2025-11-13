@@ -135,46 +135,63 @@ export function TicketView({
     <div className="container max-w-4xl mx-auto py-10 px-4">
       <Link
         href={isAdmin ? "/admin/support" : "/support"}
-        className="text-sm text-muted-foreground hover:text-primary flex items-center mb-6"
+        className="text-sm text-muted-foreground hover:text-primary flex items-center mb-6 transition-colors"
       >
         <ArrowLeft className="mr-2 h-4 w-4" /> Back to tickets
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <div className=" border rounded-lg mb-6">
-            <div className="p-4 border-b">
-              <span className="text-xs text-muted-foreground">
-                Ticket #{ticket.id.split("-")[0]}
-              </span>
+          <div className="bg-card rounded-lg mb-6 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border/40">
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs font-medium text-muted-foreground px-2 py-1 rounded bg-secondary/50">
+                  #{ticket.id.split("-")[0]}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {format(parseISO(ticket.created_at), "PPP p")}
+                </span>
+              </div>
               <h1 className="text-2xl font-bold">{ticket.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                Opened by {ticket.users.email} on{" "}
-                {format(parseISO(ticket.created_at), "PPP")}
+              <p className="text-sm text-muted-foreground mt-2">
+                Opened by{" "}
+                <span className="font-medium text-foreground">
+                  {ticket.users.email}
+                </span>
               </p>
             </div>
-            <div className="p-4 space-y-6">
+            <div className="p-6 space-y-6">
               {ticket.messages
                 .filter((msg) => isAdmin || !msg.is_internal)
                 .map((msg) => (
-                  <div key={msg.id} className="flex gap-3">
-                    <div className="flex-shrink-0 bg-secondary rounded-full h-10 w-10 flex items-center justify-center">
-                      {msg.user.id === ticket.user_id ? (
-                        <User className="w-5 h-5" />
-                      ) : (
-                        <Shield className="w-5 h-5 text-primary" />
-                      )}
+                  <div key={msg.id} className="flex gap-4 group">
+                    <div className="flex-shrink-0">
+                      <div
+                        className={cn(
+                          "h-10 w-10 rounded-full flex items-center justify-center ring-2 ring-background shadow-sm",
+                          msg.user.id === ticket.user_id
+                            ? "bg-secondary text-foreground"
+                            : "bg-primary/10 text-primary"
+                        )}
+                      >
+                        {msg.user.id === ticket.user_id ? (
+                          <User className="w-5 h-5" />
+                        ) : (
+                          <Shield className="w-5 h-5" />
+                        )}
+                      </div>
                     </div>
                     <div
                       className={cn(
-                        "flex-1 p-4 rounded-lg",
+                        "flex-1 p-4 rounded-lg shadow-sm transition-colors",
                         msg.is_internal
-                          ? "bg-yellow-500/10 border border-yellow-500/30"
-                          : "bg-secondary/50",
-                        msg.user.id === currentUserId ? "bg-primary/10" : ""
+                          ? "bg-yellow-500/10 border border-yellow-500/20"
+                          : msg.user.id === currentUserId
+                          ? "bg-primary/5 border border-primary/10"
+                          : "bg-secondary/30 border border-border/50"
                       )}
                     >
-                      <div className="flex justify-between items-center mb-1">
+                      <div className="flex justify-between items-center mb-2">
                         <span className="font-semibold text-sm">
                           {msg.user.id === currentUserId
                             ? "You"
@@ -184,11 +201,11 @@ export function TicketView({
                             " (Support)"}
                           {msg.is_internal && " (Internal Note)"}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(parseISO(msg.created_at), "Pp")}
+                        <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                          {format(parseISO(msg.created_at), "p")}
                         </span>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed text-foreground/90">
                         {msg.message}
                       </p>
                     </div>
@@ -197,36 +214,37 @@ export function TicketView({
             </div>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form
+            onSubmit={handleSubmit}
+            className="bg-card rounded-lg shadow-sm overflow-hidden focus-within:ring-1 focus-within:ring-ring/30 transition-all"
+          >
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               disabled={loading}
-              className="flex min-h-[120px] w-full rounded-md rounded-b-none  bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex min-h-[120px] w-full bg-transparent px-6 py-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none resize-none"
               placeholder={
                 isAdmin
                   ? "Type your reply or add an internal note..."
                   : "Type your reply..."
               }
             />
-            <div className="flex justify-between items-center bg-card  rounded-lg rounded-t-none p-3">
+            <div className="flex justify-between items-center bg-muted/20 border-t border-border/40 px-4 py-3">
               <div>
                 {isAdmin && (
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                     <input
                       type="checkbox"
                       checked={isInternal}
                       onChange={(e) => setIsInternal(e.target.checked)}
-                      className="form-checkbox h-4 w-4 text-primary rounded"
+                      className="h-4 w-4 rounded border-border bg-background text-primary focus:ring-primary/20"
                     />
-                    {isInternal
-                      ? "Internal Note (not visible to user)"
-                      : "Public Reply"}
+                    {isInternal ? "Internal Note" : "Public Reply"}
                   </label>
                 )}
               </div>
               <Button type="submit" disabled={loading || !newMessage.trim()}>
-                {loading ? "Sending..." : "Send"}
+                {loading ? "Sending..." : "Send Reply"}
                 <Send className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -234,80 +252,113 @@ export function TicketView({
         </div>
 
         {/* Sidebar */}
-        <div className="md:col-span-1 space-y-4">
-          <div className="bg-card rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Ticket Details</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Status</span>
+        <div className="md:col-span-1 space-y-6">
+          <div className="bg-card rounded-lg p-6 shadow-sm">
+            <h3 className="font-semibold mb-4 text-lg">Details</h3>
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-col gap-1">
+                <span className="text-muted-foreground text-xs uppercase tracking-wider">
+                  Status
+                </span>
                 {isAdmin ? (
                   <select
                     value={ticket.status}
                     onChange={handleStatusChange}
                     disabled={loading}
-                    className="text-right bg-transparen p-0 focus:ring-0"
+                    className="w-full bg-secondary/50 rounded-md px-2 py-2 border-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-secondary/70 transition-colors"
                   >
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
                     <option value="closed">Closed</option>
                   </select>
                 ) : (
-                  <span className="capitalize">
-                    {ticket.status.replace("_", " ")}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        ticket.status === "open"
+                          ? "bg-green-500"
+                          : ticket.status === "in_progress"
+                          ? "bg-blue-500"
+                          : "bg-gray-500"
+                      )}
+                    />
+                    <span className="capitalize font-medium">
+                      {ticket.status.replace("_", " ")}
+                    </span>
+                  </div>
                 )}
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Priority</span>
-                <span className="capitalize">{ticket.priority}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Last Update</span>
-                <span>{format(parseISO(ticket.updated_at), "Pp")}</span>
+
+              <div className="flex flex-col gap-1">
+                <span className="text-muted-foreground text-xs uppercase tracking-wider">
+                  Priority
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex self-start px-2.5 py-1 rounded-full text-xs font-medium capitalize",
+                    ticket.priority === "high"
+                      ? "bg-red-500/10 text-red-500"
+                      : ticket.priority === "low"
+                      ? "bg-green-500/10 text-green-500"
+                      : "bg-blue-500/10 text-blue-500"
+                  )}
+                >
+                  {ticket.priority}
+                </span>
               </div>
             </div>
           </div>
 
           {isAdmin && (
-            <div className="bg-card rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Labels</h3>
-              <div className="flex flex-wrap gap-2 mb-3">
+            <div className="bg-card rounded-lg p-6 shadow-sm">
+              <h3 className="font-semibold mb-4 text-lg">Labels</h3>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {ticketLabels.length === 0 && (
+                  <p className="text-sm text-muted-foreground italic">
+                    No labels assigned
+                  </p>
+                )}
                 {ticketLabels.map((label) => (
                   <span
                     key={label.id}
-                    className="flex items-center text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground"
+                    className="flex items-center text-xs px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground font-medium group"
                     style={{ borderLeft: `3px solid ${label.color}` }}
                   >
                     {label.name}
                     <button
                       onClick={() => handleRemoveLabel(label.id)}
                       disabled={loading}
+                      className="ml-2 text-muted-foreground hover:text-destructive transition-colors opacity-50 group-hover:opacity-100"
                     >
-                      <X className="h-3 w-3 ml-1" />
+                      <X className="h-3 w-3" />
                     </button>
                   </span>
                 ))}
               </div>
-              <select
-                onChange={handleAddLabel}
-                disabled={loading || availableLabels.length === 0}
-                className="flex h-9 w-full items-center justify-between rounded-md bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">
-                  {availableLabels.length > 0
-                    ? "Add a label..."
-                    : "No labels to add"}
-                </option>
-                {availableLabels.map((label) => (
-                  <option
-                    key={label.id}
-                    value={label.id}
-                    className="bg-background"
-                  >
-                    {label.name}
+              <div className="relative">
+                <select
+                  onChange={handleAddLabel}
+                  disabled={loading || availableLabels.length === 0}
+                  value=""
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input/50 bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="" disabled>
+                    {availableLabels.length > 0
+                      ? "Add label..."
+                      : "No labels available"}
                   </option>
-                ))}
-              </select>
+                  {availableLabels.map((label) => (
+                    <option
+                      key={label.id}
+                      value={label.id}
+                      className="bg-background"
+                    >
+                      {label.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>
