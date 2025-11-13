@@ -134,6 +134,14 @@ export default function RootLayout({
                         Release Notes
                       </Link>
                     </li>
+                    <li>
+                      <Link
+                        href="/support"
+                        className="hover:text-primary transition-colors"
+                      >
+                        Support
+                      </Link>
+                    </li>
                   </ul>
                 </div>
 
