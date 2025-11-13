@@ -28,7 +28,7 @@ async function getTicket(id: string, userId: string) {
 export default async function UserTicketPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>; // 1. Update Type to Promise
 }) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -44,7 +44,9 @@ export default async function UserTicketPage({
     redirect("/login");
   }
 
-  const ticket = await getTicket(params.id, session.user.id);
+  // 2. Await the params before using them
+  const { id } = await params;
+  const ticket = await getTicket(id, session.user.id);
 
   if (!ticket) {
     return (
