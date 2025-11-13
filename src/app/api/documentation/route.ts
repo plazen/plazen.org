@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const docEntries = await prisma.documentation_entries.findMany({
       orderBy: {
-        topic: "asc",
+        category: "asc",
       },
     });
 
