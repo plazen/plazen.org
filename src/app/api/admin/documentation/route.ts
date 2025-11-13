@@ -67,6 +67,8 @@ export async function POST(request: Request) {
         topic,
         text,
         category: category || null,
+        created_at: new Date(),
+        updated_at: new Date(),
       },
     });
 
