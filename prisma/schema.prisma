@@ -332,6 +332,8 @@ model users {
   sessions                    sessions[]
   UserSettings                UserSettings?
   routine_tasks               routine_tasks[]
+  support_tickets             support_tickets[]
+  support_messages            support_ticket_messages[]
   tasks                       tasks[]
 
   @@index([instance_id])
@@ -555,4 +557,60 @@ enum oauth_response_type {
   code
 
   @@schema("auth")
+}
+
+// Add these models to your schema.prisma file
+
+/// Support tickets for user inquiries and issues
+model support_tickets {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String   @db.Uuid
+  title       String
+  status      String   @default("open") // "open", "in_progress", "closed"
+  priority    String   @default("normal") // "low", "normal", "high"
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @db.Timestamptz(6)
+  
+  users       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  messages    support_ticket_messages[]
+  labels      support_tickets_labels[]
+
+  @@schema("public")
+}
+
+/// Messages within a support ticket
+model support_ticket_messages {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticket_id   String   @db.Uuid
+  user_id     String   @db.Uuid
+  message     String
+  is_internal Boolean  @default(false) // For admin-only notes
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  ticket      support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user        users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+/// Available labels for tickets (managed by admins)
+model support_labels {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  color       String   @default("#64748b") // Default slate color
+  tickets     support_tickets_labels[]
+
+  @@schema("public")
+}
+
+/// Junction table for tickets and labels
+model support_tickets_labels {
+  ticket_id String   @db.Uuid
+  label_id  String   @db.Uuid
+  
+  ticket    support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  label     support_labels  @relation(fields: [label_id], references: [id], onDelete: Cascade)
+
+  @@id([ticket_id, label_id])
+  @@schema("public")
 }
