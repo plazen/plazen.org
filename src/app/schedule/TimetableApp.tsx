@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import Timetable from "@/app/components/Timetable";
 import RescheduleModal from "@/app/components/RescheduleModal";
 import SettingsModal from "@/app/components/SettingsModal";
@@ -34,13 +35,13 @@ type Notification = {
   show: boolean;
 };
 
-const DISMISSED_NOTIFICATIONS_KEY = "plazen_dismissed_notifications";
-
 export default function TimetableApp() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const { setTheme } = useTheme();
+
   type Task = {
     id: string;
     title: string;
@@ -71,14 +72,13 @@ export default function TimetableApp() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
-
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
     string[]
   >(() => {
     if (typeof window === "undefined") {
       return [];
     }
-    const stored = localStorage.getItem(DISMISSED_NOTIFICATIONS_KEY);
+    const stored = localStorage.getItem("plazen_dismissed_notifications");
     return stored ? JSON.parse(stored) : [];
   });
 
@@ -126,6 +126,17 @@ export default function TimetableApp() {
       }
       setUser(session.user);
 
+      if (session.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+        if (profile && profile.role === "ADMIN") {
+          setIsAdmin(true);
+        }
+      }
+
       try {
         const settingsResponse = await fetch("/api/settings");
         if (!settingsResponse.ok) {
@@ -158,6 +169,7 @@ export default function TimetableApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ... (All other useEffects and handlers remain unchanged) ...
   useEffect(() => {
     if (date && user) {
       fetchTasks(date);
@@ -166,7 +178,7 @@ export default function TimetableApp() {
 
   useEffect(() => {
     localStorage.setItem(
-      DISMISSED_NOTIFICATIONS_KEY,
+      "plazen_dismissed_notifications",
       JSON.stringify(dismissedNotificationIds)
     );
   }, [dismissedNotificationIds]);
@@ -369,6 +381,17 @@ export default function TimetableApp() {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
+                {isAdmin && (
+                  <Link href="/admin/support" passHref>
+                    <Button
+                      variant="destructive"
+                      className="h-9 font-bold"
+                      title="Admin Tools"
+                    >
+                      ADMIN
+                    </Button>
+                  </Link>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -414,6 +437,7 @@ export default function TimetableApp() {
           </div>
         </header>
 
+        {/* ... (Rest of the component remains the same) ... */}
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AnimatePresence>
             {activeNotifications.map((notification) => (
