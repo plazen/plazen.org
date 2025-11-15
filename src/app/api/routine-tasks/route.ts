@@ -38,7 +38,6 @@ export async function GET() {
     const routineTasks = await prisma.routine_tasks.findMany({
       where: {
         user_id: session.user.id,
-        is_active: true,
       },
       orderBy: {
         created_at: "desc",
