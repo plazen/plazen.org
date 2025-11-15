@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Select } from "./ui/select";
+import { Switch } from "./ui/switch";
 import { useTheme } from "@/components/theme-provider";
 import { themes, Theme } from "@/lib/theme";
 import { Info } from "lucide-react";
@@ -73,16 +76,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <h3 className="text-lg font-medium leading-6 text-foreground mb-4">
             Settings
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="space-y-2">
                 <label
                   htmlFor="start-time"
                   className="block text-sm font-medium text-muted-foreground"
                 >
                   Start Time
                 </label>
-                <select
+                <Select
                   id="start-time"
                   value={settings.timetable_start}
                   onChange={(e) =>
@@ -91,7 +94,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       timetable_start: parseInt(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
@@ -99,16 +101,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       "0"
                     )}:00`}</option>
                   ))}
-                </select>
+                </Select>
               </div>
-              <div>
+              <div className="space-y-2">
                 <label
                   htmlFor="end-time"
                   className="block text-sm font-medium text-muted-foreground"
                 >
                   End Time
                 </label>
-                <select
+                <Select
                   id="end-time"
                   value={settings.timetable_end}
                   onChange={(e) =>
@@ -117,7 +119,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       timetable_end: parseInt(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
@@ -125,36 +126,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                       "0"
                     )}:00`}</option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
             <div className="flex items-center justify-between pt-2">
               <span className="text-sm font-medium text-muted-foreground">
                 Show current time indicator
               </span>
-              <button
+              <Switch
+                checked={settings.show_time_needle}
                 onClick={handleToggle}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  settings.show_time_needle ? "bg-primary" : "bg-gray-600"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    settings.show_time_needle
-                      ? "translate-x-5"
-                      : "translate-x-0"
-                  }`}
-                />
-              </button>
+              />
             </div>
-            <div>
+            <div className="space-y-2">
               <label
                 htmlFor="theme"
                 className="block text-sm font-medium text-muted-foreground"
               >
                 Theme
               </label>
-              <select
+              <Select
                 id="theme"
                 value={settings.theme}
                 onChange={(e) =>
@@ -163,31 +154,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     theme: e.target.value,
                   })
                 }
-                className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
               >
                 {Object.values(themes).map((theme) => (
                   <option key={theme.value} value={theme.value}>
                     {theme.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
-            {/* New Telegram Chat ID Field */}
-            <div>
+            <div className="space-y-2">
               <label
                 htmlFor="telegram-id"
                 className="block text-sm font-medium text-muted-foreground"
               >
                 Telegram Chat ID
               </label>
-              <input
+              <Input
                 id="telegram-id"
                 type="text"
                 value={telegramId}
                 onChange={(e) => setTelegramId(e.target.value)}
                 placeholder="Talk to the bot to get your ID"
-                className="mt-1 block w-full rounded-xl bg-input border-border text-foreground shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
               />
               <div className="mt-2 flex items-start space-x-2 text-xs text-muted-foreground p-2 bg-input/50 rounded-lg">
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
