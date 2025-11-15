@@ -37,7 +37,7 @@ export default function AddTaskModal({
   isLoading,
 }: AddTaskModalProps) {
   const [title, setTitle] = useState("");
-  const [isTimeSensitive, setIsTimeSensitive] = useState(false);
+  const [isTimeSensitive, setIsTimeSensitive] = useState(true);
   const [duration, setDuration] = useState(30);
   const [scheduledTime, setScheduledTime] = useState("");
 
