@@ -379,15 +379,20 @@ export default function TimetableApp() {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => redirect("/admin")}
-                  className="h-9 w-15 bg-red-700  lg:hidden"
-                  title="ADMIN"
-                >
-                  ADMIN
-                </Button>
+                {isAdmin ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => redirect("/admin")}
+                    className="h-9 w-15 bg-red-700"
+                    title="ADMIN"
+                  >
+                    ADMIN
+                  </Button>
+                ) : (
+                  <></>
+                )}
+
                 <Button
                   variant="ghost"
                   size="icon"
