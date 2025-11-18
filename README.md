@@ -51,8 +51,8 @@ Follow these instructions to get a local copy up and running for development and
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/your-username/plazen.git](https://github.com/your-username/plazen.git)
-cd plazen
+git clone https://github.com/your-username/plazen.org.git
+cd plazen.org
 ```
 
 ### 2. Install Dependencies
@@ -81,6 +81,12 @@ DATABASE_URL=YOUR_SUPABASE_DATABASE_CONNECTION_STRING
 
 # Your local development URL
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Your 16-bit encryption key
+ENCRYPTION_KEY=12345678901234567890123456789012345678901234567890123456678901234
+
+# TEMPORARY: Admin email
+ADMIN_EMAIL=you@example.com
 ```
 
 **Important:** Your `DATABASE_URL` should point to your Supabase PostgreSQL database. You can find this in your Supabase project under `Settings` > `Database`. Make sure to add your password to the connection string.
