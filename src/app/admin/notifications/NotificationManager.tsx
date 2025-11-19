@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Trash2, Edit, Plus, X, Eye, EyeOff } from "lucide-react";
@@ -13,19 +13,35 @@ type Notification = {
   updated_at: Date | null;
 };
 
-interface ManagerProps {
-  initialNotifications: Notification[];
-}
-
-export function NotificationManager({ initialNotifications }: ManagerProps) {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(initialNotifications);
+export function NotificationManager() {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form state
   const [message, setMessage] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/admin/notifications");
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data);
+        } else {
+          setError("Failed to fetch notifications");
+        }
+      } catch (error) {
+        setError("Failed to fetch notifications");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
 
   const clearForm = () => {
     setMessage("");

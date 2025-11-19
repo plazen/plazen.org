@@ -70,7 +70,6 @@ export default function TimetableApp() {
   const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
@@ -147,15 +146,6 @@ export default function TimetableApp() {
           }
         } catch (err) {
           console.error("Failed to fetch notifications:", err);
-        }
-        try {
-          const isAdminResponse = await fetch("/api/is_admin");
-          const isAdminResponseFormatted = isAdminResponse.json();
-          setIsAdmin(await isAdminResponseFormatted);
-        } catch (err: unknown) {
-          setError(
-            err instanceof Error ? err.message : "An unknown error occurred"
-          );
         }
       } catch (err: unknown) {
         setError(
@@ -379,19 +369,15 @@ export default function TimetableApp() {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                {isAdmin ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => redirect("/admin")}
-                    className="h-9 w-15 bg-red-700"
-                    title="ADMIN"
-                  >
-                    ADMIN
-                  </Button>
-                ) : (
-                  <></>
-                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => redirect("/admin")}
+                  className="h-9 w-15 bg-red-700"
+                  title="ADMIN"
+                >
+                  ADMIN
+                </Button>
 
                 <Button
                   variant="ghost"

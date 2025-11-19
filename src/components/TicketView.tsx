@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { format, parseISO } from "date-fns";
 import { ArrowLeft, Send, X, Shield, User } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import LoadingSpinner from "@/app/components/LoadingSpinner";
+import { createBrowserClient } from "@supabase/ssr";
 
 type User = {
   id: string;
@@ -23,7 +25,7 @@ type TicketLabel = {
 };
 
 type Message = {
-  id: string;
+  id:string;
   message: string;
   created_at: string;
   is_internal: boolean;
@@ -46,26 +48,57 @@ type Ticket = {
 type AllLabels = Label;
 
 interface TicketViewProps {
-  initialTicket: Ticket;
-  currentUserId: string;
+  ticketId: string;
   isAdmin: boolean;
-  allLabels?: AllLabels[];
 }
 
-export function TicketView({
-  initialTicket,
-  currentUserId,
-  isAdmin,
-  allLabels = [],
-}: TicketViewProps) {
-  const [ticket, setTicket] = useState(initialTicket);
+export function TicketView({ ticketId, isAdmin }: TicketViewProps) {
+  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [allLabels, setAllLabels] = useState<AllLabels[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [isInternal, setIsInternal] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Refresh ticket data from server
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          setCurrentUserId(session.user.id);
+        }
+
+        const ticketRes = await fetch(`/api/support/tickets/${ticketId}`);
+        if (!ticketRes.ok) throw new Error("Failed to fetch ticket");
+        const ticketData = await ticketRes.json();
+        setTicket(ticketData);
+
+        if (isAdmin) {
+          const labelsRes = await fetch("/api/support/labels");
+          if (!labelsRes.ok) throw new Error("Failed to fetch labels");
+          const labelsData = await labelsRes.json();
+          setAllLabels(labelsData);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [ticketId, isAdmin, supabase.auth]);
+
   const refreshTicket = async () => {
-    const res = await fetch(`/api/support/tickets/${ticket.id}`);
+    const res = await fetch(`/api/support/tickets/${ticketId}`);
     if (res.ok) {
       const data = await res.json();
       setTicket(data);
@@ -74,9 +107,30 @@ export function TicketView({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !ticket || !currentUserId) return;
 
-    setLoading(true);
+    const optimisticMessage: Message = {
+      id: Math.random().toString(),
+      message: newMessage,
+      created_at: new Date().toISOString(),
+      is_internal: isInternal,
+      user: {
+        id: currentUserId,
+        email: ticket.users.email,
+      },
+    };
+
+    setTicket((prevTicket) => {
+      if (!prevTicket) return null;
+      return {
+        ...prevTicket,
+        messages: [...prevTicket.messages, optimisticMessage],
+      };
+    });
+
+    setNewMessage("");
+    setIsInternal(false);
+
     await fetch(`/api/support/tickets/${ticket.id}`, {
       method: "POST",
       body: JSON.stringify({
@@ -85,46 +139,51 @@ export function TicketView({
       }),
     });
 
-    setNewMessage("");
-    setIsInternal(false);
     await refreshTicket();
-    setLoading(false);
   };
 
   const handleStatusChange = async (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     const newStatus = e.target.value;
-    setLoading(true);
+    if (!ticket) return;
     await fetch(`/api/support/tickets/${ticket.id}`, {
       method: "POST",
       body: JSON.stringify({ status: newStatus }),
     });
     await refreshTicket();
-    setLoading(false);
   };
 
   const handleAddLabel = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const labelId = e.target.value;
-    if (!labelId) return;
+    if (!labelId || !ticket) return;
 
-    setLoading(true);
     await fetch(`/api/support/tickets/${ticket.id}/labels`, {
       method: "POST",
       body: JSON.stringify({ labelId }),
     });
     await refreshTicket();
-    setLoading(false);
   };
 
   const handleRemoveLabel = async (labelId: string) => {
-    setLoading(true);
+    if (!ticket) return;
     await fetch(`/api/support/tickets/${ticket.id}/labels?labelId=${labelId}`, {
       method: "DELETE",
     });
     await refreshTicket();
-    setLoading(false);
   };
+
+  if (loading) {
+    return <LoadingSpinner text="Loading ticket..." />;
+  }
+
+  if (error) {
+    return <div className="text-destructive">{error}</div>;
+  }
+
+  if (!ticket) {
+    return <div>Ticket not found</div>;
+  }
 
   const ticketLabels = ticket.labels.map((l) => l.label);
   const availableLabels = allLabels.filter(
@@ -264,7 +323,6 @@ export function TicketView({
                   <select
                     value={ticket.status}
                     onChange={handleStatusChange}
-                    disabled={loading}
                     className="w-full bg-secondary/50 rounded-md px-2 py-2 border-none focus:ring-1 focus:ring-primary cursor-pointer hover:bg-secondary/70 transition-colors"
                   >
                     <option value="open">Open</option>
@@ -328,7 +386,6 @@ export function TicketView({
                     {label.name}
                     <button
                       onClick={() => handleRemoveLabel(label.id)}
-                      disabled={loading}
                       className="ml-2 text-muted-foreground hover:text-destructive transition-colors opacity-50 group-hover:opacity-100"
                     >
                       <X className="h-3 w-3" />
@@ -339,7 +396,7 @@ export function TicketView({
               <div className="relative">
                 <select
                   onChange={handleAddLabel}
-                  disabled={loading || availableLabels.length === 0}
+                  disabled={availableLabels.length === 0}
                   value=""
                   className="flex h-10 w-full items-center justify-between rounded-md border border-input/50 bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
