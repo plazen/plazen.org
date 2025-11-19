@@ -289,41 +289,41 @@ model sso_providers {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model users {
-  instance_id                 String?                @db.Uuid
-  id                          String                 @id @db.Uuid
-  aud                         String?                @db.VarChar(255)
-  role                        String?                @db.VarChar(255)
-  email                       String?                @db.VarChar(255)
-  encrypted_password          String?                @db.VarChar(255)
-  email_confirmed_at          DateTime?              @db.Timestamptz(6)
-  invited_at                  DateTime?              @db.Timestamptz(6)
-  confirmation_token          String?                @db.VarChar(255)
-  confirmation_sent_at        DateTime?              @db.Timestamptz(6)
-  recovery_token              String?                @db.VarChar(255)
-  recovery_sent_at            DateTime?              @db.Timestamptz(6)
-  email_change_token_new      String?                @db.VarChar(255)
-  email_change                String?                @db.VarChar(255)
-  email_change_sent_at        DateTime?              @db.Timestamptz(6)
-  last_sign_in_at             DateTime?              @db.Timestamptz(6)
+  instance_id                 String?                   @db.Uuid
+  id                          String                    @id @db.Uuid
+  aud                         String?                   @db.VarChar(255)
+  role                        String?                   @db.VarChar(255)
+  email                       String?                   @db.VarChar(255)
+  encrypted_password          String?                   @db.VarChar(255)
+  email_confirmed_at          DateTime?                 @db.Timestamptz(6)
+  invited_at                  DateTime?                 @db.Timestamptz(6)
+  confirmation_token          String?                   @db.VarChar(255)
+  confirmation_sent_at        DateTime?                 @db.Timestamptz(6)
+  recovery_token              String?                   @db.VarChar(255)
+  recovery_sent_at            DateTime?                 @db.Timestamptz(6)
+  email_change_token_new      String?                   @db.VarChar(255)
+  email_change                String?                   @db.VarChar(255)
+  email_change_sent_at        DateTime?                 @db.Timestamptz(6)
+  last_sign_in_at             DateTime?                 @db.Timestamptz(6)
   raw_app_meta_data           Json?
   raw_user_meta_data          Json?
   is_super_admin              Boolean?
-  created_at                  DateTime?              @db.Timestamptz(6)
-  updated_at                  DateTime?              @db.Timestamptz(6)
-  phone                       String?                @unique
-  phone_confirmed_at          DateTime?              @db.Timestamptz(6)
-  phone_change                String?                @default("")
-  phone_change_token          String?                @default("") @db.VarChar(255)
-  phone_change_sent_at        DateTime?              @db.Timestamptz(6)
-  confirmed_at                DateTime?              @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
-  email_change_token_current  String?                @default("") @db.VarChar(255)
-  email_change_confirm_status Int?                   @default(0) @db.SmallInt
-  banned_until                DateTime?              @db.Timestamptz(6)
-  reauthentication_token      String?                @default("") @db.VarChar(255)
-  reauthentication_sent_at    DateTime?              @db.Timestamptz(6)
-  is_sso_user                 Boolean                @default(false)
-  deleted_at                  DateTime?              @db.Timestamptz(6)
-  is_anonymous                Boolean                @default(false)
+  created_at                  DateTime?                 @db.Timestamptz(6)
+  updated_at                  DateTime?                 @db.Timestamptz(6)
+  phone                       String?                   @unique
+  phone_confirmed_at          DateTime?                 @db.Timestamptz(6)
+  phone_change                String?                   @default("")
+  phone_change_token          String?                   @default("") @db.VarChar(255)
+  phone_change_sent_at        DateTime?                 @db.Timestamptz(6)
+  confirmed_at                DateTime?                 @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
+  email_change_token_current  String?                   @default("") @db.VarChar(255)
+  email_change_confirm_status Int?                      @default(0) @db.SmallInt
+  banned_until                DateTime?                 @db.Timestamptz(6)
+  reauthentication_token      String?                   @default("") @db.VarChar(255)
+  reauthentication_sent_at    DateTime?                 @db.Timestamptz(6)
+  is_sso_user                 Boolean                   @default(false)
+  deleted_at                  DateTime?                 @db.Timestamptz(6)
+  is_anonymous                Boolean                   @default(false)
   identities                  identities[]
   mfa_factors                 mfa_factors[]
   oauth_authorizations        oauth_authorizations[]
@@ -331,9 +331,10 @@ model users {
   one_time_tokens             one_time_tokens[]
   sessions                    sessions[]
   UserSettings                UserSettings?
+  profiles                    profiles?
   routine_tasks               routine_tasks[]
-  support_tickets             support_tickets[]
   support_messages            support_ticket_messages[]
+  support_tickets             support_tickets[]
   tasks                       tasks[]
 
   @@index([instance_id])
@@ -489,6 +490,66 @@ model notifications {
   @@schema("public")
 }
 
+/// Support tickets for user inquiries and issues
+model support_tickets {
+  id         String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String                    @db.Uuid
+  created_at DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime                  @default(now()) @db.Timestamptz(6)
+  priority   String                    @default("normal")
+  title      String
+  status     String                    @default("open")
+  messages   support_ticket_messages[]
+  users      users                     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  labels     support_tickets_labels[]
+
+  @@schema("public")
+}
+
+/// Messages within a support ticket
+model support_ticket_messages {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticket_id   String          @db.Uuid
+  user_id     String          @db.Uuid
+  message     String
+  is_internal Boolean         @default(false)
+  created_at  DateTime        @default(now()) @db.Timestamptz(6)
+  ticket      support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user        users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+/// Available labels for tickets (managed by admins)
+model support_labels {
+  id      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String                   @unique
+  color   String                   @default("#64748b")
+  tickets support_tickets_labels[]
+
+  @@schema("public")
+}
+
+/// Junction table for tickets and labels
+model support_tickets_labels {
+  ticket_id String          @db.Uuid
+  label_id  String          @db.Uuid
+  label     support_labels  @relation(fields: [label_id], references: [id], onDelete: Cascade)
+  ticket    support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+
+  @@id([ticket_id, label_id])
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model profiles {
+  id    String @id @db.Uuid
+  role  Role?  @default(USER)
+  users users  @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
 enum aal_level {
   aal1
   aal2
@@ -559,58 +620,9 @@ enum oauth_response_type {
   @@schema("auth")
 }
 
-// Add these models to your schema.prisma file
+enum Role {
+  USER
+  ADMIN
 
-/// Support tickets for user inquiries and issues
-model support_tickets {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id     String   @db.Uuid
-  title       String
-  status      String   @default("open") // "open", "in_progress", "closed"
-  priority    String   @default("normal") // "low", "normal", "high"
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-  updated_at  DateTime @default(now()) @db.Timestamptz(6)
-  
-  users       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  messages    support_ticket_messages[]
-  labels      support_tickets_labels[]
-
-  @@schema("public")
-}
-
-/// Messages within a support ticket
-model support_ticket_messages {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ticket_id   String   @db.Uuid
-  user_id     String   @db.Uuid
-  message     String
-  is_internal Boolean  @default(false) // For admin-only notes
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
-
-  ticket      support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
-  user        users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@schema("public")
-}
-
-/// Available labels for tickets (managed by admins)
-model support_labels {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   @unique
-  color       String   @default("#64748b") // Default slate color
-  tickets     support_tickets_labels[]
-
-  @@schema("public")
-}
-
-/// Junction table for tickets and labels
-model support_tickets_labels {
-  ticket_id String   @db.Uuid
-  label_id  String   @db.Uuid
-  
-  ticket    support_tickets @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
-  label     support_labels  @relation(fields: [label_id], references: [id], onDelete: Cascade)
-
-  @@id([ticket_id, label_id])
   @@schema("public")
 }
