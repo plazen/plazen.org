@@ -5,27 +5,36 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-async function checkAdminAuth() {
+async function isAdmin() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    }
   );
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
-  if (!session || session.user.email !== process.env.ADMIN_EMAIL) {
-    return null;
+  if (!session) {
+    return false;
   }
-  return session;
+
+  const profile = await prisma.profiles.findUnique({
+    where: { id: session.user.id },
+  });
+
+  return profile?.role === "ADMIN";
 }
 
 export async function GET() {
-  const session = await checkAdminAuth();
-  if (!session) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -49,8 +58,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await checkAdminAuth();
-  if (!session) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

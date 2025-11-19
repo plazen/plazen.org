@@ -18,10 +18,13 @@ export async function POST(
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
-  // Only admins can manage labels
-  if (!session || session.user.email !== process.env.ADMIN_EMAIL) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session) {
+    const profile = await prisma.profiles.findUnique({
+      where: { id: session.user.id },
+    });
+    if (profile?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   const json = await request.json();
@@ -69,8 +72,13 @@ export async function DELETE(
     data: { session },
   } = await supabase.auth.getSession();
 
-  if (!session || session.user.email !== process.env.ADMIN_EMAIL) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session) {
+    const profile = await prisma.profiles.findUnique({
+      where: { id: session.user.id },
+    });
+    if (profile?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   if (!labelId) {

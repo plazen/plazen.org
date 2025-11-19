@@ -51,11 +51,16 @@ export async function GET() {
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+  const profile = await prisma.profiles.findUnique({
+    where: { id: session.user.id },
+  });
+
+  const isAdmin = profile?.role === "ADMIN";
 
   const tickets = await prisma.support_tickets.findMany({
     where: isAdmin ? {} : { user_id: session.user.id },
     include: {
+      users: { select: { email: true } },
       labels: { include: { label: true } },
       _count: { select: { messages: true } },
     },

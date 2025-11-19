@@ -21,7 +21,10 @@ export async function GET(
   if (!session)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+  const profile = await prisma.profiles.findUnique({
+    where: { id: session.user.id },
+  });
+  const isAdmin = profile?.role === "ADMIN";
 
   const ticket = await prisma.support_tickets.findUnique({
     where: { id },
@@ -68,7 +71,10 @@ export async function POST(
   const json = await request.json();
   const { message, status, is_internal } = json;
 
-  const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+  const profile = await prisma.profiles.findUnique({
+    where: { id: session.user.id },
+  });
+  const isAdmin = profile?.role === "ADMIN";
 
   if (status) {
     await prisma.support_tickets.update({

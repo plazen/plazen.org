@@ -27,6 +27,7 @@ import { Theme } from "@/lib/theme";
 import { PlazenLogo } from "@/components/plazen-logo";
 import ReactMarkdown from "react-markdown";
 import "../globals.css";
+import { redirect } from "next/navigation";
 
 type Notification = {
   id: string;
@@ -69,7 +70,6 @@ export default function TimetableApp() {
   const [isRoutineTasksOpen, setIsRoutineTasksOpen] = useState(false);
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
@@ -369,6 +369,16 @@ export default function TimetableApp() {
                 </span>
               </div>
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => redirect("/admin")}
+                  className="h-9 w-15 bg-red-700"
+                  title="ADMIN"
+                >
+                  ADMIN
+                </Button>
+
                 <Button
                   variant="ghost"
                   size="icon"

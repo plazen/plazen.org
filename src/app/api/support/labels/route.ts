@@ -9,7 +9,12 @@ async function isAdmin(supabase: SupabaseClient) {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return false;
-  return session.user.email === process.env.ADMIN_EMAIL;
+
+  const profile = await prisma.profiles.findUnique({
+    where: { id: session.user.id },
+  });
+
+  return profile?.role === "ADMIN";
 }
 
 export async function GET() {

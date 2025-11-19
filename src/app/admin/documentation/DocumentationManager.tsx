@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Trash2, Edit, Plus, X } from "lucide-react";
@@ -14,12 +14,8 @@ type DocEntry = {
   updated_at: Date | null;
 };
 
-interface ManagerProps {
-  initialEntries: DocEntry[];
-}
-
-export function DocumentationManager({ initialEntries }: ManagerProps) {
-  const [entries, setEntries] = useState<DocEntry[]>(initialEntries);
+export function DocumentationManager() {
+  const [entries, setEntries] = useState<DocEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +24,27 @@ export function DocumentationManager({ initialEntries }: ManagerProps) {
   const [category, setCategory] = useState("");
   const [text, setText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEntries = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/admin/documentation");
+        if (response.ok) {
+          const data = await response.json();
+          setEntries(data);
+        } else {
+          setError("Failed to fetch documentation entries");
+        }
+      } catch (error) {
+        setError("Failed to fetch documentation entries");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEntries();
+  }, []);
 
   const clearForm = () => {
     setTopic("");

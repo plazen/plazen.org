@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Trash2, Edit, Plus, X } from "lucide-react";
@@ -16,12 +16,8 @@ type ReleaseNote = {
   updated_at: Date | null;
 };
 
-interface ManagerProps {
-  initialNotes: ReleaseNote[];
-}
-
-export function ReleaseNotesManager({ initialNotes }: ManagerProps) {
-  const [notes, setNotes] = useState<ReleaseNote[]>(initialNotes);
+export function ReleaseNotesManager() {
+  const [notes, setNotes] = useState<ReleaseNote[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +27,27 @@ export function ReleaseNotesManager({ initialNotes }: ManagerProps) {
   const [text, setText] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/admin/release-notes");
+        if (response.ok) {
+          const data = await response.json();
+          setNotes(data);
+        } else {
+          setError("Failed to fetch release notes");
+        }
+      } catch (error) {
+        setError("Failed to fetch release notes");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotes();
+  }, []);
 
   const clearForm = () => {
     setTopic("");
