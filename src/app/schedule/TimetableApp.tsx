@@ -372,16 +372,6 @@ export default function TimetableApp() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => redirect("/admin")}
-                  className="h-9 w-15 bg-red-700"
-                  title="ADMIN"
-                >
-                  ADMIN
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
                   onClick={() => setIsCalendarOpen(true)}
                   className="h-9 w-9 lg:hidden"
                   title="View Calendar"
