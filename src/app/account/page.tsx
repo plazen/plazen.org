@@ -63,7 +63,7 @@ export default function AccountPage() {
   const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   useEffect(() => {
@@ -77,12 +77,12 @@ export default function AccountPage() {
         setDisplayName(
           session.user.user_metadata?.display_name ||
             session.user.email?.split("@")[0] ||
-            "",
+            ""
         );
         setTempDisplayName(
           session.user.user_metadata?.display_name ||
             session.user.email?.split("@")[0] ||
-            "",
+            ""
         );
         setAvatarUrl(session.user.user_metadata?.avatar_url || null);
 
@@ -130,7 +130,7 @@ export default function AccountPage() {
       if (response.ok) {
         const tasks = await response.json();
         const completed = tasks.filter(
-          (t: { is_completed: boolean }) => t.is_completed,
+          (t: { is_completed: boolean }) => t.is_completed
         ).length;
 
         const avgDuration =
@@ -139,8 +139,8 @@ export default function AccountPage() {
                 tasks.reduce(
                   (acc: number, t: { duration_minutes?: number }) =>
                     acc + (t.duration_minutes || 60),
-                  0,
-                ) / tasks.length,
+                  0
+                ) / tasks.length
               )
             : 60;
 
@@ -157,7 +157,7 @@ export default function AccountPage() {
   };
 
   const calculateWeeklyStreak = (
-    tasks: { is_completed: boolean; scheduled_time: string | null }[],
+    tasks: { is_completed: boolean; scheduled_time: string | null }[]
   ) => {
     if (!tasks.length) return 0;
     const today = new Date();
@@ -210,7 +210,7 @@ export default function AccountPage() {
 
   const handleUpdateNotifications = async (
     key: "email_updates" | "notifications",
-    value: boolean,
+    value: boolean
   ) => {
     setNotifications((prev) => ({ ...prev, [key]: value }));
     try {
@@ -556,7 +556,7 @@ function StatCard({
 }: {
   label: string;
   value: string | number;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }) {
   return (
