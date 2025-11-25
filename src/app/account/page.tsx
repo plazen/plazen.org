@@ -38,7 +38,7 @@ export default function AccountPage() {
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
-    weeklyStreak: 0,
+    dailyStreak: 0,
     avgTaskDuration: 0,
   });
 
@@ -59,6 +59,10 @@ export default function AccountPage() {
   const [notifications, setNotifications] = useState({
     notifications: true,
   });
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   const router = useRouter();
   const supabase = createBrowserClient(
@@ -147,7 +151,7 @@ export default function AccountPage() {
         setStats({
           totalTasks: tasks.length,
           completedTasks: completed,
-          weeklyStreak: calculateWeeklyStreak(tasks),
+          dailyStreak: calculateDailyStreak(tasks),
           avgTaskDuration: avgDuration,
         });
       }
@@ -156,39 +160,39 @@ export default function AccountPage() {
     }
   };
 
-  const calculateWeeklyStreak = (
+  const calculateDailyStreak = (
     tasks: { is_completed: boolean; scheduled_time: string | null }[]
   ) => {
     if (!tasks.length) return 0;
-    const today = new Date();
-    const last7Days = [];
 
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(today);
-      day.setDate(today.getDate() - i);
-      day.setHours(0, 0, 0, 0);
-      last7Days.push(day);
-    }
+    const completedDays = new Set<string>();
+
+    tasks.forEach((task) => {
+      if (!task.is_completed || !task.scheduled_time) return;
+      const taskDate = new Date(task.scheduled_time);
+      const dayKey = `${taskDate.getFullYear()}-${String(
+        taskDate.getMonth() + 1
+      ).padStart(2, "0")}-${String(taskDate.getDate()).padStart(2, "0")}`;
+      completedDays.add(dayKey);
+    });
 
     let streak = 0;
-    for (let i = last7Days.length - 1; i >= 0; i--) {
-      const day = last7Days[i];
-      const nextDay = new Date(day);
-      nextDay.setDate(day.getDate() + 1);
+    const currentDay = new Date();
+    currentDay.setHours(0, 0, 0, 0);
 
-      const hasCompletedTask = tasks.some((task) => {
-        if (!task.is_completed || !task.scheduled_time) return false;
-        const taskDate = new Date(task.scheduled_time);
-        return taskDate >= day && taskDate < nextDay;
-      });
+    while (true) {
+      const dayKey = `${currentDay.getFullYear()}-${String(
+        currentDay.getMonth() + 1
+      ).padStart(2, "0")}-${String(currentDay.getDate()).padStart(2, "0")}`;
 
-      if (hasCompletedTask) {
+      if (completedDays.has(dayKey)) {
         streak++;
-      } else if (i < last7Days.length - 1) {
-        // Break if missing day (except today)
+        currentDay.setDate(currentDay.getDate() - 1);
+      } else {
         break;
       }
     }
+
     return streak;
   };
 
@@ -245,24 +249,43 @@ export default function AccountPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!user?.id) return;
-    if (confirm("Are you sure? This action cannot be undone.")) {
-      try {
-        // Note: Client-side deletion is restricted in Supabase by default.
-        // You usually need a server action or function for this.
-        // For now, we use the client method but it might fail if RLS prevents it.
-        // Ideally: fetch('/api/account/delete', { method: 'DELETE' })
+  const handleDeleteAccount = () => {
+    setDeleteError(null);
+    setDeleteConfirmation("");
+    setIsDeleteDialogOpen(true);
+  };
 
-        const { error } = await supabase.rpc("delete_user"); // Custom RPC or API route preferred
-        if (error) throw error;
+  const handleConfirmDeleteAccount = async () => {
+    if (!user?.id || isDeletingAccount || deleteConfirmation !== "DELETE") {
+      return;
+    }
 
-        await supabase.auth.signOut();
-        router.push("/login");
-      } catch (error) {
-        console.error("Deletion failed:", error);
-        alert("Account deletion failed. Please contact support.");
+    setIsDeletingAccount(true);
+    setDeleteError(null);
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error || "Failed to delete account");
       }
+
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmation("");
+      await supabase.auth.signOut();
+      router.push("/login");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Account deletion failed. Please try again.";
+      console.error("Deletion failed:", error);
+      setDeleteError(message);
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -394,7 +417,7 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* 2. Subscription Status Card (NEW) */}
+          {/* 2. Subscription Status Card */}
           <div className="bg-card rounded-xl border border-border p-6 mb-6 relative overflow-hidden">
             {subscription?.isPro && (
               <div className="absolute -top-6 -right-6 p-4 opacity-[0.03] pointer-events-none">
@@ -429,11 +452,13 @@ export default function AccountPage() {
                 }
                 asChild
               >
-                <Link href="/pricing">
-                  {subscription?.isPro
-                    ? "Manage Subscription"
-                    : "Upgrade to Pro"}
-                </Link>
+                {subscription?.isPro ? (
+                  <Link href="https://ko-fi.com/plazen">
+                    Manage Subscription
+                  </Link>
+                ) : (
+                  <Link href="/pricing">Upgrade to Pro</Link>
+                )}
               </Button>
             </div>
           </div>
@@ -453,7 +478,7 @@ export default function AccountPage() {
             />
             <StatCard
               label="Day Streak"
-              value={stats.weeklyStreak}
+              value={stats.dailyStreak}
               icon={BarChart3}
               color="text-orange-500"
             />
@@ -516,9 +541,9 @@ export default function AccountPage() {
                   <Download className="w-4 h-4 mr-2" /> Export My Data
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   onClick={handleLogout}
-                  className="w-full justify-start text-muted-foreground hover:text-foreground"
+                  className="w-full justify-start bg-red-700"
                 >
                   <LogOut className="w-4 h-4 mr-2" /> Sign Out
                 </Button>
@@ -544,6 +569,66 @@ export default function AccountPage() {
           </div>
         </motion.div>
       </main>
+
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl">
+            <h2 className="text-xl font-semibold text-destructive flex items-center gap-2">
+              <Shield className="w-5 h-5" /> Confirm Account Deletion
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              This will permanently remove your tasks, routine templates,
+              settings, subscriptions, and your account. This action cannot be
+              undone.
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Type <span className="font-semibold text-foreground">DELETE</span>{" "}
+              below to confirm.
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              placeholder="Type DELETE to confirm"
+              className="mt-4 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive/40"
+            />
+            {deleteError && (
+              <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {deleteError}
+              </div>
+            )}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!isDeletingAccount) {
+                    setIsDeleteDialogOpen(false);
+                    setDeleteConfirmation("");
+                  }
+                }}
+                className="sm:min-w-[120px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDeleteAccount}
+                disabled={isDeletingAccount || deleteConfirmation !== "DELETE"}
+                className="sm:min-w-[140px]"
+              >
+                {isDeletingAccount ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </span>
+                ) : (
+                  "Delete Account"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
