@@ -606,6 +606,7 @@ export default function TimetableApp() {
                   </Button>
                 </div>
                 <RoutineTasksManager
+                  isProPlan={subscription?.isPro !== false}
                   onClose={() => {
                     setIsRoutineTasksOpen(false);
                     // Refresh tasks when routine tasks are generated
