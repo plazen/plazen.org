@@ -2,7 +2,13 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/app/components/ui/button";
 import { motion } from "framer-motion";
@@ -30,6 +36,43 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+const AVATAR_BUCKET =
+  process.env.NEXT_PUBLIC_SUPABASE_AVATAR_BUCKET ?? "avatars";
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+
+const STORAGE_SEGMENT = "/storage/v1/object/";
+
+function deriveAvatarPathFromUrl(sourceUrl: string): string | null {
+  try {
+    const parsed = new URL(sourceUrl);
+    if (!parsed.hostname.endsWith("supabase.co")) return null;
+
+    const markerIndex = parsed.pathname.indexOf(STORAGE_SEGMENT);
+    if (markerIndex === -1) return null;
+
+    const remainder = parsed.pathname.slice(
+      markerIndex + STORAGE_SEGMENT.length
+    );
+    const parts = remainder.split("/").filter(Boolean);
+
+    if (parts.length < 3) return null;
+
+    const visibility = parts.shift();
+    const bucket = parts.shift();
+
+    if (visibility !== "public") return null;
+    if (bucket !== AVATAR_BUCKET) return null;
+
+    return parts.join("/");
+  } catch (error) {
+    console.error("Failed to derive avatar path from URL:", {
+      error,
+      sourceUrl,
+    });
+    return null;
+  }
+}
+
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +97,7 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarPath, setAvatarPath] = useState<string | null>(null);
 
   // Settings State
   const [notifications, setNotifications] = useState({
@@ -63,12 +107,46 @@ export default function AccountPage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(
+    null
+  );
 
   const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const fetchAvatarSignedUrl = useCallback(async (path: string) => {
+    try {
+      const response = await fetch(
+        `/api/account/avatar/signed-url?path=${encodeURIComponent(path)}`
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch signed avatar URL (${response.status}).`
+        );
+      }
+
+      const data = (await response.json()) as { url?: string };
+
+      if (!data.url) {
+        throw new Error("Signed avatar URL response missing 'url'.");
+      }
+
+      setAvatarUrl(data.url);
+      return data.url;
+    } catch (error) {
+      console.error("Failed to retrieve signed avatar URL:", {
+        error,
+        path,
+      });
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const loadAccountData = async () => {
@@ -88,7 +166,67 @@ export default function AccountPage() {
             session.user.email?.split("@")[0] ||
             ""
         );
-        setAvatarUrl(session.user.user_metadata?.avatar_url || null);
+        const metadata = session.user.user_metadata ?? {};
+        const storedPath =
+          typeof metadata.avatar_path === "string"
+            ? metadata.avatar_path
+            : null;
+
+        setAvatarPath(storedPath);
+
+        if (storedPath) {
+          await fetchAvatarSignedUrl(storedPath);
+        } else {
+          const fallbackUrl =
+            typeof metadata.avatar_url === "string"
+              ? metadata.avatar_url
+              : null;
+
+          if (!fallbackUrl) {
+            setAvatarUrl(null);
+          } else {
+            const derivedPath = deriveAvatarPathFromUrl(fallbackUrl);
+
+            if (derivedPath) {
+              setAvatarPath(derivedPath);
+              const signedUrl = await fetchAvatarSignedUrl(derivedPath);
+
+              if (!signedUrl) {
+                setAvatarPath(null);
+                setAvatarUrl(fallbackUrl);
+              } else {
+                try {
+                  const { error: persistError } =
+                    await supabase.auth.updateUser({
+                      data: { avatar_path: derivedPath },
+                    });
+
+                  if (persistError) {
+                    throw persistError;
+                  }
+
+                  setUser((prev) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      user_metadata: {
+                        ...prev.user_metadata,
+                        avatar_path: derivedPath,
+                      },
+                    } as User;
+                  });
+                } catch (error) {
+                  console.error(
+                    "Failed to persist derived avatar path to Supabase:",
+                    error
+                  );
+                }
+              }
+            } else {
+              setAvatarUrl(fallbackUrl);
+            }
+          }
+        }
 
         // Parallel data fetching
         await Promise.all([fetchSettings(), fetchStats(), fetchSubscription()]);
@@ -100,7 +238,7 @@ export default function AccountPage() {
 
     loadAccountData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, supabase.auth]);
+  }, [fetchAvatarSignedUrl, router, supabase.auth]);
 
   // --- Fetchers ---
 
@@ -249,6 +387,140 @@ export default function AccountPage() {
     }
   };
 
+  const handleAvatarFileChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!user) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!AVATAR_BUCKET) {
+      setAvatarUploadError("Avatar bucket is not configured.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarUploadError("Avatar must be smaller than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setAvatarUploadError(null);
+
+    try {
+      const fileExt = (file.name.split(".").pop() ?? "png").toLowerCase();
+
+      const uploadUrlResponse = await fetch("/api/account/avatar/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileExt,
+          contentType: file.type || undefined,
+        }),
+      });
+
+      if (!uploadUrlResponse.ok) {
+        const errorPayload = await uploadUrlResponse.json().catch(() => ({}));
+        const fallbackMessage =
+          typeof errorPayload.error === "string"
+            ? errorPayload.error
+            : "Failed to request upload URL.";
+        throw new Error(fallbackMessage);
+      }
+
+      const uploadData = (await uploadUrlResponse.json()) as {
+        filePath?: string;
+        token?: string;
+      };
+
+      if (!uploadData.filePath || !uploadData.token) {
+        throw new Error("Upload URL response was missing required data.");
+      }
+
+      const uploadOptions: {
+        cacheControl: string;
+        upsert: boolean;
+        contentType?: string;
+      } = {
+        cacheControl: "3600",
+        upsert: true,
+      };
+
+      if (file.type) {
+        uploadOptions.contentType = file.type;
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from(AVATAR_BUCKET)
+        .uploadToSignedUrl(
+          uploadData.filePath,
+          uploadData.token,
+          file,
+          uploadOptions
+        );
+
+      if (uploadError) throw uploadError;
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_path: uploadData.filePath },
+      });
+
+      if (updateError) throw updateError;
+
+      setAvatarPath(uploadData.filePath);
+      await fetchAvatarSignedUrl(uploadData.filePath);
+      setUser((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          user_metadata: {
+            ...prev.user_metadata,
+            avatar_path: uploadData.filePath,
+          },
+        } as User;
+      });
+    } catch (error) {
+      const baseMessage = "Failed to upload avatar.";
+      let details = "";
+
+      if (typeof error === "string") {
+        details = error;
+      } else if (error && typeof error === "object") {
+        const maybeError = error as {
+          message?: string;
+          statusCode?: number;
+          name?: string;
+        };
+
+        const parts = [] as string[];
+        if (maybeError.statusCode)
+          parts.push(`status ${maybeError.statusCode}`);
+        if (maybeError.name) parts.push(maybeError.name);
+        if (maybeError.message) parts.push(maybeError.message);
+        details = parts.join(" • ");
+      }
+
+      const guidance =
+        "Please try again in a moment or contact support if the problem continues.";
+      const message = [baseMessage, details, guidance]
+        .filter(Boolean)
+        .join(" ");
+
+      console.error("Avatar upload failed:", {
+        error,
+        bucket: AVATAR_BUCKET,
+        userId: user?.id,
+        fileName: file.name,
+      });
+      setAvatarUploadError(message);
+    } finally {
+      setIsUploadingAvatar(false);
+      event.target.value = "";
+    }
+  };
+
   const handleDeleteAccount = () => {
     setDeleteError(null);
     setDeleteConfirmation("");
@@ -339,19 +611,35 @@ export default function AccountPage() {
           <div className="bg-card rounded-xl shadow-sm border border-border p-8 mb-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Avatar"
-                    width={64}
-                    height={64}
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
-                    <UserIcon className="w-8 h-8 text-white" />
-                  </div>
-                )}
+                <div className="relative">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Avatar"
+                      width={64}
+                      height={64}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center">
+                      <UserIcon className="w-8 h-8 text-white" />
+                    </div>
+                  )}
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full border border-border"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    title="Upload new avatar"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Edit className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </div>
 
                 <div>
                   <div className="flex items-center gap-2 h-8">
@@ -400,6 +688,18 @@ export default function AccountPage() {
                   <p className="text-muted-foreground flex items-center gap-2 mt-1">
                     <Mail className="w-4 h-4" /> {user.email}
                   </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleAvatarFileChange}
+                    className="hidden"
+                  />
+                  {avatarUploadError && (
+                    <p className="mt-2 text-xs text-destructive">
+                      {avatarUploadError}
+                    </p>
+                  )}
                 </div>
               </div>
 
