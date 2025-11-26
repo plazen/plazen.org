@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/app/components/ui/button";
 import { Trash2, Plus, Clock, Pencil, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +16,7 @@ interface RoutineTask {
 
 interface RoutineTasksManagerProps {
   onClose?: () => void;
+  isProPlan: boolean;
 }
 
 const TaskFormFields = ({
@@ -82,7 +84,7 @@ const TaskFormFields = ({
   </>
 );
 
-function RoutineTasksManager({}: RoutineTasksManagerProps) {
+function RoutineTasksManager({ isProPlan }: RoutineTasksManagerProps) {
   const [routineTasks, setRoutineTasks] = useState<RoutineTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -91,6 +93,7 @@ function RoutineTasksManager({}: RoutineTasksManagerProps) {
     useState<RoutineTask | null>(null);
 
   const [formError, setFormError] = useState<string | null>(null);
+  const routineLimitReached = !isProPlan && routineTasks.length >= 1;
 
   const [newTask, setNewTask] = useState({
     title: "",
@@ -120,6 +123,13 @@ function RoutineTasksManager({}: RoutineTasksManagerProps) {
     e.preventDefault();
     setFormError(null);
 
+    if (routineLimitReached) {
+      setFormError(
+        "Free plan allows one routine task. Upgrade to Pro to add more."
+      );
+      return;
+    }
+
     if (!newTask.title.trim()) {
       setFormError("Title is required.");
       return;
@@ -138,13 +148,17 @@ function RoutineTasksManager({}: RoutineTasksManagerProps) {
         body: JSON.stringify(newTask),
       });
 
-      if (response.ok) {
-        const createdTask = await response.json();
-        setRoutineTasks([createdTask, ...routineTasks]);
-        setNewTask({ title: "", description: "", duration_minutes: 30 });
-        setIsAddDialogOpen(false);
-        setFormError(null);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        setFormError(payload.error || "Failed to add task. Please try again.");
+        return;
       }
+
+      const createdTask = await response.json();
+      setRoutineTasks((prev) => [createdTask, ...prev]);
+      setNewTask({ title: "", description: "", duration_minutes: 30 });
+      setIsAddDialogOpen(false);
+      setFormError(null);
     } catch (error) {
       console.error("Error creating routine task:", error);
       setFormError("Failed to add task. Please try again.");
@@ -303,13 +317,31 @@ function RoutineTasksManager({}: RoutineTasksManagerProps) {
             <Button
               onClick={() => setIsAddDialogOpen(true)}
               className="shadow-sm"
+              disabled={routineLimitReached}
+              title={
+                routineLimitReached
+                  ? "Free plan allows one routine task. Upgrade to Pro to add more."
+                  : undefined
+              }
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Task
             </Button>
+            {!isProPlan && (
+              <Button variant="outline" asChild>
+                <Link href="/pricing">Upgrade to Pro</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>
+
+      {routineLimitReached && (
+        <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+          Free plan lets you keep one routine task. Upgrade to Pro to unlock
+          unlimited routines that auto-schedule with your day.
+        </div>
+      )}
 
       <AnimatePresence>
         {isAddDialogOpen && (

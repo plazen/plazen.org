@@ -86,6 +86,27 @@ export async function POST(request: Request) {
       );
     }
 
+    const subscription = await prisma.subscription.findUnique({
+      where: { user_id: session.user.id },
+      select: { is_pro: true },
+    });
+
+    if (!subscription?.is_pro) {
+      const existingCount = await prisma.routine_tasks.count({
+        where: { user_id: session.user.id },
+      });
+
+      if (existingCount >= 1) {
+        return NextResponse.json(
+          {
+            error:
+              "Free plan allows one routine task. Upgrade to Pro to add more.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     const encryptedTitle = encrypt(title);
 
     const routineTask = await prisma.routine_tasks.create({

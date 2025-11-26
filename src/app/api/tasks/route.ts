@@ -45,35 +45,28 @@ export async function GET(request: Request) {
   console.log("🔍 API GET /api/tasks - Requested date:", date);
 
   try {
-    let rangeStart = new Date();
-    let rangeEnd = new Date();
+    let rangeStart: Date | null = null;
+    let rangeEnd: Date | null = null;
 
     if (date) {
-      // If a specific date is requested, expand range to include that date
-      const requestedDate = new Date(date);
-      const today = new Date();
+      const parsedDate = new Date(date);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        rangeStart = new Date(parsedDate);
+        rangeEnd = new Date(parsedDate);
 
-      // Set range to cover from 3 days before today to 4 days after today,
-      // but expand to include the requested date if it's outside this range
-      rangeStart.setDate(today.getDate() - 3);
-      rangeEnd.setDate(today.getDate() + 4);
+        // Normalize to UTC boundaries to avoid timezone drift
+        rangeStart.setUTCHours(0, 0, 0, 0);
+        rangeEnd.setUTCHours(0, 0, 0, 0);
+        rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
 
-      // Expand range if requested date is outside
-      if (requestedDate < rangeStart) {
-        rangeStart = new Date(requestedDate);
-      }
-      if (requestedDate > rangeEnd) {
-        rangeEnd = new Date(requestedDate);
-        rangeEnd.setDate(rangeEnd.getDate() + 1); // Include the full day
+        // Prevent exceeding the supported Date range (year < 10000)
+        if (rangeEnd.getUTCFullYear() >= 10000) {
+          rangeEnd = new Date("9999-12-31T23:59:59.999Z");
+        }
       }
     } else {
-      // Default range: 3 days ago to 4 days from now
-      rangeStart.setDate(rangeStart.getDate() - 3);
-      rangeEnd.setDate(rangeEnd.getDate() + 4);
+      console.log("📊 API GET /api/tasks - Returning all tasks for user");
     }
-
-    rangeStart.setHours(0, 0, 0, 0);
-    rangeEnd.setHours(23, 59, 59, 999);
 
     // Auto-generate routine tasks for the specific date if it's requested and needed
     if (date) {
@@ -96,10 +89,14 @@ export async function GET(request: Request) {
     const tasks = await prisma.tasks.findMany({
       where: {
         user_id: session.user.id,
-        scheduled_time: {
-          gte: rangeStart,
-          lt: rangeEnd,
-        },
+        ...(rangeStart && rangeEnd
+          ? {
+              scheduled_time: {
+                gte: rangeStart,
+                lt: rangeEnd,
+              },
+            }
+          : {}),
       },
       orderBy: { created_at: "asc" },
     });
@@ -110,9 +107,9 @@ export async function GET(request: Request) {
     );
     console.log(
       "📅 API GET /api/tasks - Date range:",
-      rangeStart.toISOString(),
+      rangeStart?.toISOString(),
       "to",
-      rangeEnd.toISOString()
+      rangeEnd?.toISOString()
     );
     if (date) {
       console.log("🎯 API GET /api/tasks - Requested date:", date);

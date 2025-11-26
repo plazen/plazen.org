@@ -27,7 +27,6 @@ import { Theme } from "@/lib/theme";
 import { PlazenLogo } from "@/components/plazen-logo";
 import ReactMarkdown from "react-markdown";
 import "../globals.css";
-import { redirect } from "next/navigation";
 
 type Notification = {
   id: string;
@@ -71,6 +70,11 @@ export default function TimetableApp() {
 
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [subscription, setSubscription] = useState<{
+    isPro: boolean;
+    endsAt: string | null;
+    provider: string | null;
+  } | null>(null);
 
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<
     string[]
@@ -128,6 +132,11 @@ export default function TimetableApp() {
 
       try {
         const settingsResponse = await fetch("/api/settings");
+        const subscriptionResponse = await fetch("/api/subscription");
+        if (subscriptionResponse.ok) {
+          const fetchedSubscription = await subscriptionResponse.json();
+          setSubscription(fetchedSubscription);
+        }
         if (!settingsResponse.ok) {
           throw new Error("Failed to fetch settings");
         }
@@ -359,6 +368,11 @@ export default function TimetableApp() {
                 <PlazenLogo theme={settings?.theme} />
                 <span className="text-xl font-semibold hidden sm:block">
                   Plazen
+                  {subscription?.isPro && subscription?.endsAt && (
+                    <span className="ml-2 text-sm font-normal text-primary">
+                      Pro
+                    </span>
+                  )}
                 </span>
                 <span className="text-sm text-muted-foreground">
                   {date?.toLocaleDateString("en-US", {
@@ -592,6 +606,7 @@ export default function TimetableApp() {
                   </Button>
                 </div>
                 <RoutineTasksManager
+                  isProPlan={subscription?.isPro !== false}
                   onClose={() => {
                     setIsRoutineTasksOpen(false);
                     // Refresh tasks when routine tasks are generated

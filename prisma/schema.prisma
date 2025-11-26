@@ -336,6 +336,7 @@ model users {
   support_messages            support_ticket_messages[]
   support_tickets             support_tickets[]
   tasks                       tasks[]
+  subscription Subscription?
 
   @@index([instance_id])
   @@index([is_anonymous])
@@ -623,6 +624,23 @@ enum oauth_response_type {
 enum Role {
   USER
   ADMIN
+
+  @@schema("public")
+}
+model Subscription {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String    @unique @db.Uuid
+
+  is_pro          Boolean   @default(false)
+  provider        String    // "ko-fi", "paypal", etc.
+  subscription_id String?   // External ID (e.g. Ko-fi subscription ID)
+  starts_at       DateTime  @default(now()) @db.Timestamptz(6)
+  ends_at         DateTime? @db.Timestamptz(6)
+
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  user            users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@schema("public")
 }
