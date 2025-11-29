@@ -13,6 +13,8 @@ type Task = {
   duration_minutes: number | null;
   scheduled_time: string | null;
   is_completed: boolean;
+  is_external?: boolean;
+  color?: string;
 };
 type Settings = {
   timetable_start: number;
@@ -203,11 +205,15 @@ const Timetable: React.FC<TimetableProps> = ({
               },
             };
             const isCompleted = event.is_completed;
-            const baseColor = event.is_time_sensitive
-              ? "hsl(var(--primary))"
-              : "hsl(var(--secondary-foreground))";
+            const baseColor =
+              event.color ||
+              (event.is_time_sensitive
+                ? "hsl(var(--primary))"
+                : "hsl(var(--secondary-foreground))");
 
-            const gradientBg = event.is_time_sensitive
+            const gradientBg = event.is_external
+              ? `linear-gradient(45deg, ${event.color}20, ${event.color}40)`
+              : event.is_time_sensitive
               ? `linear-gradient(45deg, oklch(0.7 0.1 190 / 0.1), oklch(0.7 0.1 190 / 0.2))`
               : `linear-gradient(45deg, oklch(0.95 0.01 240 / 0.05), oklch(0.95 0.01 240 / 0.1))`;
 

@@ -8,20 +8,28 @@ import { Select } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { useTheme } from "@/components/theme-provider";
 import { themes, Theme } from "@/lib/theme";
-import { Info } from "lucide-react";
+import { Info, Plus, Trash } from "lucide-react";
+
+type CalendarSource = {
+  id: string;
+  name: string;
+  url: string;
+  username: string | null;
+  color: string;
+};
 
 type Settings = {
   timetable_start: number;
   timetable_end: number;
   show_time_needle: boolean;
   theme: string;
-  telegram_id: string | null; // Add new field
+  telegram_id: string | null;
 };
 
 type SettingsModalProps = {
   currentSettings: Settings;
   onClose: () => void;
-  onSave: (newSettings: Omit<Settings, "theme"> & { theme: string }) => void; // Ensure theme is a string
+  onSave: (newSettings: Omit<Settings, "theme"> & { theme: string }) => void;
 };
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -30,23 +38,62 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onSave,
 }) => {
   const [settings, setSettings] = useState(currentSettings);
-  // Add state for the new telegram_id field
   const [telegramId, setTelegramId] = useState(
     currentSettings.telegram_id || ""
   );
   const { setTheme } = useTheme();
 
+  // Calendar State
+  const [calendars, setCalendars] = useState<CalendarSource[]>([]);
+  const [isAddingCalendar, setIsAddingCalendar] = useState(false);
+  const [newCalendar, setNewCalendar] = useState({
+    name: "",
+    url: "",
+    username: "",
+    password: "",
+    color: "#3b82f6",
+  });
+
   useEffect(() => {
     setSettings(currentSettings);
     setTelegramId(currentSettings.telegram_id || "");
+    fetchCalendars();
   }, [currentSettings]);
+
+  const fetchCalendars = async () => {
+    const res = await fetch("/api/calendars");
+    if (res.ok) setCalendars(await res.json());
+  };
+
+  const handleAddCalendar = async () => {
+    const res = await fetch("/api/calendars", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newCalendar),
+    });
+    if (res.ok) {
+      fetchCalendars();
+      setIsAddingCalendar(false);
+      setNewCalendar({
+        name: "",
+        url: "",
+        username: "",
+        password: "",
+        color: "#3b82f6",
+      });
+    }
+  };
+
+  const handleDeleteCalendar = async (id: string) => {
+    await fetch(`/api/calendars/${id}`, { method: "DELETE" });
+    fetchCalendars();
+  };
 
   const handleSave = () => {
     onSave({
       ...settings,
-      telegram_id: telegramId, // Include the new field on save
+      telegram_id: telegramId,
     });
-    // Update the theme context when saving
     setTheme(settings.theme as Theme);
   };
 
@@ -70,7 +117,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
-          className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border"
+          className="bg-card rounded-xl shadow-xl p-6 w-full max-w-md border border-border max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           <h3 className="text-lg font-medium leading-6 text-foreground mb-4">
@@ -183,6 +230,102 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   To get this, find your Plazen bot on Telegram and send the
                   `/start` command.
                 </span>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Integrations</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddingCalendar(!isAddingCalendar)}
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add Calendar
+                </Button>
+              </div>
+
+              {isAddingCalendar && (
+                <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+                  <Input
+                    placeholder="Name (e.g. Work)"
+                    value={newCalendar.name}
+                    onChange={(e) =>
+                      setNewCalendar({ ...newCalendar, name: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="CalDAV URL"
+                    value={newCalendar.url}
+                    onChange={(e) =>
+                      setNewCalendar({ ...newCalendar, url: e.target.value })
+                    }
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Username"
+                      value={newCalendar.username}
+                      onChange={(e) =>
+                        setNewCalendar({
+                          ...newCalendar,
+                          username: e.target.value,
+                        })
+                      }
+                    />
+                    <Input
+                      type="password"
+                      placeholder="Password"
+                      value={newCalendar.password}
+                      onChange={(e) =>
+                        setNewCalendar({
+                          ...newCalendar,
+                          password: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsAddingCalendar(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleAddCalendar}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                {calendars.map((cal) => (
+                  <div
+                    key={cal.id}
+                    className="flex items-center justify-between p-3 bg-card border rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: cal.color }}
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{cal.name}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                          {cal.url}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteCalendar(cal.id)}
+                    >
+                      <Trash className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

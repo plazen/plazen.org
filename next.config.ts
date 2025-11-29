@@ -9,6 +9,7 @@ const imageDomains = [
   "lh3.googleusercontent.com",
   "i.pinimg.com",
   "storage.ko-fi.com",
+  "ogtmbdatqgzxtmwqnvre.supabase.co",
 ];
 
 if (supabaseDomain && !imageDomains.includes(supabaseDomain)) {
