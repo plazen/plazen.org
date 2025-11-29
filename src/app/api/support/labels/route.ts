@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       data: { name, color },
     });
     return NextResponse.json(label, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Label already exists" },
       { status: 409 }
@@ -92,7 +92,7 @@ export async function DELETE(request: Request) {
       where: { id },
     });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to delete label" },
       { status: 500 }

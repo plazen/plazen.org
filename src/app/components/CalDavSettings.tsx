@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Smartphone,
   Monitor,
-  Calendar,
 } from "lucide-react";
 
 interface CalDavSettingsProps {

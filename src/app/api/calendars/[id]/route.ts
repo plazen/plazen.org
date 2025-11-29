@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const cookieStore = await cookies();
   const supabase = createServerClient(

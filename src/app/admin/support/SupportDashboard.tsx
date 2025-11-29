@@ -30,7 +30,7 @@ export function SupportDashboard() {
         } else {
           setError("Failed to fetch tickets");
         }
-      } catch (error) {
+      } catch {
         setError("Failed to fetch tickets");
       } finally {
         setLoading(false);
@@ -43,11 +43,7 @@ export function SupportDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
-        <LoadingSpinner
-          size="lg"
-          text="Loading tickets..."
-          variant="dots"
-        />
+        <LoadingSpinner size="lg" text="Loading tickets..." variant="dots" />
       </div>
     );
   }

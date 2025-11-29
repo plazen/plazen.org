@@ -97,7 +97,6 @@ export default function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [avatarPath, setAvatarPath] = useState<string | null>(null);
 
   // Settings State
   const [notifications, setNotifications] = useState({
@@ -172,8 +171,6 @@ export default function AccountPage() {
             ? metadata.avatar_path
             : null;
 
-        setAvatarPath(storedPath);
-
         if (storedPath) {
           await fetchAvatarSignedUrl(storedPath);
         } else {
@@ -188,11 +185,9 @@ export default function AccountPage() {
             const derivedPath = deriveAvatarPathFromUrl(fallbackUrl);
 
             if (derivedPath) {
-              setAvatarPath(derivedPath);
               const signedUrl = await fetchAvatarSignedUrl(derivedPath);
 
               if (!signedUrl) {
-                setAvatarPath(null);
                 setAvatarUrl(fallbackUrl);
               } else {
                 try {
@@ -469,7 +464,6 @@ export default function AccountPage() {
 
       if (updateError) throw updateError;
 
-      setAvatarPath(uploadData.filePath);
       await fetchAvatarSignedUrl(uploadData.filePath);
       setUser((prev) => {
         if (!prev) return prev;
