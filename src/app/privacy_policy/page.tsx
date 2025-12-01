@@ -1,6 +1,16 @@
 import Link from "next/link";
 import React from "react";
 import { PlazenLogo } from "@/components/plazen-logo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Learn how Plazen collects, uses, and protects your personal information. Read our privacy policy for details on data handling and your rights.",
+  alternates: {
+    canonical: "/privacy_policy",
+  },
+};
 
 export default function App() {
   return (
@@ -9,7 +19,7 @@ export default function App() {
         <style>
           {`
             @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap');
-            
+
             .font-lexend {
               font-family: 'Lexend', sans-serif;
             }

@@ -1,6 +1,16 @@
 import React from "react";
 import Link from "next/link";
 import { PlazenLogo } from "@/components/plazen-logo";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "License",
+  description:
+    "Plazen is open-source software released under the MIT License. View the full license text.",
+  alternates: {
+    canonical: "/license",
+  },
+};
 
 const licenseText = `Copyright (c) ${new Date().getFullYear()} Plazen
 
@@ -30,7 +40,7 @@ export default function App() {
         <style>
           {`
             @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap');
-            
+
             .font-lexend {
               font-family: 'Lexend', sans-serif;
             }

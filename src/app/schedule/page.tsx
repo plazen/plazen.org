@@ -2,6 +2,13 @@ import React from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Schedule",
+  description:
+    "View and manage your daily schedule with Plazen's smart auto-scheduling.",
+};
 
 export default async function SchedulePage() {
   // Server-side session check
@@ -9,7 +16,7 @@ export default async function SchedulePage() {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } },
   );
   const {
     data: { session },

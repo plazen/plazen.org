@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/app/components/ui/button";
 import { Plus, MessageSquare } from "lucide-react";
@@ -6,12 +7,17 @@ import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { formatDistanceToNow } from "date-fns";
 
+export const metadata: Metadata = {
+  title: "Support",
+  description: "Track your support tickets and get help with Plazen.",
+};
+
 export default async function SupportPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } },
   );
   const {
     data: { session },
@@ -71,8 +77,8 @@ export default async function SupportPage() {
                           ticket.status === "open"
                             ? "bg-green-500/10 text-green-500"
                             : ticket.status === "closed"
-                            ? "bg-muted text-muted-foreground"
-                            : "bg-blue-500/10 text-blue-500"
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-blue-500/10 text-blue-500"
                         }`}
                       >
                         {ticket.status.replace("_", " ")}
