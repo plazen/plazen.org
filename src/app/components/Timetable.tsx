@@ -40,18 +40,24 @@ const Timetable: React.FC<TimetableProps> = ({
   onReschedule: onEdit,
 }) => {
   const [menu, setMenu] = useState<{ x: number; y: number; task: Task | null }>(
-    { x: 0, y: 0, task: null }
+    { x: 0, y: 0, task: null },
   );
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(
-    null
+    null,
   );
 
   const handleContextMenu = (e: React.MouseEvent, task: Task) => {
+    if (task.is_external) {
+      return;
+    }
     e.preventDefault();
     setMenu({ x: e.clientX, y: e.clientY, task });
   };
 
   const handleTouchStart = (e: React.TouchEvent, task: Task) => {
+    if (task.is_external) {
+      return;
+    }
     const timer = setTimeout(() => {
       const touch = e.touches[0];
       setMenu({ x: touch.clientX, y: touch.clientY, task });
@@ -131,21 +137,22 @@ const Timetable: React.FC<TimetableProps> = ({
       .map((t) => ({ ...t, startTime: parseLocal(t.scheduled_time!) }));
   }, [tasks]);
 
-  const menuOptions = menu.task
-    ? [
-        {
-          label: "Edit",
-          onClick: () => onEdit(menu.task!),
-          icon: <Pencil className="w-4 h-4" />,
-        },
-        {
-          label: "Delete",
-          onClick: () => onDeleteTask(menu.task!.id),
-          variant: "destructive" as const,
-          icon: <Trash2 className="w-4 h-4" />,
-        },
-      ]
-    : [];
+  const menuOptions =
+    menu.task && !menu.task.is_external
+      ? [
+          {
+            label: "Edit",
+            onClick: () => onEdit(menu.task!),
+            icon: <Pencil className="w-4 h-4" />,
+          },
+          {
+            label: "Delete",
+            onClick: () => onDeleteTask(menu.task!.id),
+            variant: "destructive" as const,
+            icon: <Trash2 className="w-4 h-4" />,
+          },
+        ]
+      : [];
 
   const isToday = new Date().toDateString() === date.toDateString();
 
@@ -214,8 +221,8 @@ const Timetable: React.FC<TimetableProps> = ({
             const gradientBg = event.is_external
               ? `linear-gradient(45deg, ${event.color}20, ${event.color}40)`
               : event.is_time_sensitive
-              ? `linear-gradient(45deg, oklch(0.7 0.1 190 / 0.1), oklch(0.7 0.1 190 / 0.2))`
-              : `linear-gradient(45deg, oklch(0.95 0.01 240 / 0.05), oklch(0.95 0.01 240 / 0.1))`;
+                ? `linear-gradient(45deg, oklch(0.7 0.1 190 / 0.1), oklch(0.7 0.1 190 / 0.2))`
+                : `linear-gradient(45deg, oklch(0.95 0.01 240 / 0.05), oklch(0.95 0.01 240 / 0.1))`;
 
             if (top < 0 || top > 100) return null;
 
@@ -223,7 +230,12 @@ const Timetable: React.FC<TimetableProps> = ({
               <motion.div
                 key={event.id}
                 layout
-                onClick={() => onToggleDone(event.id, isCompleted)}
+                onClick={() => {
+                  if (event.is_external) {
+                    return;
+                  }
+                  onToggleDone(event.id, isCompleted);
+                }}
                 onContextMenu={(e) => handleContextMenu(e, event)}
                 onTouchStart={(e) => handleTouchStart(e, event)}
                 onTouchEnd={handleTouchEnd}
@@ -254,16 +266,16 @@ const Timetable: React.FC<TimetableProps> = ({
                       duration >= 60
                         ? "text-sm"
                         : duration >= 30
-                        ? "text-[10px] leading-tight" // 30m: smaller font
-                        : "text-[8px] leading-tight" // 15m: even smaller font
+                          ? "text-[10px] leading-tight" // 30m: smaller font
+                          : "text-[8px] leading-tight" // 15m: even smaller font
                     } truncate`}
                     style={{
                       fontSize:
                         duration >= 60
                           ? undefined
                           : duration >= 30
-                          ? `min(0.75rem, max(0.55rem, calc(1.1rem - 0.03rem * ${event.title.length})))`
-                          : `min(0.65rem, max(0.45rem, calc(0.9rem - 0.035rem * ${event.title.length})))`,
+                            ? `min(0.75rem, max(0.55rem, calc(1.1rem - 0.03rem * ${event.title.length})))`
+                            : `min(0.65rem, max(0.45rem, calc(0.9rem - 0.035rem * ${event.title.length})))`,
                       lineHeight: duration < 60 ? 1.1 : undefined,
                       wordBreak: "break-word",
                       whiteSpace: "normal",
