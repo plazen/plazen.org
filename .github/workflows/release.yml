@@ -40,8 +40,8 @@ jobs:
         run: npm ci
       - name: 🧪 Run tests
         run: npm test
-      - name: Build project
-        run: npm run build
+      # - name: Build project
+      #   run: npm run build
 
       - name: 🚀 Semantic Release
         uses: cycjimmy/semantic-release-action@v4
