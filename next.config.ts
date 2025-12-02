@@ -21,6 +21,7 @@ if (!imageDomains.includes(defaultSupabaseDomain)) {
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     domains: imageDomains,
   },
