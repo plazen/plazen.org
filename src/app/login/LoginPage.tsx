@@ -9,6 +9,7 @@ import { Input } from "../components/ui/input";
 import { FaApple, FaDiscord, FaGoogle } from "react-icons/fa";
 import { Github, Mail } from "lucide-react";
 import { PlazenLogo } from "@/components/plazen-logo";
+import Link from "next/link";
 
 const socialProviders = [
   {
@@ -71,7 +72,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
 
   useEffect(() => {
@@ -232,12 +233,22 @@ export default function LoginPage() {
                     />
                   </div>
                   <div>
-                    <label
-                      htmlFor="password"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Password
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label
+                        htmlFor="password"
+                        className="block text-sm font-medium"
+                      >
+                        Password
+                      </label>
+                      {!isSignUp && (
+                        <Link
+                          href="/forgot-password"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Forgot password?
+                        </Link>
+                      )}
+                    </div>
                     <Input
                       id="password"
                       type="password"
