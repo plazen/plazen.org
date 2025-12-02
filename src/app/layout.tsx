@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Lexend, Geist_Mono } from "next/font/google"; // [MODIFIED]
+import { Lexend, Geist_Mono, Instrument_Sans } from "next/font/google"; // [MODIFIED]
 import "./globals.css";
+import packageJson from "../../package.json";
 import { ThemeProvider } from "@/components/theme-provider";
 import Link from "next/link";
 import { Github, Mail } from "lucide-react";
@@ -30,6 +31,14 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const appVersion = packageJson.version;
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://plazen.org"),
@@ -106,7 +115,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <link rel="me" href="https://fosstodon.org/@plazen" />
-      <body className={`${lexend.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${lexend.variable} ${geistMono.variable} ${instrumentSans.variable} antialiased`}
+      >
         <ThemeProvider defaultTheme="dark" storageKey="plazen-theme">
           {children}
 
@@ -174,7 +185,13 @@ export default function RootLayout({
               <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                 <div className="flex items-center space-x-2 text-sm">
                   <PlazenLogo width={40} height={40} />
-                  <span>&copy; {new Date().getFullYear()} Plazen.</span>
+                  <span>&copy; {new Date().getFullYear()} Plazen</span>
+                  <span
+                    className="text-muted-foreground/60 text-xs"
+                    style={{ fontFamily: "var(--font-instrument-sans)" }}
+                  >
+                    v{appVersion}.
+                  </span>
                   <a
                     className="underline underline-offset-3 hover:text-primary"
                     href="/license"

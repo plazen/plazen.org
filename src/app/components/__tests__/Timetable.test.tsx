@@ -206,7 +206,7 @@ describe("Timetable Component", () => {
         scheduled_time: "2025-08-19T09:00:00.000Z",
         is_completed: false,
         startTime: expect.any(Object),
-      })
+      }),
     );
   });
 
@@ -220,6 +220,55 @@ describe("Timetable Component", () => {
     fireEvent.click(deleteButton);
 
     expect(mockProps.onDeleteTask).toHaveBeenCalledWith("1");
+  });
+
+  it("should ignore context menu interactions for external tasks", () => {
+    const propsWithExternalTask = {
+      ...mockProps,
+      tasks: [
+        ...mockProps.tasks,
+        {
+          id: "ext-1",
+          title: "External Event",
+          is_time_sensitive: false,
+          duration_minutes: 30,
+          scheduled_time: "2025-08-19T16:00:00.000Z",
+          is_completed: false,
+          is_external: true,
+        },
+      ],
+    };
+
+    render(<Timetable {...propsWithExternalTask} />);
+
+    const externalEvent = screen.getByText("External Event");
+    fireEvent.contextMenu(externalEvent);
+
+    expect(screen.queryByTestId("context-menu")).not.toBeInTheDocument();
+  });
+
+  it("should not toggle completion for external tasks", () => {
+    const externalOnlyProps = {
+      ...mockProps,
+      tasks: [
+        {
+          id: "ext-only",
+          title: "External Event",
+          is_time_sensitive: false,
+          duration_minutes: 30,
+          scheduled_time: "2025-08-19T16:30:00.000Z",
+          is_completed: false,
+          is_external: true,
+        },
+      ],
+    };
+
+    render(<Timetable {...externalOnlyProps} />);
+
+    const externalEvent = screen.getByText("External Event");
+    fireEvent.click(externalEvent);
+
+    expect(mockProps.onToggleDone).not.toHaveBeenCalled();
   });
 
   it("should display completed tasks with reduced opacity", () => {
@@ -238,7 +287,7 @@ describe("Timetable Component", () => {
 
     // Find the SVG checkmark by its polyline element
     const checkMark = document.querySelector(
-      'polyline[points="20 6 9 17 4 12"]'
+      'polyline[points="20 6 9 17 4 12"]',
     );
     expect(checkMark).toBeInTheDocument();
   });

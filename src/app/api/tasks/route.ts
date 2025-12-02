@@ -7,6 +7,7 @@ import {
   autoGenerateRoutineTasksForToday,
 } from "@/lib/routineTasksService";
 import { encrypt, decrypt } from "@/lib/encryption";
+import { syncCalendarSource } from "@/lib/calDavService";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,48 @@ export async function GET(request: Request) {
       },
       orderBy: { created_at: "asc" },
     });
+    if (date) {
+      const calendarSources = await prisma.calendar_sources.findMany({
+        where: { user_id: session.user.id },
+      });
+
+      if (calendarSources.length > 0) {
+        await Promise.all(
+          calendarSources.map(async (source) => {
+            try {
+              await syncCalendarSource(source.id, {
+                expectedUserId: session.user.id,
+                ...(rangeStart && rangeEnd
+                  ? {
+                      rangeStart,
+                      rangeEnd,
+                    }
+                  : {}),
+              });
+            } catch (err) {
+              console.error("Failed to sync CalDAV source", {
+                sourceId: source.id,
+                error: err instanceof Error ? err.message : "Unknown error",
+              });
+            }
+          })
+        );
+      }
+    }
+    const externalEvents = await prisma.external_events.findMany({
+      where: {
+        source: { user_id: session.user.id },
+        ...(rangeStart && rangeEnd
+          ? {
+              start_time: {
+                gte: rangeStart,
+                lt: rangeEnd,
+              },
+            }
+          : {}),
+      },
+      include: { source: true },
+    });
 
     console.log(
       "📊 API GET /api/tasks - Total tasks found in range:",
@@ -145,14 +188,41 @@ export async function GET(request: Request) {
       );
     }
 
-    // [MODIFIED] Decrypt titles before sending to client
     const serializableTasks = filteredTasks.map((task) => ({
       ...task,
       id: task.id.toString(),
-      title: decrypt(task.title), // Decrypt the title
+      title: decrypt(task.title),
+      is_external: false,
     }));
 
-    return NextResponse.json(serializableTasks, { status: 200 });
+    const adjustToLocalISOString = (date: Date) => {
+      if (Number.isFinite(timezoneOffset)) {
+        const adjusted = new Date(date.getTime() - timezoneOffset * 60 * 1000);
+        return adjusted.toISOString();
+      }
+      return date.toISOString();
+    };
+
+    const serializableExternalEvents = externalEvents.map((event) => {
+      const durationMs = event.end_time.getTime() - event.start_time.getTime();
+      return {
+        id: `ext_${event.id}`,
+        title: event.title,
+        is_time_sensitive: true,
+        duration_minutes: Math.round(durationMs / 60000),
+        scheduled_time: adjustToLocalISOString(event.start_time),
+        is_completed: false,
+        is_from_routine: false,
+        is_external: true, // Mark as external
+        color: event.source.color,
+        description: event.description,
+      };
+    });
+
+    return NextResponse.json(
+      [...serializableTasks, ...serializableExternalEvents],
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json(
@@ -492,6 +562,13 @@ export async function PATCH(request: Request) {
       );
     }
 
+    if (typeof id === "string" && id.startsWith("ext_")) {
+      return NextResponse.json(
+        { error: "External events are read-only" },
+        { status: 400 }
+      );
+    }
+
     const dataToUpdate: {
       is_completed?: boolean;
       scheduled_time?: Date;
@@ -575,6 +652,13 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json(
         { error: "Task ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (typeof id === "string" && id.startsWith("ext_")) {
+      return NextResponse.json(
+        { error: "External events are read-only" },
         { status: 400 }
       );
     }

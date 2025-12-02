@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/app/components/ui/button";
-import { Input } from "@/app/components/ui/input";
 import { Trash2, Edit, Plus, X, Eye, EyeOff } from "lucide-react";
 
 type Notification = {
@@ -33,7 +32,7 @@ export function NotificationManager() {
         } else {
           setError("Failed to fetch notifications");
         }
-      } catch (error) {
+      } catch {
         setError("Failed to fetch notifications");
       } finally {
         setIsLoading(false);

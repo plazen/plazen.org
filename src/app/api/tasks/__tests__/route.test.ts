@@ -3,16 +3,38 @@ import { NextRequest } from "next/server";
 import { GET, POST, PATCH, DELETE } from "@/app/api/tasks/route";
 import prisma from "@/lib/prisma";
 import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { syncCalendarSource } from "@/lib/calDavService";
+import {
+  shouldGenerateRoutineTasksForToday,
+  autoGenerateRoutineTasksForToday,
+} from "@/lib/routineTasksService";
 
 // Mock modules
 jest.mock("@/lib/prisma");
 jest.mock("@supabase/ssr");
-jest.mock("next/headers");
+jest.mock("next/headers", () => ({
+  cookies: jest.fn(),
+}));
+jest.mock("@/lib/calDavService");
+jest.mock("@/lib/routineTasksService");
 
 const mockPrisma = prisma as any;
 const mockCreateServerClient = createServerClient as jest.MockedFunction<
   typeof createServerClient
 >;
+const mockSyncCalendarSource = syncCalendarSource as jest.MockedFunction<
+  typeof syncCalendarSource
+>;
+const mockCookies = cookies as unknown as jest.Mock;
+const mockShouldGenerateRoutineTasksForToday =
+  shouldGenerateRoutineTasksForToday as jest.MockedFunction<
+    typeof shouldGenerateRoutineTasksForToday
+  >;
+const mockAutoGenerateRoutineTasksForToday =
+  autoGenerateRoutineTasksForToday as jest.MockedFunction<
+    typeof autoGenerateRoutineTasksForToday
+  >;
 
 describe("/api/tasks route handlers", () => {
   const mockSession = {
@@ -30,6 +52,39 @@ describe("/api/tasks route handlers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCreateServerClient.mockReturnValue(mockSupabaseClient as unknown);
+    mockSupabaseClient.auth.getSession.mockResolvedValue({
+      data: { session: mockSession },
+    });
+
+    mockCookies.mockReturnValue({
+      get: jest.fn(),
+      set: jest.fn(),
+      delete: jest.fn(),
+    } as any);
+
+    mockPrisma.tasks = {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    };
+    mockPrisma.external_events = {
+      findMany: jest.fn(),
+    };
+    mockPrisma.calendar_sources = {
+      findMany: jest.fn(),
+      update: jest.fn(),
+    };
+
+    mockPrisma.userSettings = {
+      findUnique: jest.fn(),
+    };
+
+    mockPrisma.external_events.findMany.mockResolvedValue([]);
+    mockPrisma.calendar_sources.findMany.mockResolvedValue([]);
+    mockSyncCalendarSource.mockResolvedValue(undefined as never);
+    mockShouldGenerateRoutineTasksForToday.mockResolvedValue(false);
+    mockAutoGenerateRoutineTasksForToday.mockResolvedValue([]);
   });
 
   describe("GET /api/tasks", () => {
@@ -61,6 +116,7 @@ describe("/api/tasks route handlers", () => {
       ];
 
       mockPrisma.tasks.findMany.mockResolvedValue(mockTasks);
+      mockPrisma.external_events.findMany.mockResolvedValue([]);
 
       const request = new NextRequest("http://localhost:3000/api/tasks");
       const response = await GET(request);
@@ -70,6 +126,12 @@ describe("/api/tasks route handlers", () => {
       expect(data).toHaveLength(1);
       expect(data[0].id).toBe("1");
       expect(data[0].title).toBe("Test Task");
+      expect(mockPrisma.external_events.findMany).toHaveBeenCalledWith({
+        where: {
+          source: { user_id: "test-user-id" },
+        },
+        include: { source: true },
+      });
     });
 
     it("should filter tasks by date when date parameter provided", async () => {
@@ -87,11 +149,25 @@ describe("/api/tasks route handlers", () => {
       ];
 
       mockPrisma.tasks.findMany.mockResolvedValue(mockTasks);
+      mockPrisma.calendar_sources.findMany.mockResolvedValue([
+        { id: "source-1", user_id: "test-user-id" },
+      ]);
+      mockPrisma.external_events.findMany.mockResolvedValue([
+        {
+          id: 42,
+          title: "External Meeting",
+          start_time: new Date("2025-08-19T09:00:00.000Z"),
+          end_time: new Date("2025-08-19T10:00:00.000Z"),
+          description: "Sync",
+          source: { color: "#123456" },
+        },
+      ]);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/tasks?date=2025-08-19"
+        "http://localhost:3000/api/tasks?date=2025-08-19&timezoneOffset=120"
       );
       const response = await GET(request);
+      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(mockPrisma.tasks.findMany).toHaveBeenCalledWith({
@@ -104,6 +180,37 @@ describe("/api/tasks route handlers", () => {
         },
         orderBy: { created_at: "asc" },
       });
+
+      expect(mockPrisma.external_events.findMany).toHaveBeenCalledWith({
+        where: {
+          source: { user_id: "test-user-id" },
+          start_time: {
+            gte: expect.any(Date),
+            lt: expect.any(Date),
+          },
+        },
+        include: { source: true },
+      });
+
+      expect(mockSyncCalendarSource).toHaveBeenCalledTimes(1);
+      const callArgs = mockSyncCalendarSource.mock.calls[0];
+      const options = callArgs[1];
+      const expectedRangeStart = new Date(Date.UTC(2025, 7, 19, 0, 0, 0));
+      const expectedRangeEnd = new Date(Date.UTC(2025, 7, 20, 0, 0, 0));
+
+      expect(callArgs[0]).toBe("source-1");
+      expect(options).toEqual(
+        expect.objectContaining({
+          expectedUserId: "test-user-id",
+          rangeStart: expectedRangeStart,
+          rangeEnd: expectedRangeEnd,
+        })
+      );
+
+      expect(data).toHaveLength(2);
+      const externalEvent = data[1];
+      expect(externalEvent.id).toBe("ext_42");
+      expect(externalEvent.scheduled_time).toBe("2025-08-19T07:00:00.000Z");
     });
 
     it("should handle database errors gracefully", async () => {

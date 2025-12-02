@@ -4,6 +4,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 type ReleaseNote = {
   id: string;
@@ -29,10 +30,17 @@ const MarkdownStyles = () => (
         line-height: 1.7;
         margin-bottom: 1em;
       }
-      .prose-custom ul, .prose-custom ol {
+      .prose-custom ul {
         line-height: 1.7;
         margin-left: 1.5rem;
         margin-bottom: 1em;
+        list-style-type: disc;
+      }
+      .prose-custom ol {
+        line-height: 1.7;
+        margin-left: 1.5rem;
+        margin-bottom: 1em;
+        list-style-type: decimal;
       }
       .prose-custom li {
         margin-bottom: 0.5em;
@@ -66,6 +74,33 @@ const MarkdownStyles = () => (
     `}
   </style>
 );
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  let note: ReleaseNote | null = null;
+  try {
+    note = await prisma.release_notes.findUnique({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("Failed to fetch release note for metadata", error);
+  }
+
+  if (!note) {
+    return {
+      title: "Release Note Not Found",
+    };
+  }
+
+  return {
+    title: `${note.topic} (${note.version})`,
+    description: `Release notes for Plazen ${note.version}: ${note.topic}`,
+  };
+}
 
 export default async function SingleReleaseNotePage({
   params,

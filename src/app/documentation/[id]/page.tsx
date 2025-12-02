@@ -4,6 +4,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 type DocEntry = {
   id: string;
@@ -29,10 +30,17 @@ const MarkdownStyles = () => (
         line-height: 1.7;
         margin-bottom: 1em;
       }
-      .prose-custom ul, .prose-custom ol {
+      .prose-custom ul {
         line-height: 1.7;
         margin-left: 1.5rem;
         margin-bottom: 1em;
+        list-style-type: disc;
+      }
+      .prose-custom ol {
+        line-height: 1.7;
+        margin-left: 1.5rem;
+        margin-bottom: 1em;
+        list-style-type: decimal;
       }
       .prose-custom li {
         margin-bottom: 0.5em;
@@ -67,20 +75,46 @@ const MarkdownStyles = () => (
   </style>
 );
 
+async function getDocEntry(id: string): Promise<DocEntry | null> {
+  try {
+    return await prisma.documentation_entries.findUnique({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("Failed to fetch documentation entry", error);
+    return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const entry = await getDocEntry(id);
+
+  if (!entry) {
+    return {
+      title: "Documentation Not Found",
+    };
+  }
+
+  return {
+    title: entry.topic || "Documentation",
+    description: entry.text
+      ? entry.text.slice(0, 160).replace(/[#*`]/g, "") + "..."
+      : "Plazen documentation entry.",
+  };
+}
+
 export default async function SingleDocumentationPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  let entry: DocEntry | null = null;
-  try {
-    entry = await prisma.documentation_entries.findUnique({
-      where: { id },
-    });
-  } catch (error) {
-    console.error("Failed to fetch documentation entry", error);
-  }
+  const entry = await getDocEntry(id);
 
   if (!entry) {
     notFound();

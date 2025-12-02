@@ -9,6 +9,7 @@ const imageDomains = [
   "lh3.googleusercontent.com",
   "i.pinimg.com",
   "storage.ko-fi.com",
+  "ogtmbdatqgzxtmwqnvre.supabase.co",
 ];
 
 if (supabaseDomain && !imageDomains.includes(supabaseDomain)) {
@@ -20,6 +21,7 @@ if (!imageDomains.includes(defaultSupabaseDomain)) {
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     domains: imageDomains,
   },

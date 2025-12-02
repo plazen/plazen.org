@@ -36,7 +36,7 @@ export function DocumentationManager() {
         } else {
           setError("Failed to fetch documentation entries");
         }
-      } catch (error) {
+      } catch {
         setError("Failed to fetch documentation entries");
       } finally {
         setIsLoading(false);

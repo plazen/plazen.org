@@ -39,7 +39,7 @@ export function ReleaseNotesManager() {
         } else {
           setError("Failed to fetch release notes");
         }
-      } catch (error) {
+      } catch {
         setError("Failed to fetch release notes");
       } finally {
         setIsLoading(false);
