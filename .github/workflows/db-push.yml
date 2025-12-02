@@ -20,6 +20,8 @@ permissions:
 jobs:
   db-push:
     name: Prisma DB Push
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     runs-on: ubuntu-latest
 
     if: |
