@@ -1,0 +1,51 @@
+name: Database Push
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'yes' to confirm database push"
+        required: true
+        default: ""
+
+  push:
+    branches:
+      - main
+    paths:
+      - "prisma/schema.prisma"
+
+permissions:
+  contents: read
+
+jobs:
+  db-push:
+    name: Prisma DB Push
+    runs-on: ubuntu-latest
+
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm == 'yes')
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm"
+
+      - name: 🔧 Install dependencies
+        run: npm ci
+
+      - name: 🗄️ Generate Prisma Client
+        run: npx prisma generate
+
+      - name: 🚀 Push schema to database
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: ✅ Push complete
+        run: echo "Database schema has been pushed successfully!"
