@@ -948,7 +948,9 @@ export default function AccountPage() {
                 asChild
               >
                 {subscription?.isPro ? (
-                  <Link href="https://ko-fi.com/plazen">age Subscription</Link>
+                  <Link href="https://ko-fi.com/plazen">
+                    Manage Subscription
+                  </Link>
                 ) : (
                   <Link href="/pricing">Upgrade to Pro</Link>
                 )}
