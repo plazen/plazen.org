@@ -9,8 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { User, UserIdentity } from "@supabase/supabase-js";
 import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
 import { motion } from "framer-motion";
 import { PlazenLogo } from "@/components/plazen-logo";
 import Link from "next/link";
@@ -33,8 +34,39 @@ import {
   CreditCard,
   Crown,
   Loader2,
+  Key,
+  Link as LinkIcon,
+  Unlink,
 } from "lucide-react";
+import { FaApple, FaDiscord, FaGoogle, FaGithub } from "react-icons/fa";
 import Image from "next/image";
+
+const socialProviders = [
+  {
+    id: "github",
+    icon: FaGithub,
+    bgColor: "bg-gray-900 hover:bg-gray-800",
+    name: "GitHub",
+  },
+  {
+    id: "google",
+    icon: FaGoogle,
+    bgColor: "bg-red-600 hover:bg-red-700",
+    name: "Google",
+  },
+  {
+    id: "discord",
+    icon: FaDiscord,
+    bgColor: "bg-indigo-600 hover:bg-indigo-700",
+    name: "Discord",
+  },
+  {
+    id: "apple",
+    icon: FaApple,
+    bgColor: "bg-black hover:bg-gray-900",
+    name: "Apple",
+  },
+];
 
 const AVATAR_BUCKET =
   process.env.NEXT_PUBLIC_SUPABASE_AVATAR_BUCKET ?? "avatars";
@@ -51,7 +83,7 @@ function deriveAvatarPathFromUrl(sourceUrl: string): string | null {
     if (markerIndex === -1) return null;
 
     const remainder = parsed.pathname.slice(
-      markerIndex + STORAGE_SEGMENT.length
+      markerIndex + STORAGE_SEGMENT.length,
     );
     const parts = remainder.split("/").filter(Boolean);
 
@@ -77,7 +109,6 @@ export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Stats State
   const [stats, setStats] = useState({
     totalTasks: 0,
     completedTasks: 0,
@@ -85,20 +116,17 @@ export default function AccountPage() {
     avgTaskDuration: 0,
   });
 
-  // Subscription State
   const [subscription, setSubscription] = useState<{
     isPro: boolean;
     endsAt?: string;
     provider?: string;
   } | null>(null);
 
-  // Profile Editing State
   const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [tempDisplayName, setTempDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Settings State
   const [notifications, setNotifications] = useState({
     notifications: true,
   });
@@ -108,25 +136,56 @@ export default function AccountPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUploadError, setAvatarUploadError] = useState<string | null>(
-    null
+    null,
   );
+
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+  const [emailChangeMessage, setEmailChangeMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const [connectedIdentities, setConnectedIdentities] = useState<
+    UserIdentity[]
+  >([]);
+  const [connectingProvider, setConnectingProvider] = useState<string | null>(
+    null,
+  );
+  const [disconnectingProvider, setDisconnectingProvider] = useState<
+    string | null
+  >(null);
+  const [connectionMessage, setConnectionMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const router = useRouter();
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchAvatarSignedUrl = useCallback(async (path: string) => {
     try {
       const response = await fetch(
-        `/api/account/avatar/signed-url?path=${encodeURIComponent(path)}`
+        `/api/account/avatar/signed-url?path=${encodeURIComponent(path)}`,
       );
 
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch signed avatar URL (${response.status}).`
+          `Failed to fetch signed avatar URL (${response.status}).`,
         );
       }
 
@@ -158,13 +217,18 @@ export default function AccountPage() {
         setDisplayName(
           session.user.user_metadata?.display_name ||
             session.user.email?.split("@")[0] ||
-            ""
+            "",
         );
         setTempDisplayName(
           session.user.user_metadata?.display_name ||
             session.user.email?.split("@")[0] ||
-            ""
+            "",
         );
+
+        if (session.user.identities) {
+          setConnectedIdentities(session.user.identities);
+        }
+
         const metadata = session.user.user_metadata ?? {};
         const storedPath =
           typeof metadata.avatar_path === "string"
@@ -213,7 +277,7 @@ export default function AccountPage() {
                 } catch (error) {
                   console.error(
                     "Failed to persist derived avatar path to Supabase:",
-                    error
+                    error,
                   );
                 }
               }
@@ -223,7 +287,6 @@ export default function AccountPage() {
           }
         }
 
-        // Parallel data fetching
         await Promise.all([fetchSettings(), fetchStats(), fetchSubscription()]);
       } else {
         router.push("/login");
@@ -234,8 +297,6 @@ export default function AccountPage() {
     loadAccountData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchAvatarSignedUrl, router, supabase.auth]);
-
-  // --- Fetchers ---
 
   const fetchSubscription = async () => {
     try {
@@ -267,7 +328,7 @@ export default function AccountPage() {
       if (response.ok) {
         const tasks = await response.json();
         const completed = tasks.filter(
-          (t: { is_completed: boolean }) => t.is_completed
+          (t: { is_completed: boolean }) => t.is_completed,
         ).length;
 
         const avgDuration =
@@ -276,8 +337,8 @@ export default function AccountPage() {
                 tasks.reduce(
                   (acc: number, t: { duration_minutes?: number }) =>
                     acc + (t.duration_minutes || 60),
-                  0
-                ) / tasks.length
+                  0,
+                ) / tasks.length,
               )
             : 60;
 
@@ -294,7 +355,7 @@ export default function AccountPage() {
   };
 
   const calculateDailyStreak = (
-    tasks: { is_completed: boolean; scheduled_time: string | null }[]
+    tasks: { is_completed: boolean; scheduled_time: string | null }[],
   ) => {
     if (!tasks.length) return 0;
 
@@ -304,7 +365,7 @@ export default function AccountPage() {
       if (!task.is_completed || !task.scheduled_time) return;
       const taskDate = new Date(task.scheduled_time);
       const dayKey = `${taskDate.getFullYear()}-${String(
-        taskDate.getMonth() + 1
+        taskDate.getMonth() + 1,
       ).padStart(2, "0")}-${String(taskDate.getDate()).padStart(2, "0")}`;
       completedDays.add(dayKey);
     });
@@ -315,7 +376,7 @@ export default function AccountPage() {
 
     while (true) {
       const dayKey = `${currentDay.getFullYear()}-${String(
-        currentDay.getMonth() + 1
+        currentDay.getMonth() + 1,
       ).padStart(2, "0")}-${String(currentDay.getDate()).padStart(2, "0")}`;
 
       if (completedDays.has(dayKey)) {
@@ -328,8 +389,6 @@ export default function AccountPage() {
 
     return streak;
   };
-
-  // --- Actions ---
 
   const handleUpdateDisplayName = async () => {
     try {
@@ -345,9 +404,153 @@ export default function AccountPage() {
     }
   };
 
+  const handleUpdateEmail = async () => {
+    if (!newEmail || newEmail === user?.email) {
+      setEmailChangeMessage({
+        type: "error",
+        text: "Please enter a new email address.",
+      });
+      return;
+    }
+
+    setEmailChangeLoading(true);
+    setEmailChangeMessage(null);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail,
+      });
+
+      if (error) throw error;
+
+      setEmailChangeMessage({
+        type: "success",
+        text: "A confirmation email has been sent to your new email address. Please check your inbox.",
+      });
+      setIsEditingEmail(false);
+      setNewEmail("");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to update email.";
+      setEmailChangeMessage({ type: "error", text: message });
+    } finally {
+      setEmailChangeLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      setPasswordChangeMessage({
+        type: "error",
+        text: "Please fill in all password fields.",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordChangeMessage({
+        type: "error",
+        text: "New passwords do not match.",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordChangeMessage({
+        type: "error",
+        text: "Password must be at least 6 characters long.",
+      });
+      return;
+    }
+
+    setPasswordChangeLoading(true);
+    setPasswordChangeMessage(null);
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      setPasswordChangeMessage({
+        type: "success",
+        text: "Password updated successfully!",
+      });
+      setIsChangingPassword(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to update password.";
+      setPasswordChangeMessage({ type: "error", text: message });
+    } finally {
+      setPasswordChangeLoading(false);
+    }
+  };
+
+  const handleConnectProvider = async (providerId: string) => {
+    setConnectingProvider(providerId);
+    setConnectionMessage(null);
+
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: providerId as "github" | "google" | "discord" | "apple",
+        options: {
+          redirectTo: `${window.location.origin}/account`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to connect account.";
+      setConnectionMessage({ type: "error", text: message });
+      setConnectingProvider(null);
+    }
+  };
+
+  const handleDisconnectProvider = async (identity: UserIdentity) => {
+    const hasPasswordAuth = connectedIdentities.some(
+      (id) => id.provider === "email",
+    );
+    if (connectedIdentities.length <= 1 && !hasPasswordAuth) {
+      setConnectionMessage({
+        type: "error",
+        text: "You must have at least one login method. Add a password or connect another account first.",
+      });
+      return;
+    }
+
+    setDisconnectingProvider(identity.provider);
+    setConnectionMessage(null);
+
+    try {
+      const { error } = await supabase.auth.unlinkIdentity(identity);
+
+      if (error) throw error;
+
+      setConnectedIdentities((prev) =>
+        prev.filter((id) => id.identity_id !== identity.identity_id),
+      );
+      setConnectionMessage({
+        type: "success",
+        text: `${identity.provider.charAt(0).toUpperCase() + identity.provider.slice(1)} account disconnected.`,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to disconnect account.";
+      setConnectionMessage({ type: "error", text: message });
+    } finally {
+      setDisconnectingProvider(null);
+    }
+  };
+
   const handleUpdateNotifications = async (
     key: "email_updates" | "notifications",
-    value: boolean
+    value: boolean,
   ) => {
     setNotifications((prev) => ({ ...prev, [key]: value }));
     try {
@@ -383,7 +586,7 @@ export default function AccountPage() {
   };
 
   const handleAvatarFileChange = async (
-    event: ChangeEvent<HTMLInputElement>
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     if (!user) return;
     const file = event.target.files?.[0];
@@ -453,7 +656,7 @@ export default function AccountPage() {
           uploadData.filePath,
           uploadData.token,
           file,
-          uploadOptions
+          uploadOptions,
         );
 
       if (uploadError) throw uploadError;
@@ -601,7 +804,6 @@ export default function AccountPage() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-4xl mx-auto"
         >
-          {/* 1. User Profile Card */}
           <div className="bg-card rounded-xl shadow-sm border border-border p-8 mb-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
@@ -711,7 +913,6 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* 2. Subscription Status Card */}
           <div className="bg-card rounded-xl border border-border p-6 mb-6 relative overflow-hidden">
             {subscription?.isPro && (
               <div className="absolute -top-6 -right-6 p-4 opacity-[0.03] pointer-events-none">
@@ -747,9 +948,7 @@ export default function AccountPage() {
                 asChild
               >
                 {subscription?.isPro ? (
-                  <Link href="https://ko-fi.com/plazen">
-                    Manage Subscription
-                  </Link>
+                  <Link href="https://ko-fi.com/plazen">age Subscription</Link>
                 ) : (
                   <Link href="/pricing">Upgrade to Pro</Link>
                 )}
@@ -784,7 +983,6 @@ export default function AccountPage() {
             />
           </div>
 
-          {/* 4. Completion Rate */}
           <div className="bg-card rounded-xl border border-border p-6 mb-6">
             <div className="flex justify-between items-end mb-2">
               <h3 className="text-sm font-medium text-muted-foreground">
@@ -803,9 +1001,260 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* 5. Settings & Actions */}
+          <div className="bg-card rounded-xl border border-border p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+              <Shield className="w-5 h-5" /> Security & Account
+            </h3>
+
+            <div className="mb-6 pb-6 border-b border-border">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Mail className="w-4 h-4" /> Email Address
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {user.email}
+                  </p>
+                </div>
+                {!isEditingEmail && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditingEmail(true);
+                      setEmailChangeMessage(null);
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-2" /> Change
+                  </Button>
+                )}
+              </div>
+
+              {isEditingEmail && (
+                <div className="space-y-3 mt-4">
+                  <Input
+                    type="email"
+                    placeholder="Enter new email address"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleUpdateEmail}
+                      disabled={emailChangeLoading}
+                      size="sm"
+                    >
+                      {emailChangeLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4 mr-2" />
+                      )}
+                      Save
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditingEmail(false);
+                        setNewEmail("");
+                        setEmailChangeMessage(null);
+                      }}
+                    >
+                      <X className="w-4 h-4 mr-2" /> Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {emailChangeMessage && (
+                <div
+                  className={`mt-3 text-sm p-3 rounded-md ${
+                    emailChangeMessage.type === "success"
+                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
+                >
+                  {emailChangeMessage.text}
+                </div>
+              )}
+            </div>
+
+            <div className="mb-6 pb-6 border-b border-border">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Key className="w-4 h-4" /> Password
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Update your password to keep your account secure
+                  </p>
+                </div>
+                {!isChangingPassword && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsChangingPassword(true);
+                      setPasswordChangeMessage(null);
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-2" /> Change
+                  </Button>
+                )}
+              </div>
+
+              {isChangingPassword && (
+                <div className="space-y-3 mt-4">
+                  <Input
+                    type="password"
+                    placeholder="New password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleChangePassword}
+                      disabled={passwordChangeLoading}
+                      size="sm"
+                    >
+                      {passwordChangeLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4 mr-2" />
+                      )}
+                      Update Password
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setIsChangingPassword(false);
+                        setNewPassword("");
+                        setConfirmPassword("");
+                        setPasswordChangeMessage(null);
+                      }}
+                    >
+                      <X className="w-4 h-4 mr-2" /> Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {passwordChangeMessage && (
+                <div
+                  className={`mt-3 text-sm p-3 rounded-md ${
+                    passwordChangeMessage.type === "success"
+                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
+                >
+                  {passwordChangeMessage.text}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="font-medium flex items-center gap-2 mb-3">
+                <LinkIcon className="w-4 h-4" /> Connected Accounts
+              </h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                Connect additional accounts to sign in with different providers
+              </p>
+
+              {connectionMessage && (
+                <div
+                  className={`mb-4 text-sm p-3 rounded-md ${
+                    connectionMessage.type === "success"
+                      ? "bg-green-500/10 text-green-600 border border-green-500/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
+                >
+                  {connectionMessage.text}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {socialProviders.map((provider) => {
+                  const Icon = provider.icon;
+                  const connectedIdentity = connectedIdentities.find(
+                    (id) => id.provider === provider.id,
+                  );
+                  const isConnected = !!connectedIdentity;
+                  const isLoading =
+                    connectingProvider === provider.id ||
+                    disconnectingProvider === provider.id;
+
+                  return (
+                    <div
+                      key={provider.id}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${provider.bgColor} text-white`}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{provider.name}</p>
+                          {isConnected &&
+                            connectedIdentity.identity_data?.email && (
+                              <p className="text-xs text-muted-foreground">
+                                {
+                                  connectedIdentity.identity_data
+                                    .email as string
+                                }
+                              </p>
+                            )}
+                        </div>
+                      </div>
+
+                      {isConnected ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleDisconnectProvider(connectedIdentity)
+                          }
+                          disabled={isLoading}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Unlink className="w-4 h-4 mr-2" />
+                          )}
+                          Disconnect
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleConnectProvider(provider.id)}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <LinkIcon className="w-4 h-4 mr-2" />
+                          )}
+                          Connect
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Notifications */}
             <div className="bg-card rounded-xl border border-border p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Bell className="w-5 h-5" /> Notifications
@@ -821,7 +1270,6 @@ export default function AccountPage() {
               </div>
             </div>
 
-            {/* Account Actions */}
             <div className="bg-card rounded-xl border border-border p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Settings className="w-5 h-5" /> Actions
@@ -845,7 +1293,6 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* 6. Danger Zone */}
           <div className="mt-8 pt-8 border-t border-border">
             <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
