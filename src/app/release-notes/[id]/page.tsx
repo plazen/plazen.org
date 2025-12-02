@@ -30,10 +30,17 @@ const MarkdownStyles = () => (
         line-height: 1.7;
         margin-bottom: 1em;
       }
-      .prose-custom ul, .prose-custom ol {
+      .prose-custom ul {
         line-height: 1.7;
         margin-left: 1.5rem;
         margin-bottom: 1em;
+        list-style-type: disc;
+      }
+      .prose-custom ol {
+        line-height: 1.7;
+        margin-left: 1.5rem;
+        margin-bottom: 1em;
+        list-style-type: decimal;
       }
       .prose-custom li {
         margin-bottom: 0.5em;
