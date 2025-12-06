@@ -91,6 +91,9 @@ export default function TimetableApp() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
 
+  // Track the current date string to avoid updating tasks for stale dates
+  const currentDateRef = React.useRef<string>("");
+
   const fetchTasks = useCallback(
     async (selectedDate: Date, skipSync = false) => {
       setTasksLoading(true);
@@ -101,6 +104,9 @@ export default function TimetableApp() {
         const dateString = `${year}-${month}-${day}`;
         const timezoneOffset = new Date().getTimezoneOffset();
 
+        // Update the ref to track the current date being fetched
+        currentDateRef.current = dateString;
+
         const response = await fetch(
           `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`,
         );
@@ -109,7 +115,10 @@ export default function TimetableApp() {
         }
         const fetchedTasks = await response.json();
 
-        setTasks(fetchedTasks);
+        // Only update if this is still the current date
+        if (currentDateRef.current === dateString) {
+          setTasks(fetchedTasks);
+        }
         setTasksLoading(false);
 
         // Trigger background CalDAV sync after displaying cached data
@@ -127,14 +136,20 @@ export default function TimetableApp() {
             })
             .then((syncResult) => {
               // Only refetch if sync was successful and had calendar sources
-              if (syncResult && syncResult.synced > 0) {
+              // AND the user is still viewing the same date
+              if (
+                syncResult &&
+                syncResult.synced > 0 &&
+                currentDateRef.current === dateString
+              ) {
                 // Refetch tasks to get updated external events (skip sync to avoid loop)
                 fetch(
                   `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`,
                 )
                   .then((res) => (res.ok ? res.json() : null))
                   .then((updatedTasks) => {
-                    if (updatedTasks) {
+                    // Double-check the date is still current before updating
+                    if (updatedTasks && currentDateRef.current === dateString) {
                       setTasks(updatedTasks);
                     }
                   })
