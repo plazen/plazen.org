@@ -10,12 +10,12 @@ Plazen is a modern, open-source task manager that intelligently plans your day f
 
 <div align="center">
 
-[![CLA assistant](https://cla-assistant.io/readme/badge/plazen/plazen.org)](https://cla-assistant.io/plazen/plazen.org)
-[![MIT License](https://img.shields.io/github/license/plazen/plazen.org)](https://github.com/plazen/plazen.org/blob/main/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/plazen/plazen.org)](https://github.com/plazen/plazen.org/commits/main)
-[![GitHub issues](https://img.shields.io/github/issues/plazen/plazen.org)](https://github.com/plazen/plazen.org/issues)
-[![GitHub forks](https://img.shields.io/github/forks/plazen/plazen.org)](https://github.com/plazen/plazen.org/network)
-[![GitHub stars](https://img.shields.io/github/stars/plazen/plazen.org)](https://github.com/plazen/plazen.org/stargazers)
+[![CLA assistant](https://cla-assistant.io/readme/badge/plazen/plazen)](https://cla-assistant.io/plazen/plazen)
+[![MIT License](https://img.shields.io/github/license/plazen/plazen)](https://github.com/plazen/plazen/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/plazen/plazen)](https://github.com/plazen/plazen/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/plazen/plazen)](https://github.com/plazen/plazen/issues)
+[![GitHub forks](https://img.shields.io/github/forks/plazen/plazen)](https://github.com/plazen/plazen/network)
+[![GitHub stars](https://img.shields.io/github/stars/plazen/plazen)](https://github.com/plazen/plazen/stargazers)
 
 </div>
 
