@@ -7,7 +7,6 @@ import {
   autoGenerateRoutineTasksForToday,
 } from "@/lib/routineTasksService";
 import { encrypt, decrypt } from "@/lib/encryption";
-import { syncCalendarSource } from "@/lib/calDavService";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +27,7 @@ export async function GET(request: Request) {
           cookieStore.delete({ name, ...options });
         },
       },
-    }
+    },
   );
 
   const {
@@ -74,14 +73,14 @@ export async function GET(request: Request) {
       const shouldGenerate = await shouldGenerateRoutineTasksForToday(
         session.user.id,
         date,
-        timezoneOffset
+        timezoneOffset,
       );
       if (shouldGenerate) {
         console.log("🔄 Auto-generating routine tasks for date:", date);
         const generatedTasks = await autoGenerateRoutineTasksForToday(
           session.user.id,
           date,
-          timezoneOffset
+          timezoneOffset,
         );
         console.log(`🔄 Generated ${generatedTasks.length} routine tasks`);
       }
@@ -101,34 +100,8 @@ export async function GET(request: Request) {
       },
       orderBy: { created_at: "asc" },
     });
-    if (date) {
-      const calendarSources = await prisma.calendar_sources.findMany({
-        where: { user_id: session.user.id },
-      });
-
-      if (calendarSources.length > 0) {
-        await Promise.all(
-          calendarSources.map(async (source) => {
-            try {
-              await syncCalendarSource(source.id, {
-                expectedUserId: session.user.id,
-                ...(rangeStart && rangeEnd
-                  ? {
-                      rangeStart,
-                      rangeEnd,
-                    }
-                  : {}),
-              });
-            } catch (err) {
-              console.error("Failed to sync CalDAV source", {
-                sourceId: source.id,
-                error: err instanceof Error ? err.message : "Unknown error",
-              });
-            }
-          })
-        );
-      }
-    }
+    // External events are fetched from the DB cache immediately.
+    // CalDAV sync is triggered separately by the frontend to avoid blocking.
     const externalEvents = await prisma.external_events.findMany({
       where: {
         source: { user_id: session.user.id },
@@ -146,13 +119,13 @@ export async function GET(request: Request) {
 
     console.log(
       "📊 API GET /api/tasks - Total tasks found in range:",
-      tasks.length
+      tasks.length,
     );
     console.log(
       "📅 API GET /api/tasks - Date range:",
       rangeStart?.toISOString(),
       "to",
-      rangeEnd?.toISOString()
+      rangeEnd?.toISOString(),
     );
     if (date) {
       console.log("🎯 API GET /api/tasks - Requested date:", date);
@@ -177,14 +150,14 @@ export async function GET(request: Request) {
           "-> date string:",
           taskDateString,
           "matches:",
-          taskDateString === date
+          taskDateString === date,
         );
 
         return taskDateString === date;
       });
       console.log(
         "✅ API GET /api/tasks - Filtered tasks count:",
-        filteredTasks.length
+        filteredTasks.length,
       );
     }
 
@@ -221,13 +194,13 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       [...serializableTasks, ...serializableExternalEvents],
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json(
       { error: "Failed to fetch tasks" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -237,7 +210,7 @@ export async function POST(request: Request) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } },
   );
 
   const {
@@ -296,7 +269,7 @@ export async function POST(request: Request) {
       });
 
       function parseLocalDateTimeArr(
-        str: string
+        str: string,
       ): [number, number, number, number, number, number] {
         const [datePart, timePart] = str.split("T");
         const [year, month, day] = datePart.split("-").map(Number);
@@ -304,13 +277,13 @@ export async function POST(request: Request) {
         return [year, month, day, hour, minute, second];
       }
       function toMinutes(
-        arr: [number, number, number, number, number, number]
+        arr: [number, number, number, number, number, number],
       ): number {
         return arr[3] * 60 + arr[4] + arr[5] / 60;
       }
       function compareDateTimeArr(
         a: [number, number, number, number, number, number],
-        b: [number, number, number, number, number, number]
+        b: [number, number, number, number, number, number],
       ): number {
         for (let i = 0; i < a.length; i++) {
           if (a[i] !== b[i]) return a[i] - b[i];
@@ -335,7 +308,7 @@ export async function POST(request: Request) {
             number,
             number,
             number,
-            number
+            number,
           ];
           const duration = task.duration_minutes || 60;
           const endArr: [number, number, number, number, number, number] = [
@@ -364,7 +337,7 @@ export async function POST(request: Request) {
       ];
       if (body.is_for_today && body.user_current_time) {
         const userCurrentArr = parseLocalDateTimeArr(
-          body.user_current_time
+          body.user_current_time,
         ) as [number, number, number, number, number, number];
         if (compareDateTimeArr(userCurrentArr, lastEventEnd) > 0) {
           lastEventEnd = userCurrentArr;
@@ -400,12 +373,12 @@ export async function POST(request: Request) {
       let availableSlots = freeSlots.filter(
         (slot) =>
           toMinutes(
-            slot.end as [number, number, number, number, number, number]
+            slot.end as [number, number, number, number, number, number],
           ) -
             toMinutes(
-              slot.start as [number, number, number, number, number, number]
+              slot.start as [number, number, number, number, number, number],
             ) >=
-          taskDuration
+          taskDuration,
       );
       if (body.is_for_today && body.user_current_time) {
         const nowArr = parseLocalDateTimeArr(body.user_current_time) as [
@@ -414,14 +387,14 @@ export async function POST(request: Request) {
           number,
           number,
           number,
-          number
+          number,
         ];
         availableSlots = availableSlots.filter(
           (slot) =>
             compareDateTimeArr(
               slot.end as [number, number, number, number, number, number],
-              nowArr
-            ) > 0
+              nowArr,
+            ) > 0,
         );
       }
 
@@ -437,13 +410,13 @@ export async function POST(request: Request) {
             number,
             number,
             number,
-            number
+            number,
           ];
           if (compareDateTimeArr(nowArr, minStart) > 0) minStart = nowArr;
         }
         const maxStartMinutes =
           toMinutes(
-            randomSlot.end as [number, number, number, number, number, number]
+            randomSlot.end as [number, number, number, number, number, number],
           ) - taskDuration;
         const minStartMinutes = toMinutes(minStart);
 
@@ -455,7 +428,7 @@ export async function POST(request: Request) {
             number,
             number,
             number,
-            number
+            number,
           ][] = [];
           for (
             let mins = Math.ceil(minStartMinutes / 15) * 15;
@@ -493,11 +466,11 @@ export async function POST(request: Request) {
               possibleStarts[Math.floor(Math.random() * possibleStarts.length)];
             scheduledTime = `${chosen[0]}-${String(chosen[1]).padStart(
               2,
-              "0"
+              "0",
             )}-${String(chosen[2]).padStart(2, "0")}T${String(
-              chosen[3]
+              chosen[3],
             ).padStart(2, "0")}:${String(chosen[4]).padStart(2, "0")}:${String(
-              chosen[5]
+              chosen[5],
             ).padStart(2, "0")}.000Z`;
           }
         }
@@ -531,7 +504,7 @@ export async function POST(request: Request) {
     console.error("Error creating task:", error);
     return NextResponse.json(
       { error: "Failed to create task" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -541,7 +514,7 @@ export async function PATCH(request: Request) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } },
   );
 
   const {
@@ -558,14 +531,14 @@ export async function PATCH(request: Request) {
     if (!id) {
       return NextResponse.json(
         { error: "Task ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (typeof id === "string" && id.startsWith("ext_")) {
       return NextResponse.json(
         { error: "External events are read-only" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -601,7 +574,7 @@ export async function PATCH(request: Request) {
     if (Object.keys(dataToUpdate).length === 0) {
       return NextResponse.json(
         { error: "No update data provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -625,7 +598,7 @@ export async function PATCH(request: Request) {
     console.error("Error updating task:", error);
     return NextResponse.json(
       { error: "Failed to update task" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -635,7 +608,7 @@ export async function DELETE(request: Request) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get: (name: string) => cookieStore.get(name)?.value } }
+    { cookies: { get: (name: string) => cookieStore.get(name)?.value } },
   );
 
   const {
@@ -652,14 +625,14 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json(
         { error: "Task ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (typeof id === "string" && id.startsWith("ext_")) {
       return NextResponse.json(
         { error: "External events are read-only" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -672,13 +645,13 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json(
       { message: "Task deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error deleting task:", error);
     return NextResponse.json(
       { error: "Failed to delete task" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
