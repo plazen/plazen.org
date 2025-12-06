@@ -35,12 +35,12 @@ export type SyncCalendarOptions = {
 type LogFn = (
   level: LogLevel,
   message: string,
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown>,
 ) => void;
 
 export async function syncCalendarSource(
   sourceId: string,
-  options?: SyncCalendarOptions
+  options?: SyncCalendarOptions,
 ) {
   const source = await prisma.calendar_sources.findUnique({
     where: { id: sourceId },
@@ -114,6 +114,9 @@ export async function syncCalendarSource(
     });
 
     let syncedCount = 0;
+    // Track all UIDs we've seen from CalDAV to identify stale events for deletion
+    const allSyncedUids: Set<string> = new Set();
+
     for (const calendar of calendars) {
       if (shouldSkipCalendar(calendar.url, calendar.displayName)) {
         log("info", "Skipping system calendar", {
@@ -132,7 +135,7 @@ export async function syncCalendarSource(
           calendar.url,
           log,
           options?.rangeStart,
-          options?.rangeEnd
+          options?.rangeEnd,
         );
         log("info", `Retrieved ${events.length} events`, {
           url: calendar.url,
@@ -176,6 +179,9 @@ export async function syncCalendarSource(
             location: event.location,
             calendarUrl: calendar.url,
           });
+
+          // Track this UID as synced
+          allSyncedUids.add(event.uid);
 
           await prisma.external_events.upsert({
             where: {
@@ -239,6 +245,40 @@ export async function syncCalendarSource(
         where: { id: sourceId },
         data: { last_synced_at: new Date() },
       });
+
+      // Delete stale events that are no longer in CalDAV
+      // If we have a date range, only delete events within that range that weren't synced
+      // If no date range, delete all events for this source that weren't synced
+      if (allSyncedUids.size > 0 || syncedCount > 0) {
+        const deleteWhere: {
+          source_id: string;
+          uid: { notIn: string[] };
+          start_time?: { gte: Date; lt: Date };
+        } = {
+          source_id: source.id,
+          uid: { notIn: Array.from(allSyncedUids) },
+        };
+
+        // If we synced with a date range, only delete stale events within that range
+        if (options?.rangeStart && options?.rangeEnd) {
+          deleteWhere.start_time = {
+            gte: options.rangeStart,
+            lt: options.rangeEnd,
+          };
+        }
+
+        const deleteResult = await prisma.external_events.deleteMany({
+          where: deleteWhere,
+        });
+
+        if (deleteResult.count > 0) {
+          log("info", `Deleted ${deleteResult.count} stale events`, {
+            sourceId: source.id,
+            rangeStart: options?.rangeStart?.toISOString(),
+            rangeEnd: options?.rangeEnd?.toISOString(),
+          });
+        }
+      }
     }
   } catch (error) {
     log("error", "Failed to sync calendar source", {
@@ -254,7 +294,7 @@ async function fetchEventsWithRange(
   calendarUrl: string,
   log: LogFn,
   rangeStart?: Date,
-  rangeEnd?: Date
+  rangeEnd?: Date,
 ): Promise<CalDavEvent[]> {
   if (rangeStart && rangeEnd) {
     try {
@@ -327,7 +367,7 @@ function buildBaseUrlCandidates(rawUrl: string): string[] {
 async function createClientWithFallback(
   baseUrl: string,
   auth: { type: "basic"; username: string; password: string } | undefined,
-  log: LogFn
+  log: LogFn,
 ) {
   const candidates = buildBaseUrlCandidates(baseUrl);
   const errors: Array<{ url: string; message?: string; status?: number }> = [];
@@ -344,7 +384,7 @@ async function createClientWithFallback(
       }
 
       const createdClient = await CalDAVClient.create(
-        options as unknown as Parameters<typeof CalDAVClient.create>[0]
+        options as unknown as Parameters<typeof CalDAVClient.create>[0],
       );
       log("info", "Connected using base URL", { candidate });
       return createdClient;
@@ -436,7 +476,7 @@ function normaliseCalDavError(error: unknown): {
 
 function extractICalDate(
   calendarData: string | null,
-  property: "DTSTART" | "DTEND"
+  property: "DTSTART" | "DTEND",
 ): string | null {
   if (!calendarData) return null;
 
@@ -475,7 +515,7 @@ function parseICalDateValue(value: unknown): Date | null {
     if (/^\d{8}T\d{6}$/.test(trimmed)) {
       const formatted = trimmed.replace(
         /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})$/,
-        "$1-$2-$3T$4:$5:$6Z"
+        "$1-$2-$3T$4:$5:$6Z",
       );
       const date = new Date(formatted);
       if (!isNaN(date.getTime())) return date;
@@ -485,7 +525,7 @@ function parseICalDateValue(value: unknown): Date | null {
     if (/^\d{8}T\d{6}Z?$/.test(trimmed)) {
       const formatted = trimmed.replace(
         /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?$/,
-        "$1-$2-$3T$4:$5:$6$7"
+        "$1-$2-$3T$4:$5:$6$7",
       );
       const date = new Date(formatted);
       if (!isNaN(date.getTime())) return date;

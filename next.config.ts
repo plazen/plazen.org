@@ -4,7 +4,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseDomain = supabaseUrl ? new URL(supabaseUrl).hostname : null;
 const defaultSupabaseDomain = "bmaaavingiaelyvxaraj.supabase.co";
 
-const imageDomains = [
+const imageHostnames = [
   "avatars.githubusercontent.com",
   "lh3.googleusercontent.com",
   "i.pinimg.com",
@@ -12,18 +12,22 @@ const imageDomains = [
   "ogtmbdatqgzxtmwqnvre.supabase.co",
 ];
 
-if (supabaseDomain && !imageDomains.includes(supabaseDomain)) {
-  imageDomains.push(supabaseDomain);
+if (supabaseDomain && !imageHostnames.includes(supabaseDomain)) {
+  imageHostnames.push(supabaseDomain);
 }
 
-if (!imageDomains.includes(defaultSupabaseDomain)) {
-  imageDomains.push(defaultSupabaseDomain);
+if (!imageHostnames.includes(defaultSupabaseDomain)) {
+  imageHostnames.push(defaultSupabaseDomain);
 }
 
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
-    domains: imageDomains,
+    remotePatterns: imageHostnames.map((hostname) => ({
+      protocol: "https" as const,
+      hostname,
+      pathname: "/**",
+    })),
   },
 };
 

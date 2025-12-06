@@ -4,11 +4,12 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Select } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { useTheme } from "@/components/theme-provider";
 import { themes, Theme } from "@/lib/theme";
-import { Info, Plus, Trash } from "lucide-react";
+import { Info, Plus, Trash, Sun, Moon, Monitor } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Select } from "./ui/select";
 
 type CalendarSource = {
   id: string;
@@ -39,7 +40,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [telegramId, setTelegramId] = useState(
-    currentSettings.telegram_id || ""
+    currentSettings.telegram_id || "",
   );
   const { setTheme } = useTheme();
 
@@ -145,7 +146,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
                       2,
-                      "0"
+                      "0",
                     )}:00`}</option>
                   ))}
                 </Select>
@@ -170,7 +171,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   {Array.from({ length: 24 }).map((_, i) => (
                     <option key={i} value={i}>{`${String(i).padStart(
                       2,
-                      "0"
+                      "0",
                     )}:00`}</option>
                   ))}
                 </Select>
@@ -192,22 +193,43 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 Theme
               </label>
-              <Select
-                id="theme"
-                value={settings.theme}
-                onChange={(e) =>
-                  setSettings({
-                    ...settings,
-                    theme: e.target.value,
-                  })
-                }
+              <div
+                className="inline-flex items-center gap-1 rounded-md border border-input bg-background p-1 w-full"
+                role="radiogroup"
+                aria-label="Select theme"
               >
-                {Object.values(themes).map((theme) => (
-                  <option key={theme.value} value={theme.value}>
-                    {theme.name}
-                  </option>
-                ))}
-              </Select>
+                {[
+                  { value: "light", icon: Sun, label: "Light" },
+                  { value: "dark", icon: Moon, label: "Dark" },
+                  { value: "system", icon: Monitor, label: "System" },
+                ].map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={settings.theme === option.value}
+                      aria-label={option.label}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          theme: option.value,
+                        })
+                      }
+                      className={cn(
+                        "flex-1 inline-flex items-center justify-center gap-2 rounded-sm px-3 py-2 text-sm transition-all",
+                        settings.theme === option.value
+                          ? "bg-muted text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="space-y-2">

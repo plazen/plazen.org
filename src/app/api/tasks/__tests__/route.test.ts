@@ -4,7 +4,7 @@ import { GET, POST, PATCH, DELETE } from "@/app/api/tasks/route";
 import prisma from "@/lib/prisma";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { syncCalendarSource } from "@/lib/calDavService";
+
 import {
   shouldGenerateRoutineTasksForToday,
   autoGenerateRoutineTasksForToday,
@@ -16,16 +16,14 @@ jest.mock("@supabase/ssr");
 jest.mock("next/headers", () => ({
   cookies: jest.fn(),
 }));
-jest.mock("@/lib/calDavService");
+
 jest.mock("@/lib/routineTasksService");
 
 const mockPrisma = prisma as any;
 const mockCreateServerClient = createServerClient as jest.MockedFunction<
   typeof createServerClient
 >;
-const mockSyncCalendarSource = syncCalendarSource as jest.MockedFunction<
-  typeof syncCalendarSource
->;
+
 const mockCookies = cookies as unknown as jest.Mock;
 const mockShouldGenerateRoutineTasksForToday =
   shouldGenerateRoutineTasksForToday as jest.MockedFunction<
@@ -82,7 +80,6 @@ describe("/api/tasks route handlers", () => {
 
     mockPrisma.external_events.findMany.mockResolvedValue([]);
     mockPrisma.calendar_sources.findMany.mockResolvedValue([]);
-    mockSyncCalendarSource.mockResolvedValue(undefined as never);
     mockShouldGenerateRoutineTasksForToday.mockResolvedValue(false);
     mockAutoGenerateRoutineTasksForToday.mockResolvedValue([]);
   });
@@ -164,7 +161,7 @@ describe("/api/tasks route handlers", () => {
       ]);
 
       const request = new NextRequest(
-        "http://localhost:3000/api/tasks?date=2025-08-19&timezoneOffset=120"
+        "http://localhost:3000/api/tasks?date=2025-08-19&timezoneOffset=120",
       );
       const response = await GET(request);
       const data = await response.json();
@@ -192,21 +189,7 @@ describe("/api/tasks route handlers", () => {
         include: { source: true },
       });
 
-      expect(mockSyncCalendarSource).toHaveBeenCalledTimes(1);
-      const callArgs = mockSyncCalendarSource.mock.calls[0];
-      const options = callArgs[1];
-      const expectedRangeStart = new Date(Date.UTC(2025, 7, 19, 0, 0, 0));
-      const expectedRangeEnd = new Date(Date.UTC(2025, 7, 20, 0, 0, 0));
-
-      expect(callArgs[0]).toBe("source-1");
-      expect(options).toEqual(
-        expect.objectContaining({
-          expectedUserId: "test-user-id",
-          rangeStart: expectedRangeStart,
-          rangeEnd: expectedRangeEnd,
-        })
-      );
-
+      // CalDAV sync is now triggered by the frontend separately, not during GET
       expect(data).toHaveLength(2);
       const externalEvent = data[1];
       expect(externalEvent.id).toBe("ext_42");

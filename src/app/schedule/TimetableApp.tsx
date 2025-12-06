@@ -88,35 +88,89 @@ export default function TimetableApp() {
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
 
-  const fetchTasks = useCallback(async (selectedDate: Date) => {
-    setTasksLoading(true);
-    try {
-      const year = selectedDate.getFullYear();
-      const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
-      const day = selectedDate.getDate().toString().padStart(2, "0");
-      const dateString = `${year}-${month}-${day}`;
-      const timezoneOffset = new Date().getTimezoneOffset();
+  // Track the current date string to avoid updating tasks for stale dates
+  const currentDateRef = React.useRef<string>("");
 
-      const response = await fetch(
-        `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch tasks");
+  const fetchTasks = useCallback(
+    async (selectedDate: Date, skipSync = false) => {
+      setTasksLoading(true);
+      try {
+        const year = selectedDate.getFullYear();
+        const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0");
+        const day = selectedDate.getDate().toString().padStart(2, "0");
+        const dateString = `${year}-${month}-${day}`;
+        const timezoneOffset = new Date().getTimezoneOffset();
+
+        // Update the ref to track the current date being fetched
+        currentDateRef.current = dateString;
+
+        const response = await fetch(
+          `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`,
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch tasks");
+        }
+        const fetchedTasks = await response.json();
+
+        // Only update if this is still the current date
+        if (currentDateRef.current === dateString) {
+          setTasks(fetchedTasks);
+        }
+        setTasksLoading(false);
+
+        // Trigger background CalDAV sync after displaying cached data
+        if (!skipSync) {
+          fetch("/api/calendars/sync-all", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date: dateString }),
+          })
+            .then((syncResponse) => {
+              if (syncResponse.ok) {
+                return syncResponse.json();
+              }
+              return null;
+            })
+            .then((syncResult) => {
+              // Only refetch if sync was successful and had calendar sources
+              // AND the user is still viewing the same date
+              if (
+                syncResult &&
+                syncResult.synced > 0 &&
+                currentDateRef.current === dateString
+              ) {
+                // Refetch tasks to get updated external events (skip sync to avoid loop)
+                fetch(
+                  `/api/tasks?date=${dateString}&timezoneOffset=${timezoneOffset}`,
+                )
+                  .then((res) => (res.ok ? res.json() : null))
+                  .then((updatedTasks) => {
+                    // Double-check the date is still current before updating
+                    if (updatedTasks && currentDateRef.current === dateString) {
+                      setTasks(updatedTasks);
+                    }
+                  })
+                  .catch((err) => {
+                    console.error("Failed to refetch tasks after sync:", err);
+                  });
+              }
+            })
+            .catch((err) => {
+              console.error("Failed to sync CalDAV calendars:", err);
+            });
+        }
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred",
+        );
+        setTasksLoading(false);
       }
-      const fetchedTasks = await response.json();
-
-      setTasks(fetchedTasks);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-    } finally {
-      setTasksLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const checkUserAndFetch = async () => {
@@ -158,7 +212,7 @@ export default function TimetableApp() {
         }
       } catch (err: unknown) {
         setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
+          err instanceof Error ? err.message : "An unknown error occurred",
         );
       }
       setLoading(false);
@@ -176,7 +230,7 @@ export default function TimetableApp() {
   useEffect(() => {
     localStorage.setItem(
       DISMISSED_NOTIFICATIONS_KEY,
-      JSON.stringify(dismissedNotificationIds)
+      JSON.stringify(dismissedNotificationIds),
     );
   }, [dismissedNotificationIds]);
 
@@ -202,9 +256,9 @@ export default function TimetableApp() {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, "0");
     const localTimeString = `${now.getFullYear()}-${pad(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     )}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(
-      now.getMinutes()
+      now.getMinutes(),
     )}:${pad(now.getSeconds())}`;
     let finalScheduledTime = null;
     if (taskData.isTimeSensitive && taskData.scheduledTime && date) {
@@ -241,7 +295,7 @@ export default function TimetableApp() {
       setIsAddTaskModalOpen(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unknown error occurred",
       );
     } finally {
       setIsAddingTask(false);
@@ -260,7 +314,7 @@ export default function TimetableApp() {
       setTasks(tasks.map((task) => (task.id === taskId ? updatedTask : task)));
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unknown error occurred",
       );
     }
   };
@@ -276,7 +330,7 @@ export default function TimetableApp() {
       if (!response.ok) throw new Error("Failed to delete task");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unknown error occurred",
       );
     }
   };
@@ -287,7 +341,7 @@ export default function TimetableApp() {
   const handleUpdateTaskTime = async (
     taskId: string,
     newTime: string,
-    newTitle?: string
+    newTitle?: string,
   ) => {
     try {
       const requestBody: {
@@ -317,7 +371,7 @@ export default function TimetableApp() {
       handleCloseRescheduleModal();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unknown error occurred",
       );
     }
   };
@@ -335,7 +389,7 @@ export default function TimetableApp() {
       setIsSettingsOpen(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
+        err instanceof Error ? err.message : "An unknown error occurred",
       );
     }
   };
@@ -355,7 +409,7 @@ export default function TimetableApp() {
     );
   }
   const activeNotifications = notifications.filter(
-    (n) => !dismissedNotificationIds.includes(n.id)
+    (n) => !dismissedNotificationIds.includes(n.id),
   );
 
   return (
